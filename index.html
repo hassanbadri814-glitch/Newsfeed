@@ -2505,4 +2505,306 @@ function renderMap(){
     sudan:    { color:"#0891b2", label:"Soedan" },
     maroc:    { color:"#e0a458", label:"Marokko" },
     mideast:  { color:"#a855f7", label:"Midden-Oosten" },
-    world:   
+    world:    { color:"#64748b", label:"Wereld" },
+    nl:       { color:"#fb923c", label:"Nederland" },
+    tg:       { color:"#229ED9", label:"Telegram" },
+    sport:    { color:"#22c55e", label:"Sport" },
+    business: { color:"#14b8a6", label:"Economie" },
+    tech:     { color:"#06b6d4", label:"Tech" },
+    health:   { color:"#ec4899", label:"Gezondheid" },
+    algemeen: { color:"#94a3b8", label:"Algemeen" }
+  };
+
+  const byLoc = {};
+  list.forEach(it => {
+    const key = it.lat.toFixed(2) + "," + it.lon.toFixed(2);
+    if(!byLoc[key]) byLoc[key] = { items: [], cats: {} };
+    byLoc[key].items.push(it);
+    byLoc[key].cats[it.cat] = (byLoc[key].cats[it.cat] || 0) + 1;
+  });
+
+  const catCounts = {};
+  list.forEach(it => { catCounts[it.cat] = (catCounts[it.cat] || 0) + 1; });
+
+  const legendItems = document.getElementById("legendItems");
+  if(legendItems){
+    const sorted = Object.entries(catCounts).sort((a,b) => b[1] - a[1]);
+    legendItems.innerHTML = sorted.slice(0, 10).map(([cat, count]) => {
+      const c = catColors[cat] || catColors.algemeen;
+      return `
+        <div class="item">
+          <span class="dot" style="background:${c.color}; color:${c.color}"></span>
+          <span>${c.label}</span>
+          <span class="num">${count}</span>
+        </div>`;
+    }).join("");
+  }
+
+  Object.entries(byLoc).forEach(([key, data]) => {
+    const [lat, lon] = key.split(",").map(Number);
+    const items = data.items;
+
+    let dominant = "algemeen";
+    let maxCount = 0;
+    for(const [cat, count] of Object.entries(data.cats)){
+      if(count > maxCount){ maxCount = count; dominant = cat; }
+    }
+    const color = (catColors[dominant] || catColors.algemeen).color;
+    const count = items.length;
+    const size = Math.min(24 + (count * 2), 44);
+
+    const icon = L.divIcon({
+      className: "custom-marker",
+      html: `
+        <div class="marker-pulse" style="color:${color}; width:${size}px; height:${size}px;">
+          <span class="ring"></span>
+          <span class="ring delay"></span>
+          <span class="core" style="background:${color}"></span>
+          ${count > 1 ? `<span class="count" style="background:${color}">${count}</span>` : ''}
+        </div>`,
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2]
+    });
+
+    const marker = L.marker([lat, lon], { icon }).addTo(markersLayer);
+    const top = items.slice(0, 5);
+    const html = `
+      <div>
+        <div class="pop-src">${count} artikel${count>1?'en':''} · ${(catColors[dominant]||catColors.algemeen).label}</div>
+        ${top.map(it => {
+          const cached = getCachedTr(it.title);
+          const arabic = isArabic(it.title);
+          let displayTitle;
+          if(cached && !isArabic(cached)){
+            displayTitle = escapeHtml(cached.slice(0, 90));
+          } else if(arabic){
+            displayTitle = "📄 " + escapeHtml(it.source) + " — klik om te lezen";
+          } else {
+            displayTitle = escapeHtml(it.title.slice(0, 90));
+          }
+          return `
+            <div style="margin-bottom:.6rem">
+              <h4 style="font-family:'Playfair Display',serif; font-size:.85rem; line-height:1.3; margin:.3rem 0 .35rem; font-weight:600; color:var(--ink);">
+                ${displayTitle}${displayTitle.length>90?'…':''}
+              </h4>
+              <div style="font-size:.6rem; color:var(--ink-3); text-transform:uppercase; letter-spacing:.08em; font-weight:600; margin-bottom:.3rem;">
+                ${escapeHtml(it.source)} · ${timeAgo(it.date)}
+              </div>
+              <a href="${escapeHtml(it.link)}" target="_blank" rel="noopener">LEES →</a>
+            </div>`;
+        }).join("")}
+        ${items.length > 5 ? `<div style="font-size:.65rem; color:var(--ink-3); text-align:center; padding-top:.5rem; border-top:1px solid var(--line);">+ ${items.length - 5} meer artikelen</div>` : ''}
+      </div>`;
+    marker.bindPopup(html);
+  });
+}
+
+function loadLiveChannel(key){
+  const ch = LIVE_CHANNELS[key];
+  if(!ch) return;
+  currentLiveChannel = key;
+  document.getElementById("liveChannelName").textContent = ch.label;
+  document.getElementById("liveChannelDesc").textContent = ch.desc;
+  document.getElementById("liveIcon").textContent = ch.icon;
+  document.getElementById("liveYoutube").href = ch.youtube;
+  document.getElementById("liveTiktok").href = ch.tiktok;
+  document.getElementById("liveWeb").href = ch.web;
+  localStorage.setItem("wardesk_live", key);
+}
+
+document.querySelectorAll(".live-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".live-chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    loadLiveChannel(chip.dataset.live);
+  });
+});
+
+function showOnly(view){
+  listView.style.display = "none";
+  liveView.style.display = "none";
+  mapView.classList.remove("active");
+  if(view === "list") listView.style.display = "block";
+  else if(view === "live"){
+    liveView.style.display = "block";
+    loadLiveChannel(currentLiveChannel);
+  }
+  else if(view === "map"){
+    mapView.classList.add("active");
+    setTimeout(() => {
+      if(!map) initMap();
+      map.invalidateSize();
+      renderMap();
+    }, 100);
+  }
+}
+
+function switchView(v){
+  currentView = v;
+  viewListBtn.classList.toggle("active", v === "list");
+  viewMapBtn.classList.toggle("active", v === "map");
+  showOnly(v);
+  localStorage.setItem("wardesk_view", v);
+}
+
+navTabs.addEventListener("click", e => {
+  const tab = e.target.closest(".nav-tab");
+  if(!tab) return;
+  navTabs.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  tab.classList.add("active");
+  activeCat = tab.dataset.cat;
+  currentPage = 1;
+
+  if(activeCat === "live"){
+    showOnly("live");
+    viewListBtn.classList.remove("active");
+    viewMapBtn.classList.remove("active");
+    return;
+  }
+
+  showOnly("list");
+  viewListBtn.classList.add("active");
+  viewMapBtn.classList.remove("active");
+  render();
+  renderHero();
+  renderMap();
+});
+
+let searchTimer = null;
+searchInput.addEventListener("input", () => {
+  const val = searchInput.value.trim();
+  searchWrap.classList.toggle("has-value", val.length > 0);
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { currentPage = 1; render(); renderHero(); renderMap(); }, 250);
+});
+
+searchClear.addEventListener("click", () => {
+  searchInput.value = "";
+  searchWrap.classList.remove("has-value");
+  currentPage = 1;
+  render(); renderHero(); renderMap();
+});
+
+sourceSelect.addEventListener("change", () => {
+  activeSource = sourceSelect.value;
+  currentPage = 1;
+  render(); renderHero(); renderMap();
+});
+
+timeSelect.addEventListener("change", () => {
+  activeTime = timeSelect.value;
+  currentPage = 1;
+  render(); renderHero(); renderMap();
+});
+
+failedToggle.addEventListener("click", () => failedList.classList.toggle("show"));
+
+function updateNotifBtn(){
+  if(!("Notification" in window)){ notifBtn.style.display = "none"; return; }
+  notifBtn.classList.toggle("on", notifEnabled && Notification.permission === "granted");
+  notifBtn.textContent = (notifEnabled && Notification.permission === "granted") ? "🔔" : "🔕";
+}
+updateNotifBtn();
+
+notifBtn.addEventListener("click", async () => {
+  if(!("Notification" in window)){ showToast("Notificaties niet ondersteund", "⚠"); return; }
+  if(notifEnabled && Notification.permission === "granted"){
+    notifEnabled = false;
+    localStorage.setItem(NOTIF_KEY, "0");
+    showToast("Notificaties uit", "🔕");
+    updateNotifBtn();
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm === "granted"){
+    notifEnabled = true;
+    localStorage.setItem(NOTIF_KEY, "1");
+    showToast("Notificaties aan", "🔔");
+    try { new Notification("WAR DESK", { body: "Je krijgt nu meldingen bij breaking news." }); } catch(e){}
+  } else { showToast("Notificaties geweigerd", "⚠"); }
+  updateNotifBtn();
+});
+
+refreshBtn.addEventListener("click", () => loadFeeds(false));
+viewListBtn.addEventListener("click", () => {
+  if(activeCat === "live"){
+    navTabs.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+    navTabs.querySelector('[data-cat="all"]').classList.add("active");
+    activeCat = "all";
+    render(); renderHero();
+  }
+  switchView("list");
+});
+viewMapBtn.addEventListener("click", () => switchView("map"));
+
+document.getElementById("theme").addEventListener("click", () => {
+  document.body.classList.toggle("light");
+  localStorage.setItem("wardesk_theme", document.body.classList.contains("light") ? "light" : "dark");
+  if(map){
+    map.remove();
+    map = null;
+    markersLayer = null;
+    initMap();
+    setTimeout(() => { map.invalidateSize(); renderMap(); }, 200);
+  }
+});
+
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { renderHero(); }, 300);
+});
+
+setInterval(() => {
+  const now = new Date();
+  clockEl.textContent = now.toLocaleTimeString("nl-NL", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+  nextRefreshSeconds--;
+  if(nextRefreshSeconds < 0) nextRefreshSeconds = REFRESH_MS/1000;
+  nextEl.textContent = nextRefreshSeconds + "s";
+}, 1000);
+
+setInterval(() => {
+  const idleTime = Date.now() - lastUserActivity;
+  const atTop = window.scrollY < 200;
+
+  if(idleTime < INACTIVITY_MS && !atTop){
+    if(!refreshPaused){
+      refreshPaused = true;
+      pausedIndicator.classList.add("show");
+    }
+    return;
+  }
+
+  if(isUserScrolling){
+    return;
+  }
+
+  if(refreshPaused){
+    refreshPaused = false;
+    pausedIndicator.classList.remove("show");
+  }
+
+  loadFeeds(true);
+}, REFRESH_MS);
+
+initMap();
+const savedView = localStorage.getItem("wardesk_view") || "list";
+const savedLive = localStorage.getItem("wardesk_live") || "aljazeera-en";
+currentLiveChannel = savedLive;
+
+document.querySelectorAll(".live-chip").forEach(c => {
+  c.classList.toggle("active", c.dataset.live === savedLive);
+});
+
+switchView(savedView);
+loadFeeds(false);
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js")
+      .catch(err => console.log("SW:", err));
+  });
+}
+</script>
+</body>
+</html>

@@ -30,7 +30,7 @@
     overflow-x:hidden;
   }
 
-  /* ═══════════ BREAKING TICKER (ROOD) ═══════════ */
+  /* BREAKING TICKER */
   .ticker{
     background:var(--red); color:#fff;
     height:36px; overflow:hidden;
@@ -66,7 +66,7 @@
   }
   @keyframes scroll{to{transform:translateX(-50%)}}
 
-  /* ═══════════ HEADER (ZWART + GOUD) ═══════════ */
+  /* HEADER */
   header{
     background:var(--bg2);
     border-bottom:1px solid var(--border);
@@ -79,10 +79,7 @@
     display:flex; align-items:center; gap:1.2rem;
     flex-wrap:wrap;
   }
-  .logo{
-    display:flex; align-items:center; gap:.8rem;
-    font-weight:900;
-  }
+  .logo{display:flex; align-items:center; gap:.8rem; font-weight:900}
   .logo-mark{
     width:42px; height:42px;
     background:linear-gradient(135deg,var(--gold),var(--gold2));
@@ -151,7 +148,7 @@
     border-color:var(--gold);
   }
 
-  /* ═══════════ NAV TABS ═══════════ */
+  /* NAV TABS */
   .nav-tabs{
     background:var(--bg); border-bottom:1px solid var(--border);
     overflow-x:auto; -webkit-overflow-scrolling:touch;
@@ -190,7 +187,7 @@
     background:var(--red2); animation:blink 1.5s infinite;
   }
 
-  /* ═══════════ STATUS BAR ═══════════ */
+  /* STATUS BAR */
   .statusbar{
     background:var(--bg2); border-bottom:1px solid var(--border);
     padding:.55rem 1.2rem;
@@ -208,13 +205,10 @@
   .statusbar .dot.warn{background:var(--gold)}
   .statusbar .dot.err{background:var(--red2)}
 
-  /* ═══════════ MAIN LAYOUT ═══════════ */
-  main{
-    max-width:1600px; margin:0 auto;
-    padding:1.5rem 1.2rem 5rem;
-  }
+  /* MAIN */
+  main{max-width:1600px; margin:0 auto; padding:1.5rem 1.2rem 5rem}
 
-  /* Hero — Al Jazeera/Reuters-style */
+  /* HERO */
   .hero{
     display:grid;
     grid-template-columns:1.65fr 1fr;
@@ -224,7 +218,6 @@
     border:1px solid var(--border2);
   }
   @media(max-width:900px){.hero{grid-template-columns:1fr}}
-
   .hero-main{
     background:var(--card);
     display:flex; flex-direction:column;
@@ -272,7 +265,6 @@
     margin-top:.9rem; letter-spacing:.05em;
     display:flex; gap:.8rem; align-items:center;
   }
-
   .hero-side{
     display:grid; grid-template-rows:1fr 1fr;
     gap:1px; background:var(--border2);
@@ -307,16 +299,14 @@
     text-transform:uppercase;
   }
 
-  /* Section head */
+  /* SECTION HEAD */
   .section-head{
     display:flex; align-items:center; gap:.9rem;
     padding-bottom:.9rem;
     border-bottom:2px solid var(--gold);
     margin-bottom:1.5rem;
   }
-  .section-head .bar{
-    width:5px; height:24px; background:var(--gold);
-  }
+  .section-head .bar{width:5px; height:24px; background:var(--gold)}
   .section-head h2{
     font-size:1.1rem; font-weight:900;
     letter-spacing:.12em; text-transform:uppercase;
@@ -329,7 +319,7 @@
     letter-spacing:.05em;
   }
 
-  /* News grid */
+  /* GRID */
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
@@ -349,7 +339,6 @@
   }
   article.war{border-top:3px solid var(--red)}
   article.tg{border-top:3px solid #229ED9}
-
   article .thumb{
     width:100%; aspect-ratio:16/9;
     background:var(--card2);
@@ -361,7 +350,6 @@
     display:block; transition:transform .5s;
   }
   article:hover .thumb img{transform:scale(1.08)}
-
   article .badges{
     position:absolute; top:.6rem; left:.6rem;
     display:flex; gap:.35rem; z-index:2;
@@ -376,7 +364,6 @@
   article .badge.ar{background:var(--gold); color:#000; border-color:transparent}
   article .badge.tg{background:#229ED9; color:#fff; border-color:transparent}
   article .badge.he{background:#6366f1; color:#fff; border-color:transparent}
-
   article .live-flag{
     position:absolute; top:.6rem; right:.6rem;
     background:var(--red); color:#fff;
@@ -392,7 +379,6 @@
     background:#fff; border-radius:50%;
     animation:blink 1.2s infinite;
   }
-
   article .body{
     padding:1rem 1.1rem 1.2rem;
     display:flex; flex-direction:column; gap:.6rem;
@@ -419,7 +405,6 @@
     background:var(--red2); border-radius:50%;
     animation:blink 1.2s infinite;
   }
-
   article h3{
     font-size:1rem; line-height:1.4;
     font-weight:700; letter-spacing:-.005em;
@@ -469,7 +454,7 @@
   article .read-link:hover{gap:.6rem; color:var(--gold2)}
   article[dir="rtl"] .read-link{flex-direction:row-reverse}
 
-  /* ═══════════ LIVE TV ═══════════ */
+  /* LIVE TV */
   #liveView{display:none}
   .live-channels{
     display:flex; gap:.5rem; flex-wrap:wrap;
@@ -494,7 +479,6 @@
     background:var(--red2); animation:blink 1.5s infinite;
   }
   .live-chip.active .live-dot{background:#000}
-
   .live-panel{
     background:var(--card); border:1px solid var(--border2);
     padding:2.5rem 1.5rem; text-align:center;
@@ -519,21 +503,15 @@
     display:inline-flex; align-items:center; gap:.5rem;
     transition:all .2s;
   }
-  .live-btn.youtube{
-    background:#ff0000; color:#fff;
-  }
+  .live-btn.youtube{background:#ff0000; color:#fff}
   .live-btn.youtube:hover{background:#cc0000; transform:translateY(-2px)}
-  .live-btn.tiktok{
-    background:#000; color:#fff;
-    border:1px solid #333;
-  }
+  .live-btn.tiktok{background:#000; color:#fff; border:1px solid #333}
   .live-btn.tiktok:hover{background:#111; transform:translateY(-2px)}
   .live-btn.web{
     background:var(--card2); color:var(--gold);
     border:1px solid var(--gold);
   }
   .live-btn.web:hover{background:var(--gold); color:#000; transform:translateY(-2px)}
-
   .live-note{
     margin-top:1.5rem; padding:1.1rem 1.3rem;
     background:var(--card); border-left:3px solid var(--gold);
@@ -542,7 +520,7 @@
   }
   .live-note strong{color:var(--gold)}
 
-  /* ═══════════ MAP ═══════════ */
+  /* MAP */
   #mapView{display:none}
   #mapView.active{display:block}
   #map{
@@ -578,7 +556,7 @@
     letter-spacing:.12em; text-transform:uppercase;
   }
 
-  /* ═══════════ LOADER / EMPTY ═══════════ */
+  /* LOADER / EMPTY */
   .loader{
     grid-column:1/-1;
     display:flex; flex-direction:column;
@@ -608,7 +586,7 @@
     letter-spacing:.1em; text-transform:uppercase;
   }
 
-  /* ═══════════ FOOTER ═══════════ */
+  /* FOOTER */
   footer{
     padding:2.5rem 1.2rem;
     text-align:center; color:var(--dim);
@@ -618,7 +596,7 @@
   }
   footer a{color:var(--gold); text-decoration:none; font-weight:700}
 
-  /* ═══════════ MOBIEL ═══════════ */
+  /* MOBIEL */
   @media(max-width:640px){
     .header-top{padding:.7rem .9rem; gap:.7rem}
     .logo-text .a{font-size:1rem}
@@ -639,7 +617,7 @@
 </head>
 <body>
 
-<!-- ═══════════ BREAKING TICKER ═══════════ -->
+<!-- BREAKING TICKER -->
 <div class="ticker">
   <div class="label">BREAKING</div>
   <div class="track" id="tickerTrack">
@@ -647,7 +625,7 @@
   </div>
 </div>
 
-<!-- ═══════════ HEADER ═══════════ -->
+<!-- HEADER -->
 <header>
   <div class="header-top">
     <div class="logo">
@@ -701,7 +679,7 @@
   </nav>
 </header>
 
-<!-- ═══════════ STATUS BAR ═══════════ -->
+<!-- STATUS BAR -->
 <div class="statusbar">
   <span><span class="dot ok"></span><span id="statusText">Verbinding maken...</span></span>
   <span id="trStatus" style="display:none">
@@ -709,10 +687,9 @@
   </span>
 </div>
 
-<!-- ═══════════ MAIN ═══════════ -->
+<!-- MAIN -->
 <main>
 
-  <!-- Hero -->
   <section class="hero" id="heroSection" style="display:none">
     <div class="hero-main" id="heroMain"></div>
     <div class="hero-side">
@@ -721,7 +698,6 @@
     </div>
   </section>
 
-  <!-- Lijstweergave -->
   <div id="listView">
     <div class="section-head">
       <span class="bar"></span>
@@ -736,7 +712,6 @@
     </div>
   </div>
 
-  <!-- Live TV -->
   <div id="liveView">
     <div class="section-head">
       <span class="bar"></span>
@@ -767,12 +742,11 @@
 
     <div class="live-note">
       <strong>⚠ Let op:</strong> Live streams worden geopend in YouTube, TikTok of de website van de zender.
-      Directe insluiting (embedden) wordt door YouTube en TikTok geblokkeerd voor de meeste nieuwszenders.
+      Directe insluiting wordt door YouTube en TikTok geblokkeerd voor de meeste nieuwszenders.
       Deze methode werkt <strong>altijd</strong> en geeft de beste kwaliteit.
     </div>
   </div>
 
-  <!-- Kaartweergave -->
   <div id="mapView">
     <div class="section-head">
       <span class="bar"></span>
@@ -785,8 +759,8 @@
 </main>
 
 <footer>
-  WAR DESK · Live conflict monitor · Bronnen: Al Jazeera, BBC, Reuters, AP, Middle East Eye,
-  Times of Israel, Haaretz, Iran International, Rudaw, Al Mayadeen, Al Arabiya, RT, TRT, en meer · 
+  WAR DESK · Live conflict monitor · Bronnen: Al Jazeera, BBC, Reuters, AP, TRT, CNN, Middle East Eye,
+  Times of Israel, Haaretz, Iran International, Rudaw, Al Mayadeen, Al Arabiya, RT, en meer ·
   Eigen RSSHub via <a href="https://rss-hub-red-nine.vercel.app" target="_blank" rel="noopener">Vercel</a>
 </footer>
 
@@ -796,7 +770,7 @@
    ========================================================== */
 const PROXY      = "https://api.rss2json.com/v1/api.json?rss_url=";
 const PER_FEED   = 5;
-const REFRESH_MS = 30 * 1000;         // 30 seconden
+const REFRESH_MS = 30 * 1000;
 const FRESH_MS   = 20 * 60 * 1000;
 
 const RSSHUB_MIRRORS = [
@@ -805,7 +779,6 @@ const RSSHUB_MIRRORS = [
   "https://rsshub.rssforever.com"
 ];
 
-/* YouTube live-pagina's per zender */
 const LIVE_CHANNELS = {
   "aljazeera-en": {
     label: "Al Jazeera English",
@@ -866,10 +839,9 @@ const LIVE_CHANNELS = {
 };
 
 /* ==========================================================
-   BRONNEN — 50+ feeds, inclusief Reuters & AP via Ground News
+   BRONNEN — 50+ feeds, inclusief AP, Reuters, TRT
    ========================================================== */
 const FEEDS = [
-
   /* ⚔️ OORLOG — ALGEMEEN */
   { name:"Al Jazeera",          lang:"en", cat:"war", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
   { name:"Middle East Eye",     lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
@@ -877,11 +849,12 @@ const FEEDS = [
   { name:"Al Monitor",          lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
   { name:"Al Mayadeen",         lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/rss" },
 
-  /* 📰 REUTERS & AP via Ground News */
-  { name:"Reuters (via Ground)", lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://ground.news/rss/source/reuters" },
-  { name:"AP (via Ground)",      lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://ground.news/rss/source/associated-press" },
+  /* 📰 AP & REUTERS & TRT */
+  { name:"AP News",             lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://apnews.com/hub/ap-top-news/rss" },
+  { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en" },
+  { name:"TRT World",           lang:"en", cat:"war", lat:39.93, lon:32.86, url:"https://www.trtworld.com/feed/rss.xml" },
 
-  /* 🕌 GAZA / PALESTINA */
+  /* 🕌 GAZA */
   { name:"Times of Israel",     lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
   { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
   { name:"Haaretz",             lang:"he", cat:"gaza", lat:32.07, lon:34.78, url:"https://www.haaretz.com/cmlink/1.628765" },
@@ -913,10 +886,6 @@ const FEEDS = [
 
   /* 🇷🇺 RT (Rusland) */
   { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
-  { name:"RT Russia",           lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/russia/" },
-
-  /* 🇹🇷 TRT (Turkije) */
-  { name:"TRT World",           lang:"en", cat:"war", lat:39.93, lon:32.86, url:"https://www.trtworld.com/feed/rss.xml" },
 
   /* 🕌 MIDDEN-OOSTEN — Arabisch */
   { name:"Al Jazeera AR",     lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
@@ -944,7 +913,7 @@ const FEEDS = [
   { name:"NOS",            lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
   { name:"Nu.nl Algemeen", lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
 
-  /* 📡 TELEGRAM — alleen bevestigd werkende kanalen */
+  /* 📡 TELEGRAM */
   { name:"📡 Al Jazeera AR", lang:"ar", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/aljazeera" },
   { name:"📡 Al Arabiya",    lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" }
 ];
@@ -960,11 +929,7 @@ let map = null, markersLayer = null;
 let nextRefreshSeconds = REFRESH_MS / 1000;
 let isFirstLoad = true;
 let currentLiveChannel = "aljazeera-en";
-
-const TARGETS = ["nl","en","fr","ar"];
-const browserLang = (navigator.language || "nl").slice(0,2);
-let targetLang = localStorage.getItem("wardesk_target")
-  || (TARGETS.includes(browserLang) ? browserLang : "nl");
+let targetLang = "nl";
 
 const feedEl    = document.getElementById("feed");
 const statusEl  = document.getElementById("statusText");
@@ -989,7 +954,7 @@ const sectionCount= document.getElementById("sectionCount");
 const tickerTrack = document.getElementById("tickerTrack");
 
 /* ---------- Vertaalcache ---------- */
-const TR_KEY = "wardesk_tr_v3";
+const TR_KEY = "wardesk_tr_v4";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1035,7 +1000,7 @@ function trEnqueue(fn){
   });
 }
 function trPump(){
-  while(trActive < 4 && trQueue.length){
+  while(trActive < 5 && trQueue.length){
     const {fn, res, rej} = trQueue.shift();
     trActive++;
     fn().then(res).catch(rej).finally(() => {
@@ -1079,51 +1044,33 @@ function isFresh(dateStr){
 function trKeyFor(text){ return targetLang + ":" + hash((text||"").slice(0,450)); }
 function getCachedTr(text){ return trCache[trKeyFor(text)] || ""; }
 function isArabic(t){ return /[\u0600-\u06FF]/.test(t||""); }
+function needsTranslation(lang){ return lang !== "nl"; }
 
 /* ==========================================================
-   TREFWOORD-DETECTIE — bepaalt juiste categorie per artikel
+   TREFWOORD-DETECTIE
    ========================================================== */
 function detectTopic(title, desc, fallbackCat){
   const t = (title + " " + desc).toLowerCase();
 
-  /* Gaza / Palestina */
-  if(/\b(gaza|rafah|khan younis|hamas|palestin|west bank|idf|netanyahu|tel aviv|jerusalem)\b/.test(t))
+  if(/\b(gaza|rafah|khan younis|hamas|palestin|west bank|netanyahu|tel aviv|jerusalem)\b/.test(t))
     return "gaza";
-
-  /* Libanon */
   if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah)\b/.test(t))
     return "lebanon";
-
-  /* Iran */
-  if(/\b(iran|iranian|tehran|irgc|khamenei|rouhani|ahmadinejad|persian gulf)\b/.test(t))
+  if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf)\b/.test(t))
     return "iran";
-
-  /* Syrië */
   if(/\b(syria|syrian|damascus|assad|idlib|aleppo)\b/.test(t))
     return "syria";
-
-  /* Jemen */
-  if(/\b(yemen|yemeni|houthi|sanaa|aden|sana'a)\b/.test(t))
+  if(/\b(yemen|yemeni|houthi|sanaa|aden)\b/.test(t))
     return "yemen";
-
-  /* Oekraïne */
-  if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|zelenskyy|kharkiv|odesa|donbas|crimea)\b/.test(t))
+  if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|kharkiv|odesa|donbas|crimea)\b/.test(t))
     return "ukraine";
-
-  /* Soedan */
   if(/\b(sudan|sudanese|khartoum|darfur|rsf)\b/.test(t))
     return "sudan";
-
-  /* Marokko */
-  if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara)\b/.test(t))
-    return "maroc";
-
-  /* Val terug op de bron-categorie */
   return fallbackCat;
 }
 
 /* ==========================================================
-   FEED OPHALEN
+   FEED OPHALEN — met cache-buster
    ========================================================== */
 async function fetchFeedData(url){
   let attempts = [];
@@ -1135,7 +1082,8 @@ async function fetchFeedData(url){
   }
   for(const u of attempts){
     try{
-      const r = await fetch(PROXY + encodeURIComponent(u));
+      const cacheBuster = "&_=" + Date.now();
+      const r = await fetch(PROXY + encodeURIComponent(u) + cacheBuster);
       const data = await r.json();
       if(data && data.status === "ok" && Array.isArray(data.items) && data.items.length){
         return data;
@@ -1264,10 +1212,11 @@ function renderHero(){
 
 function heroCardHtml(it){
   const tr = getCachedTr(it.title) || it.title;
-  const rtl = it.lang === "ar" || isArabic(it.title);
+  const rtl = false;
   const catLabel = getCatLabel(it.cat);
+  const img = it.img || "";
   return `
-    <div class="hero-img" style="background-image:url('${escapeHtml(it.img)}')"></div>
+    <div class="hero-img" style="background-image:url('${escapeHtml(img)}')"></div>
     <div class="hero-content">
       <span class="cat-tag">${catLabel}</span>
       <h1 dir="${rtl?'rtl':'ltr'}">${escapeHtml(tr)}</h1>
@@ -1281,11 +1230,10 @@ function heroCardHtml(it){
 
 function heroSideHtml(it){
   const tr = getCachedTr(it.title) || it.title;
-  const rtl = it.lang === "ar" || isArabic(it.title);
   const catLabel = getCatLabel(it.cat);
   return `
     <span class="cat-tag">${catLabel}</span>
-    <h3 dir="${rtl?'rtl':'ltr'}">${escapeHtml(tr)}</h3>
+    <h3>${escapeHtml(tr)}</h3>
     <span class="hero-meta">${escapeHtml(it.source)} · ${timeAgo(it.date)}</span>`;
 }
 
@@ -1299,7 +1247,6 @@ function getCatLabel(cat){
   return map[cat] || cat.toUpperCase();
 }
 
-/* ---------- Filter ---------- */
 function getFiltered(){
   return allItems.filter(it => {
     if(activeCat === "all" || activeCat === "live") return true;
@@ -1341,7 +1288,7 @@ function render(){
         scheduleTranslation(currentRender[idx], idx);
       }
     });
-  }, { rootMargin: "300px" });
+  }, { rootMargin: "400px" });
 
   list.forEach((_, i) => {
     const el = document.getElementById("wcard-" + i);
@@ -1352,10 +1299,9 @@ function render(){
 function cardHtml(it, i){
   const cachedTitle = getCachedTr(it.title);
   const cachedDesc  = getCachedTr(it.desc);
-  const rtl = it.lang === "ar" || isArabic(it.title);
   const dispTitle = cachedTitle || it.title;
   const dispDesc  = cachedDesc  || it.desc;
-  const translating = !cachedTitle && it.lang !== targetLang;
+  const translating = !cachedTitle && needsTranslation(it.lang);
 
   const img = it.img
     ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy"
@@ -1371,7 +1317,7 @@ function cardHtml(it, i){
   const catLabel = getCatLabel(it.cat);
 
   return `
-    <article id="wcard-${i}" data-idx="${i}" class="${cls}" dir="${rtl?'rtl':'ltr'}"
+    <article id="wcard-${i}" data-idx="${i}" class="${cls}"
              onclick="if(event.target.tagName!=='A')window.open('${escapeHtml(it.link)}','_blank')">
       <div class="thumb">
         ${img}
@@ -1390,7 +1336,7 @@ function cardHtml(it, i){
         ${showOrig ? `<div class="orig" data-role="orig">🌐 ${escapeHtml(it.title)}</div>` : ""}
         ${dispDesc ? `<p class="desc" data-role="desc">${escapeHtml(dispDesc)}${dispDesc.length>=280?"…":""}</p>` : ""}
         <a class="read-link" href="${escapeHtml(it.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
-          ${rtl ? 'اقرأ المزيد' : 'Lees verder'} →
+          Lees verder →
         </a>
       </div>
     </article>`;
@@ -1398,7 +1344,7 @@ function cardHtml(it, i){
 
 function scheduleTranslation(it, idx){
   if(!it) return;
-  if(it.lang === targetLang) return;
+  if(!needsTranslation(it.lang)) return;
   const card = document.getElementById("wcard-" + idx);
   if(!card) return;
   const titleEl = card.querySelector('[data-role="title"]');
@@ -1481,11 +1427,10 @@ function renderMap(){
         <div class="pop-src">${escapeHtml(info.source)} · ${items.length}</div>
         ${top.map(it => {
           const tr = getCachedTr(it.title) || it.title;
-          const rtl = targetLang === "ar" || isArabic(it.title);
           return `
             <div style="margin-bottom:.5rem">
-              <h4 dir="${rtl?'rtl':'ltr'}">${escapeHtml(tr.slice(0,100))}${tr.length>100?'…':''}</h4>
-              <a href="${escapeHtml(it.link)}" target="_blank" rel="noopener">${rtl?'اقرأ':'LEES'} →</a>
+              <h4>${escapeHtml(tr.slice(0,100))}${tr.length>100?'…':''}</h4>
+              <a href="${escapeHtml(it.link)}" target="_blank" rel="noopener">LEES →</a>
             </div>`;
         }).join("")}
       </div>`;

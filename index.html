@@ -612,6 +612,7 @@
     height:72vh; min-height:480px;
     border:1px solid var(--line); border-radius:var(--radius);
     overflow:hidden;
+    background:var(--bg-2);
   }
 
   /* MARKERS */
@@ -1007,7 +1008,7 @@ const FRESH_MS    = 20 * 60 * 1000;
 const BREAKING_MS = 10 * 60 * 1000;
 const PAGE_SIZE   = 30;
 const TIMEOUT_MS  = 6000;
-const CACHE_KEY   = "wardesk_cache_v6";
+const CACHE_KEY   = "wardesk_cache_v7";
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
@@ -1168,7 +1169,7 @@ function showToast(msg, icon = "ℹ"){
 })();
 
 /* TRANSLATION */
-const TR_KEY = "wardesk_tr_v16";
+const TR_KEY = "wardesk_tr_v17";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1950,19 +1951,18 @@ function scheduleTranslation(it, idx){
 function initMap(){
   if(map) return;
   map = L.map("map", { center:[30,38], zoom:3, worldCopyJump:true, zoomControl:true });
-  
-  /* CartoDB tiles — donker of licht op basis van thema */
+
+  /* Esri tiles — gratis, geen API key */
   const isLight = document.body.classList.contains("light");
   const tileUrl = isLight
-    ? "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-  
+    ? "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+    : "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+
   L.tileLayer(tileUrl, {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap · © CARTO',
-    subdomains: "abcd"
+    maxZoom: 16,
+    attribution: '© Esri · © OpenStreetMap'
   }).addTo(map);
-  
+
   markersLayer = L.layerGroup().addTo(map);
 }
 
@@ -2270,7 +2270,7 @@ viewMapBtn.addEventListener("click", () => switchView("map"));
 document.getElementById("theme").addEventListener("click", () => {
   document.body.classList.toggle("light");
   localStorage.setItem("wardesk_theme", document.body.classList.contains("light") ? "light" : "dark");
-  
+
   /* Herlaad kaart met nieuwe tiles */
   if(map){
     map.remove();

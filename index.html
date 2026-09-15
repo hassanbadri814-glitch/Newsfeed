@@ -1148,4 +1148,117 @@ searchClear.addEventListener("click",()=>{
   currentPage=1;render();renderHero();
 });
 sourceSelect.addEventListener("change",()=>{activeSource=sourceSelect.value;currentPage=1;render();renderHero();});
-timeSelect.addEventListener("change",()=>{activeTime=time
+timeSelect.addEventListener("change",()=>{activeTime=timeSelect.value;currentPage=1;render();renderHero();});
+langSelect.addEventListener("change",()=>{activeLang=langSelect.value;currentPage=1;render();renderHero();});
+sortSelect.addEventListener("change",()=>{activeSort=sortSelect.value;currentPage=1;render();renderHero();});
+failedToggle.addEventListener("click",()=>failedList.classList.toggle("show"));
+
+/* ================= NOTIF ================= */
+function updateNotifBtn(){
+  if(!("Notification"in window)){notifBtn.style.display="none";return;}
+  notifBtn.classList.toggle("on",notifEnabled&&Notification.permission==="granted");
+  notifBtn.textContent=(notifEnabled&&Notification.permission==="granted")?"🔔":"🔕";
+}
+updateNotifBtn();
+notifBtn.addEventListener("click",async()=>{
+  if(!("Notification"in window)){showToast("Notificaties niet ondersteund","⚠");return;}
+  if(notifEnabled&&Notification.permission==="granted"){
+    notifEnabled=false;localStorage.setItem(NOTIF_KEY,"0");
+    showToast("Notificaties uit","🔕");updateNotifBtn();return;
+  }
+  const perm=await Notification.requestPermission();
+  if(perm==="granted"){
+    notifEnabled=true;localStorage.setItem(NOTIF_KEY,"1");
+    showToast("Notificaties aan","🔔");
+    try{new Notification("WAR DESK",{body:"Je krijgt nu meldingen bij breaking news."});}catch(e){}
+  }else showToast("Notificaties geweigerd","⚠");
+  updateNotifBtn();
+});
+
+/* ================= BUTTONS ================= */
+refreshBtn.addEventListener("click",()=>loadFeeds(false));
+viewListBtn.addEventListener("click",()=>{
+  if(activeCat==="live"){
+    navTabs.querySelectorAll(".nav-tab").forEach(t=>t.classList.remove("active"));
+    const allTab=navTabs.querySelector('[data-cat="all"]');
+    if(allTab)allTab.classList.add("active");
+    activeCat="all";render();renderHero();
+  }
+  switchView("list");
+});
+viewMapBtn.addEventListener("click",()=>switchView("map"));
+$("theme").addEventListener("click",()=>{
+  document.body.classList.toggle("light");
+  try{localStorage.setItem("wardesk_theme",document.body.classList.contains("light")?"light":"dark");}catch(e){}
+  updateThemeMeta();
+  if(map){map.remove();map=null;markersLayer=null;initMap();setTimeout(()=>{if(map){map.invalidateSize();renderMap();}},200);}
+});
+backTop.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+
+/* ================= KEYBOARD ================= */
+document.addEventListener("keydown",e=>{
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(tag==="input"||tag==="textarea"||tag==="select")return;
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const k=e.key.toLowerCase();
+  if(k==="/"){e.preventDefault();searchInput.focus();searchInput.select();}
+  else if(k==="r"){e.preventDefault();loadFeeds(false);}
+  else if(k==="m"){e.preventDefault();switchView(currentView==="map"?"list":"map");}
+  else if(k==="l"){e.preventDefault();switchView("list");}
+  else if(k==="f"){
+    e.preventDefault();
+    navTabs.querySelectorAll(".nav-tab").forEach(t=>t.classList.remove("active"));
+    const favTab=navTabs.querySelector('[data-cat="fav"]');
+    if(favTab)favTab.classList.add("active");
+    activeCat="fav";currentPage=1;
+    switchView("list");render();renderHero();
+  }
+  else if(k==="escape"){srcPopup.classList.remove("show");breakingBanner.classList.remove("show");searchInput.blur();}
+});
+
+/* ================= RESIZE ================= */
+let resizeTimer=null;
+window.addEventListener("resize",()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>renderHero(),300);});
+
+/* ================= CLOCK + REFRESH ================= */
+setInterval(()=>{
+  const now=new Date();
+  clockEl.textContent=now.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  nextRefreshSeconds--;
+  if(nextRefreshSeconds<0)nextRefreshSeconds=REFRESH_MS/1000;
+  nextEl.textContent=nextRefreshSeconds+"s";
+},1000);
+
+setInterval(()=>{
+  const idleTime=Date.now()-lastUserActivity;
+  const atTop=window.scrollY<200;
+  if(idleTime<INACTIVITY_MS&&!atTop){
+    if(!refreshPaused){refreshPaused=true;pausedIndicator.classList.add("show");}
+    return;
+  }
+  if(isUserScrolling)return;
+  if(refreshPaused){refreshPaused=false;pausedIndicator.classList.remove("show");}
+  loadFeeds(true);
+},REFRESH_MS);
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){refreshPaused=true;pausedIndicator.classList.add("show");}
+  else markActivity();
+});
+
+/* ================= INIT ================= */
+const savedView=(()=>{try{return localStorage.getItem("wardesk_view");}catch(e){return null;}})()||"list";
+const savedLive=(()=>{try{return localStorage.getItem("wardesk_live");}catch(e){return null;}})()||"aljazeera-en";
+currentLiveChannel=savedLive;
+document.querySelectorAll(".live-chip").forEach(c=>c.classList.toggle("active",c.dataset.live===savedLive));
+switchView(savedView);
+loadFeeds(false);
+
+if("serviceWorker"in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(err=>console.log("SW:",err));
+  });
+}
+</script>
+</body>
+</html>

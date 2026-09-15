@@ -674,6 +674,8 @@
       <button class="nav-tab" data-cat="iran">IRAN</button>
       <button class="nav-tab" data-cat="ukraine">OEKRAÏNE</button>
       <button class="nav-tab" data-cat="sudan">SOEDAN</button>
+      <button class="nav-tab" data-cat="maroc">MAROKKO</button>
+      <button class="nav-tab" data-cat="mideast">MIDDEN-OOSTEN</button>
       <button class="nav-tab" data-cat="tg">📡 TELEGRAM</button>
     </div>
   </nav>
@@ -760,7 +762,7 @@
 
 <footer>
   WAR DESK · Live conflict monitor · Bronnen: Al Jazeera, BBC, Reuters, AP, TRT, CNN, Middle East Eye,
-  Times of Israel, Haaretz, Iran International, Rudaw, Al Mayadeen, Al Arabiya, RT, en meer ·
+  Times of Israel, Haaretz, Iran International, Rudaw, Al Mayadeen, Al Arabiya, RT, SANA, SABA, en meer ·
   Eigen RSSHub via <a href="https://rss-hub-red-nine.vercel.app" target="_blank" rel="noopener">Vercel</a>
 </footer>
 
@@ -839,22 +841,22 @@ const LIVE_CHANNELS = {
 };
 
 /* ==========================================================
-   BRONNEN — 50+ feeds, inclusief AP, Reuters, TRT
+   BRONNEN — per land georganiseerd
    ========================================================== */
 const FEEDS = [
+
   /* ⚔️ OORLOG — ALGEMEEN */
   { name:"Al Jazeera",          lang:"en", cat:"war", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
   { name:"Middle East Eye",     lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
   { name:"The New Arab",        lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.newarab.com/rss" },
   { name:"Al Monitor",          lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
-  { name:"Al Mayadeen",         lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/rss" },
-
-  /* 📰 AP & REUTERS & TRT */
-  { name:"AP News",             lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://apnews.com/hub/ap-top-news/rss" },
-  { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en" },
+  { name:"Al Mayadeen",         lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/feed.rss" },
+  { name:"AP News",             lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://apnews.com/hub/ap-top-news?format=rss" },
+  { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://www.reutersagency.com/feed/?best-regions=world&post_type=best" },
   { name:"TRT World",           lang:"en", cat:"war", lat:39.93, lon:32.86, url:"https://www.trtworld.com/feed/rss.xml" },
+  { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
 
-  /* 🕌 GAZA */
+  /* 🕌 GAZA / PALESTINA */
   { name:"Times of Israel",     lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
   { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
   { name:"Haaretz",             lang:"he", cat:"gaza", lat:32.07, lon:34.78, url:"https://www.haaretz.com/cmlink/1.628765" },
@@ -866,12 +868,12 @@ const FEEDS = [
   { name:"L'Orient Today",      lang:"en", cat:"lebanon", lat:33.89, lon:35.50, url:"https://today.lorientlejour.com/rss" },
 
   /* 🇸🇾 SYRIË */
-  { name:"Syrian Observatory",  lang:"en", cat:"syria", lat:51.5, lon:-0.12, url:"https://www.syriahr.com/en/feed/" },
+  { name:"Syria Direct",        lang:"en", cat:"syria", lat:33.51, lon:36.29, url:"https://syriadirect.org/feed/" },
   { name:"Rudaw English",       lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.rudaw.net/rss/english" },
   { name:"Kurdistan24",         lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.kurdistan24.net/en/rss" },
 
   /* 🇾🇪 JEMEN */
-  { name:"Al Masirah Yemen",    lang:"ar", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.almasirah.net/rss" },
+  { name:"SABA Yemen",          lang:"en", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.saba.ye/en/rsscatfeed14.htm" },
 
   /* 🇮🇷 IRAN */
   { name:"Iran International",  lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
@@ -884,8 +886,15 @@ const FEEDS = [
   /* 🇸🇩 SOEDAN */
   { name:"Radio Dabanga",       lang:"en", cat:"sudan", lat:15.5, lon:32.5, url:"https://www.dabangasudan.org/en/rss" },
 
-  /* 🇷🇺 RT (Rusland) */
-  { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
+  /* 🇲🇦 MAROKKO */
+  { name:"Hespress",            lang:"ar", cat:"maroc", lat:34.02, lon:-6.83, url:"https://www.hespress.com/feed" },
+  { name:"Hespress FR",         lang:"fr", cat:"maroc", lat:34.02, lon:-6.83, url:"https://fr.hespress.com/feed" },
+  { name:"Le360",               lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://fr.le360.ma/rss" },
+  { name:"Yabiladi",            lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.yabiladi.com/rss/articles.xml" },
+  { name:"Medias24",            lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.medias24.com/feed/" },
+  { name:"Lakome2",             lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
+  { name:"TelQuel",             lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
+  { name:"Morocco World News",  lang:"en", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.moroccoworldnews.com/feed/" },
 
   /* 🕌 MIDDEN-OOSTEN — Arabisch */
   { name:"Al Jazeera AR",     lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
@@ -954,7 +963,7 @@ const sectionCount= document.getElementById("sectionCount");
 const tickerTrack = document.getElementById("tickerTrack");
 
 /* ---------- Vertaalcache ---------- */
-const TR_KEY = "wardesk_tr_v4";
+const TR_KEY = "wardesk_tr_v5";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 

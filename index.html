@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="WAR DESK — Live conflict monitor met 50+ bronnen, automatische vertaling en live kaart.">
 <title>WAR DESK · Live Conflict Monitor</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -18,6 +22,7 @@
     --gold:#c9a961; --gold-2:#e0c884; --gold-3:#8b7642;
     --crimson:#c8102e; --crimson-2:#e63946; --crimson-3:#7a0a1c;
     --line:#1e2738; --line-2:#2a3446;
+    --green:#22c55e; --blue:#3b82f6;
     --shadow-sm:0 1px 2px rgba(0,0,0,.4);
     --shadow-md:0 8px 24px -8px rgba(0,0,0,.6);
     --shadow-lg:0 20px 60px -20px rgba(0,0,0,.8);
@@ -39,17 +44,20 @@
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     overflow-x:hidden; line-height:1.5;
   }
+
+  /* ═══════ TICKER ═══════ */
   .ticker{
     background:var(--crimson); color:#fff; height:38px;
-    display:flex; align-items:center; overflow:hidden; position:relative;
+    display:flex; align-items:center; overflow:hidden;
     border-bottom:1px solid rgba(0,0,0,.4);
     box-shadow:0 2px 12px rgba(200,16,46,.25); z-index:100;
+    position:relative;
   }
   .ticker-label{
     background:#000; color:var(--gold); padding:0 1.1rem; height:100%;
     display:flex; align-items:center; gap:.5rem;
     font-weight:900; font-size:.68rem; letter-spacing:.22em;
-    flex-shrink:0; z-index:2; position:relative;
+    flex-shrink:0; z-index:2;
   }
   .ticker-label::before{
     content:""; width:8px; height:8px; border-radius:50%;
@@ -60,12 +68,14 @@
   .ticker-track{
     display:flex; gap:3rem; white-space:nowrap; padding-left:1.5rem;
     animation:scroll 150s linear infinite;
-    font-size:.82rem; font-weight:500; letter-spacing:.01em;
+    font-size:.82rem; font-weight:500;
   }
   .ticker-track:hover{animation-play-state:paused}
   .ticker-track span{display:inline-flex; align-items:center; gap:.6rem}
   .ticker-track span::before{content:"◆"; color:var(--gold); font-size:.55rem}
   @keyframes scroll{to{transform:translateX(-50%)}}
+
+  /* ═══════ HEADER ═══════ */
   header{
     background:linear-gradient(180deg,var(--bg-2) 0%,var(--bg) 100%);
     border-bottom:1px solid var(--line); position:sticky; top:0; z-index:99;
@@ -103,7 +113,7 @@
     content:""; width:7px; height:7px; background:#fff;
     border-radius:50%; animation:blink 1.2s infinite;
   }
-  .stats{margin-left:auto; display:flex; gap:1.75rem; align-items:center; flex-wrap:wrap}
+  .stats{margin-left:auto; display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap}
   .stat{display:flex; flex-direction:column; gap:.15rem}
   .stat-label{
     font-size:.58rem; color:var(--ink-3); text-transform:uppercase;
@@ -111,29 +121,107 @@
   }
   .stat-value{
     font-size:.95rem; font-weight:800;
-    font-variant-numeric:tabular-nums; letter-spacing:-.01em;
-    color:var(--ink);
+    font-variant-numeric:tabular-nums; color:var(--ink);
   }
   .stat.gold .stat-value{color:var(--gold)}
   .stat.crimson .stat-value{color:var(--crimson-2)}
-  .actions{display:flex; gap:.4rem}
+  .actions{display:flex; gap:.4rem; flex-wrap:wrap}
   .btn{
     width:40px; height:40px; background:var(--card);
     border:1px solid var(--line-2); color:var(--ink-2);
     cursor:pointer; display:grid; place-items:center;
     font-size:1rem; border-radius:var(--radius-sm);
-    transition:all .18s ease;
+    transition:all .18s ease; position:relative;
   }
   .btn:hover{
     border-color:var(--gold); color:var(--gold);
     transform:translateY(-1px); box-shadow:0 4px 12px rgba(201,169,97,.2);
   }
   .btn.active{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
+  .btn.on{background:var(--green); color:#fff; border-color:var(--green)}
   .btn.spin span{animation:spin 1s linear infinite; display:inline-block}
+  .btn .dot-badge{
+    position:absolute; top:-4px; right:-4px;
+    min-width:16px; height:16px; border-radius:8px;
+    background:var(--crimson); color:#fff;
+    font-size:.58rem; font-weight:900;
+    display:grid; place-items:center; padding:0 4px;
+    border:2px solid var(--bg);
+  }
   @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ═══════ FILTER BAR ═══════ */
+  .filterbar{
+    max-width:1600px; margin:0 auto;
+    padding:.75rem 1.5rem;
+    display:flex; gap:.6rem; align-items:center; flex-wrap:wrap;
+    border-bottom:1px solid var(--line);
+    background:var(--bg);
+  }
+  .search-wrap{
+    position:relative; flex:1 1 240px; min-width:0;
+  }
+  .search-wrap input{
+    width:100%;
+    padding:.7rem 2.4rem .7rem 2.6rem;
+    background:var(--card); border:1px solid var(--line-2);
+    color:var(--ink); font-family:inherit; font-size:.88rem;
+    border-radius:var(--radius-sm); outline:none;
+    transition:border-color .2s;
+  }
+  .search-wrap input:focus{border-color:var(--gold)}
+  .search-wrap .icon{
+    position:absolute; left:.85rem; top:50%;
+    transform:translateY(-50%); color:var(--ink-3);
+    font-size:1rem; pointer-events:none;
+  }
+  .search-wrap .clear{
+    position:absolute; right:.5rem; top:50%;
+    transform:translateY(-50%);
+    background:transparent; border:none;
+    color:var(--ink-3); font-size:1.2rem;
+    cursor:pointer; padding:.3rem; display:none;
+  }
+  .search-wrap.has-value .clear{display:block}
+
+  .source-select{
+    padding:.7rem 2rem .7rem .9rem;
+    background:var(--card); border:1px solid var(--line-2);
+    color:var(--ink); font-family:inherit; font-size:.82rem;
+    font-weight:600; border-radius:var(--radius-sm);
+    outline:none; cursor:pointer;
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%236b7689' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right .7rem center;
+    max-width:200px;
+  }
+  .source-select:focus{border-color:var(--gold)}
+
+  .fav-toggle{
+    padding:.7rem 1rem;
+    background:var(--card); border:1px solid var(--line-2);
+    color:var(--ink-2); font-family:inherit;
+    font-size:.78rem; font-weight:800;
+    letter-spacing:.1em; text-transform:uppercase;
+    border-radius:var(--radius-sm); cursor:pointer;
+    display:inline-flex; align-items:center; gap:.5rem;
+    transition:all .2s;
+  }
+  .fav-toggle:hover{color:var(--gold); border-color:var(--gold-3)}
+  .fav-toggle.active{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
+  .fav-toggle .count{
+    background:var(--bg); color:var(--gold);
+    padding:.05rem .45rem; border-radius:8px;
+    font-size:.7rem;
+  }
+  .fav-toggle.active .count{background:#0a0e1a; color:var(--gold)}
+
+  /* ═══════ NAV TABS ═══════ */
   .nav{
     background:var(--bg); border-bottom:1px solid var(--line);
-    overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    overflow-x:auto; scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
   }
   .nav::-webkit-scrollbar{display:none}
   .nav-inner{
@@ -163,6 +251,8 @@
     background:var(--crimson-2); animation:blink 1.5s infinite;
     box-shadow:0 0 6px var(--crimson-2);
   }
+
+  /* ═══════ STATUS BAR ═══════ */
   .statusbar{
     background:var(--bg-2); border-bottom:1px solid var(--line);
     padding:.6rem 1.5rem; font-size:.72rem; color:var(--ink-3);
@@ -172,10 +262,31 @@
   }
   .statusbar .indicator{display:inline-flex; align-items:center; gap:.4rem}
   .statusbar .dot{width:7px; height:7px; border-radius:50%}
-  .statusbar .dot.ok{background:#22c55e; box-shadow:0 0 8px #22c55e}
+  .statusbar .dot.ok{background:var(--green); box-shadow:0 0 8px var(--green)}
   .statusbar .dot.warn{background:var(--gold)}
   .statusbar .dot.err{background:var(--crimson-2)}
+  .statusbar .failed-toggle{
+    background:transparent; border:1px dashed var(--crimson-2);
+    color:var(--crimson-2); font-family:inherit;
+    font-size:.68rem; font-weight:800;
+    padding:.2rem .55rem; border-radius:var(--radius-sm);
+    cursor:pointer; letter-spacing:.05em;
+  }
+  .failed-list{
+    display:none; padding:.6rem 1.5rem;
+    max-width:1600px; margin:0 auto;
+    background:var(--bg-2);
+    border-bottom:1px solid var(--line);
+    font-size:.72rem; color:var(--ink-3);
+    line-height:1.6;
+  }
+  .failed-list.show{display:block}
+  .failed-list strong{color:var(--crimson-2)}
+
+  /* ═══════ MAIN ═══════ */
   main{max-width:1600px; margin:0 auto; padding:1.75rem 1.5rem 5rem}
+
+  /* HERO */
   .hero{
     display:grid; grid-template-columns:1.7fr 1fr; gap:1px;
     background:var(--line-2); margin-bottom:2rem;
@@ -225,7 +336,7 @@
   .hero-small{
     background:var(--card); padding:1.35rem 1.4rem;
     display:flex; flex-direction:column; gap:.65rem;
-    cursor:pointer; transition:background .18s ease; position:relative;
+    cursor:pointer; transition:background .18s ease;
   }
   .hero-small:hover{background:var(--card-hover)}
   .hero-small .tag{
@@ -234,7 +345,7 @@
   }
   .hero-small .title{
     font-family:"Playfair Display",serif; font-size:1rem;
-    line-height:1.32; font-weight:700; letter-spacing:-.005em;
+    line-height:1.32; font-weight:700;
     display:-webkit-box; -webkit-line-clamp:4;
     -webkit-box-orient:vertical; overflow:hidden;
     flex:1; color:var(--ink);
@@ -244,6 +355,8 @@
     font-size:.65rem; color:var(--ink-3); font-weight:700;
     letter-spacing:.08em; text-transform:uppercase;
   }
+
+  /* SECTION HEAD */
   .section-head{
     display:flex; align-items:center; gap:.9rem;
     padding-bottom:.85rem; border-bottom:1px solid var(--line-2);
@@ -255,13 +368,15 @@
   }
   .section-head h2{
     font-family:"Playfair Display",serif; font-size:1.15rem;
-    font-weight:800; letter-spacing:.02em; color:var(--ink);
+    font-weight:800; color:var(--ink);
   }
   .section-count{
     margin-left:auto; font-size:.7rem; color:var(--ink-3);
     font-weight:700; letter-spacing:.1em; text-transform:uppercase;
     font-variant-numeric:tabular-nums;
   }
+
+  /* GRID */
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(310px,1fr));
@@ -281,6 +396,9 @@
   article.war{border-top:2px solid var(--crimson)}
   article.war:hover{border-color:var(--crimson); box-shadow:var(--shadow-crimson)}
   article.tg{border-top:2px solid #229ED9}
+  article.read{opacity:.65}
+  article.read:hover{opacity:1}
+
   .card-thumb{
     width:100%; aspect-ratio:16/9; background:var(--bg-3);
     background-size:cover; background-position:center;
@@ -306,8 +424,10 @@
   .badge.ar{background:var(--gold); color:#0a0e1a; border-color:transparent}
   .badge.he{background:#6366f1; color:#fff; border-color:transparent}
   .badge.tg{background:#229ED9; color:#fff; border-color:transparent}
+  .badge.multi{background:var(--crimson); color:#fff; border-color:transparent}
+
   .live-tag{
-    position:absolute; top:.7rem; right:.7rem;
+    position:absolute; top:.7rem; right:3.2rem;
     background:var(--crimson); color:#fff;
     padding:.25rem .6rem; font-size:.56rem; font-weight:900;
     letter-spacing:.15em; display:inline-flex; align-items:center;
@@ -318,6 +438,20 @@
     content:""; width:5px; height:5px; background:#fff;
     border-radius:50%; animation:blink 1.1s infinite;
   }
+
+  .fav-btn{
+    position:absolute; top:.55rem; right:.55rem;
+    width:32px; height:32px; border-radius:50%;
+    background:rgba(10,14,26,.85);
+    border:1px solid rgba(255,255,255,.15);
+    color:#fff; font-size:1rem;
+    cursor:pointer; display:grid; place-items:center;
+    z-index:3; transition:all .2s;
+    backdrop-filter:blur(6px);
+  }
+  .fav-btn:hover{transform:scale(1.1); background:rgba(10,14,26,1)}
+  .fav-btn.on{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
+
   .card-body{
     padding:1.05rem 1.15rem 1.2rem;
     display:flex; flex-direction:column; gap:.65rem; flex:1;
@@ -326,9 +460,16 @@
     display:flex; align-items:center; gap:.55rem;
     font-size:.6rem; font-weight:800;
     letter-spacing:.14em; text-transform:uppercase;
+    flex-wrap:wrap;
   }
   .card-source{color:var(--gold); font-weight:900}
   .card-cat{color:var(--ink-3)}
+  .card-read{
+    color:var(--ink-3);
+    display:inline-flex; align-items:center; gap:.25rem;
+    font-size:.6rem;
+  }
+  .card-read::before{content:"⏱"; font-size:.75rem}
   .card-time{
     margin-left:auto; color:var(--ink-3);
     font-variant-numeric:tabular-nums; font-weight:700;
@@ -344,7 +485,7 @@
   }
   .card-title{
     font-size:1rem; line-height:1.4; font-weight:700;
-    letter-spacing:-.008em; color:var(--ink);
+    color:var(--ink);
     display:-webkit-box; -webkit-line-clamp:3;
     -webkit-box-orient:vertical; overflow:hidden;
   }
@@ -367,9 +508,7 @@
     display:-webkit-box; -webkit-line-clamp:2;
     -webkit-box-orient:vertical; overflow:hidden; flex:1;
   }
-  .card-desc[dir="rtl"]{
-    font-family:"Noto Sans Arabic",sans-serif; line-height:1.7;
-  }
+  .card-desc[dir="rtl"]{font-family:"Noto Sans Arabic",sans-serif; line-height:1.7}
   .card-link{
     display:inline-flex; align-items:center; gap:.4rem;
     color:var(--gold); text-decoration:none;
@@ -380,6 +519,32 @@
   }
   .card-link:hover{gap:.7rem; color:var(--gold-2)}
   article[dir="rtl"] .card-link{flex-direction:row-reverse}
+
+  /* LOAD MORE */
+  .load-more{
+    grid-column:1/-1; text-align:center; padding:2rem 1rem .5rem;
+  }
+  .load-more button{
+    padding:1rem 2.5rem;
+    background:transparent; border:1px solid var(--gold-3);
+    color:var(--gold); font-family:inherit;
+    font-size:.75rem; font-weight:900;
+    letter-spacing:.18em; text-transform:uppercase;
+    border-radius:var(--radius-sm); cursor:pointer;
+    transition:all .2s;
+  }
+  .load-more button:hover{
+    background:var(--gold); color:#0a0e1a;
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(201,169,97,.35);
+  }
+  .load-more .progress{
+    display:block; margin-top:.85rem;
+    font-size:.68rem; color:var(--ink-3);
+    letter-spacing:.12em; font-weight:700;
+  }
+
+  /* LIVE TV */
   #liveView{display:none}
   .live-chips{display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem}
   .live-chip{
@@ -430,8 +595,8 @@
     gap:.55rem; border-radius:var(--radius-sm);
     transition:all .25s ease; border:1px solid transparent;
   }
-  .live-btn.youtube{background:#ff0000; color:#fff; box-shadow:0 4px 16px rgba(255,0,0,.35)}
-  .live-btn.youtube:hover{background:#cc0000; transform:translateY(-2px); box-shadow:0 8px 24px rgba(255,0,0,.5)}
+  .live-btn.youtube{background:#ff0000; color:#fff}
+  .live-btn.youtube:hover{background:#cc0000; transform:translateY(-2px)}
   .live-btn.tiktok{background:#000; color:#fff; border-color:#333}
   .live-btn.tiktok:hover{background:#111; transform:translateY(-2px)}
   .live-btn.web{background:transparent; color:var(--gold); border-color:var(--gold-3)}
@@ -444,6 +609,8 @@
     font-size:.76rem; color:var(--ink-2); line-height:1.65;
   }
   .live-note strong{color:var(--gold)}
+
+  /* MAP */
   #mapView{display:none}
   #mapView.active{display:block}
   #map{
@@ -455,7 +622,6 @@
   .leaflet-popup-content-wrapper, .leaflet-popup-tip{
     background:var(--card); color:var(--ink);
     border-radius:var(--radius); border:1px solid var(--gold-3);
-    box-shadow:var(--shadow-md);
   }
   .leaflet-popup-content{margin:.9rem 1.1rem; max-width:310px; font-family:inherit}
   .leaflet-popup-content .pop-src{
@@ -466,13 +632,12 @@
     font-family:"Playfair Display",serif; font-size:.92rem;
     line-height:1.35; margin:.4rem 0 .5rem; font-weight:700;
   }
-  .leaflet-popup-content h4[dir="rtl"]{
-    font-family:"Noto Sans Arabic",sans-serif; line-height:1.55;
-  }
   .leaflet-popup-content a{
     color:var(--gold); text-decoration:none; font-weight:900;
     font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
   }
+
+  /* LOADER / EMPTY */
   .loader{
     grid-column:1/-1; display:flex; flex-direction:column;
     align-items:center; gap:1.5rem; padding:7rem 1rem; color:var(--ink-3);
@@ -495,18 +660,37 @@
     font-size:.8rem; font-weight:700;
     letter-spacing:.12em; text-transform:uppercase;
   }
+
+  /* FOOTER */
   footer{
     padding:2.5rem 1.5rem; text-align:center;
     color:var(--ink-3); font-size:.7rem; letter-spacing:.08em;
     border-top:1px solid var(--line); background:var(--bg-2); line-height:1.7;
   }
-  footer a{color:var(--gold); text-decoration:none; font-weight:700; transition:color .2s ease}
-  footer a:hover{color:var(--gold-2)}
+  footer a{color:var(--gold); text-decoration:none; font-weight:700}
+
+  /* TOAST */
+  .toast{
+    position:fixed; bottom:20px; left:50%;
+    transform:translateX(-50%) translateY(120%);
+    background:var(--card); color:var(--ink);
+    border:1px solid var(--gold-3);
+    padding:.85rem 1.3rem; border-radius:var(--radius);
+    font-size:.82rem; font-weight:600;
+    box-shadow:var(--shadow-lg);
+    z-index:10000; max-width:90vw;
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.2);
+    display:flex; align-items:center; gap:.6rem;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast .ic{color:var(--gold); font-size:1rem}
+
+  /* MOBIEL */
   @media(max-width:640px){
-    .header-inner{padding:.85rem 1rem; gap:1rem}
+    .header-inner{padding:.85rem 1rem; gap:.8rem}
     .brand-text .name{font-size:1.05rem}
     .brand-mark{width:38px; height:38px; font-size:1.15rem}
-    .stats{gap:1rem; width:100%; margin-left:0}
+    .stats{gap:.9rem; width:100%; margin-left:0}
     .stat:nth-child(4){display:none}
     .hero-main{min-height:360px}
     .hero-title{font-size:1.3rem}
@@ -514,6 +698,8 @@
     .hero-body{padding:1.2rem 1.25rem 1.4rem; margin-top:-80px}
     .grid{grid-template-columns:1fr; gap:1rem}
     main{padding:1.2rem 1rem 3rem}
+    .filterbar{padding:.6rem 1rem; gap:.5rem}
+    .source-select{max-width:100%; flex:1 1 100%}
     .nav-inner{padding:0 1rem; height:46px}
     .nav-tab{padding:0 .85rem; font-size:.65rem}
     #map{height:62vh}
@@ -528,6 +714,7 @@
 </head>
 <body>
 
+<!-- TICKER -->
 <div class="ticker">
   <div class="ticker-label">BREAKING</div>
   <div class="ticker-track" id="tickerTrack">
@@ -535,6 +722,7 @@
   </div>
 </div>
 
+<!-- HEADER -->
 <header>
   <div class="header-inner">
     <div class="brand">
@@ -564,13 +752,30 @@
       </div>
     </div>
     <div class="actions">
-      <button class="btn" id="viewList" title="Lijstweergave">☰</button>
-      <button class="btn" id="viewMap" title="Kaartweergave">◉</button>
+      <button class="btn" id="notifBtn" title="Meldingen aan/uit">🔔</button>
+      <button class="btn" id="viewList" title="Lijst">☰</button>
+      <button class="btn" id="viewMap" title="Kaart">◉</button>
       <button class="btn" id="refresh" title="Verversen"><span>↻</span></button>
       <button class="btn" id="theme" title="Thema">◐</button>
     </div>
   </div>
 
+  <!-- FILTER BAR -->
+  <div class="filterbar">
+    <div class="search-wrap" id="searchWrap">
+      <span class="icon">🔍</span>
+      <input type="search" id="searchInput" placeholder="Zoek in alle artikelen..." aria-label="Zoeken">
+      <button class="clear" id="searchClear" aria-label="Wissen">✕</button>
+    </div>
+    <select class="source-select" id="sourceSelect" aria-label="Filter op bron">
+      <option value="all">Alle bronnen</option>
+    </select>
+    <button class="fav-toggle" id="favToggle">
+      ⭐ Favorieten <span class="count" id="favCount">0</span>
+    </button>
+  </div>
+
+  <!-- NAV TABS -->
   <nav class="nav">
     <div class="nav-inner" id="navTabs">
       <button class="nav-tab active" data-cat="all">ALLE</button>
@@ -590,13 +795,19 @@
   </nav>
 </header>
 
+<!-- STATUS -->
 <div class="statusbar">
   <span class="indicator"><span class="dot ok"></span><span id="statusText">Verbinding maken...</span></span>
   <span class="indicator" id="trStatus" style="display:none">
     <span class="dot warn"></span>Vertalen: <span id="trCount">0/0</span>
   </span>
+  <button class="failed-toggle" id="failedToggle" style="display:none">
+    <span id="failedCount">0</span> bronnen falen
+  </button>
 </div>
+<div class="failed-list" id="failedList"></div>
 
+<!-- MAIN -->
 <main>
   <section class="hero" id="heroSection" style="display:none">
     <div class="hero-main" id="heroMain"></div>
@@ -624,7 +835,6 @@
       <h2>Live TV · 24/7</h2>
       <span class="section-count">Kies een zender</span>
     </div>
-
     <div class="live-chips" id="liveChannels">
       <button class="live-chip active" data-live="aljazeera-en"><span class="pulse"></span>Al Jazeera EN</button>
       <button class="live-chip" data-live="aljazeera-ar"><span class="pulse"></span>الجزيرة</button>
@@ -634,7 +844,6 @@
       <button class="live-chip" data-live="dw-en"><span class="pulse"></span>DW News</button>
       <button class="live-chip" data-live="trt"><span class="pulse"></span>TRT World</button>
     </div>
-
     <div class="live-panel">
       <div class="icon" id="liveIcon">📺</div>
       <h3 id="liveChannelName">Al Jazeera English</h3>
@@ -645,11 +854,9 @@
         <a id="liveWeb" class="live-btn web" target="_blank" rel="noopener">🌐 Website</a>
       </div>
     </div>
-
     <div class="live-note">
-      <strong>Let op:</strong> Live streams worden geopend in YouTube, TikTok of op de website van de zender.
-      Directe insluiting wordt door YouTube en TikTok geblokkeerd voor de meeste nieuwszenders.
-      Deze methode werkt altijd en geeft de beste kwaliteit.
+      <strong>Let op:</strong> Live streams openen in YouTube, TikTok of op de website van de zender.
+      Directe insluiting wordt geblokkeerd door YouTube en TikTok voor de meeste nieuwszenders.
     </div>
   </div>
 
@@ -663,18 +870,24 @@
 </main>
 
 <footer>
-  WAR DESK · Live conflict monitor · Eigen proxy via
+  WAR DESK · Live conflict monitor · Proxy via
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
 </footer>
 
+<div class="toast" id="toast">
+  <span class="ic">ℹ</span>
+  <span id="toastMsg">Klaar</span>
+</div>
+
 <script>
 /* ==========================================================
-   WAR DESK — Configuratie
+   CONFIG
    ========================================================== */
 const PROXY      = "https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED   = 5;
 const REFRESH_MS = 30 * 1000;
 const FRESH_MS   = 20 * 60 * 1000;
+const PAGE_SIZE  = 30;
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
@@ -683,48 +896,13 @@ const RSSHUB_MIRRORS = [
 ];
 
 const LIVE_CHANNELS = {
-  "aljazeera-en": {
-    label: "Al Jazeera English", desc: "24/7 Engelstalig nieuws uit Qatar", icon: "🌍",
-    youtube: "https://www.youtube.com/@aljazeeraenglish/live",
-    tiktok:  "https://www.tiktok.com/@aljazeeraenglish",
-    web:     "https://www.aljazeera.com/live"
-  },
-  "aljazeera-ar": {
-    label: "الجزيرة", desc: "Al Jazeera Arabic — 24/7 nieuws", icon: "🕌",
-    youtube: "https://www.youtube.com/@aljazeera/live",
-    tiktok:  "https://www.tiktok.com/@aljazeera",
-    web:     "https://www.aljazeera.net/live"
-  },
-  "skynews-ar": {
-    label: "سكاي نيوز عربية", desc: "Sky News Arabia", icon: "📡",
-    youtube: "https://www.youtube.com/@skynewsarabia/live",
-    tiktok:  "https://www.tiktok.com/@skynewsarabia",
-    web:     "https://www.skynewsarabia.com/live"
-  },
-  "alarabiya": {
-    label: "العربية", desc: "Al Arabiya — 24/7 nieuws", icon: "🗞️",
-    youtube: "https://www.youtube.com/@AlArabiya/live",
-    tiktok:  "https://www.tiktok.com/@alarabiya",
-    web:     "https://www.alarabiya.net/live"
-  },
-  "france24-en": {
-    label: "France24 English", desc: "France24 in het Engels", icon: "🇫🇷",
-    youtube: "https://www.youtube.com/@FRANCE24English/live",
-    tiktok:  "https://www.tiktok.com/@france24",
-    web:     "https://www.france24.com/en/live"
-  },
-  "dw-en": {
-    label: "DW News", desc: "Deutsche Welle English", icon: "🇩🇪",
-    youtube: "https://www.youtube.com/@dwnews/live",
-    tiktok:  "https://www.tiktok.com/@dwnews",
-    web:     "https://www.dw.com/en/live-tv/channel-english"
-  },
-  "trt": {
-    label: "TRT World", desc: "TRT World — Turkse staatstelevisie", icon: "🇹🇷",
-    youtube: "https://www.youtube.com/@trtworld/live",
-    tiktok:  "https://www.tiktok.com/@trtworld",
-    web:     "https://www.trtworld.com/live"
-  }
+  "aljazeera-en": { label:"Al Jazeera English", desc:"24/7 Engelstalig nieuws uit Qatar", icon:"🌍", youtube:"https://www.youtube.com/@aljazeeraenglish/live", tiktok:"https://www.tiktok.com/@aljazeeraenglish", web:"https://www.aljazeera.com/live" },
+  "aljazeera-ar": { label:"الجزيرة", desc:"Al Jazeera Arabic — 24/7 nieuws", icon:"🕌", youtube:"https://www.youtube.com/@aljazeera/live", tiktok:"https://www.tiktok.com/@aljazeera", web:"https://www.aljazeera.net/live" },
+  "skynews-ar":   { label:"سكاي نيوز عربية", desc:"Sky News Arabia", icon:"📡", youtube:"https://www.youtube.com/@skynewsarabia/live", tiktok:"https://www.tiktok.com/@skynewsarabia", web:"https://www.skynewsarabia.com/live" },
+  "alarabiya":    { label:"العربية", desc:"Al Arabiya — 24/7 nieuws", icon:"🗞️", youtube:"https://www.youtube.com/@AlArabiya/live", tiktok:"https://www.tiktok.com/@alarabiya", web:"https://www.alarabiya.net/live" },
+  "france24-en":  { label:"France24 English", desc:"France24 in het Engels", icon:"🇫🇷", youtube:"https://www.youtube.com/@FRANCE24English/live", tiktok:"https://www.tiktok.com/@france24", web:"https://www.france24.com/en/live" },
+  "dw-en":        { label:"DW News", desc:"Deutsche Welle English", icon:"🇩🇪", youtube:"https://www.youtube.com/@dwnews/live", tiktok:"https://www.tiktok.com/@dwnews", web:"https://www.dw.com/en/live-tv/channel-english" },
+  "trt":          { label:"TRT World", desc:"TRT World — Turkse staatstelevisie", icon:"🇹🇷", youtube:"https://www.youtube.com/@trtworld/live", tiktok:"https://www.tiktok.com/@trtworld", web:"https://www.trtworld.com/live" }
 };
 
 const FEEDS = [
@@ -737,30 +915,22 @@ const FEEDS = [
   { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://www.reutersagency.com/feed/?best-regions=world&post_type=best" },
   { name:"TRT World",           lang:"en", cat:"war", lat:39.93, lon:32.86, url:"https://www.trtworld.com/feed/rss.xml" },
   { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
-
   { name:"Times of Israel",     lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
   { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
   { name:"Haaretz",             lang:"he", cat:"gaza", lat:32.07, lon:34.78, url:"https://www.haaretz.com/cmlink/1.628765" },
   { name:"Palestine Today",     lang:"en", cat:"gaza", lat:31.5,  lon:34.47, url:"https://www.palestinetoday.net/feed" },
   { name:"WAFA Palestine",      lang:"en", cat:"gaza", lat:31.9,  lon:35.2,  url:"http://english.wafa.ps/rss" },
-
   { name:"Al Akhbar LB",        lang:"ar", cat:"lebanon", lat:33.89, lon:35.50, url:"https://al-akhbar.com/rss" },
   { name:"L'Orient Today",      lang:"en", cat:"lebanon", lat:33.89, lon:35.50, url:"https://today.lorientlejour.com/rss" },
-
   { name:"Syria Direct",        lang:"en", cat:"syria", lat:33.51, lon:36.29, url:"https://syriadirect.org/feed/" },
   { name:"Rudaw English",       lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.rudaw.net/rss/english" },
   { name:"Kurdistan24",         lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.kurdistan24.net/en/rss" },
-
   { name:"SABA Yemen",          lang:"en", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.saba.ye/en/rsscatfeed14.htm" },
-
   { name:"Iran International",  lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
   { name:"Mehr News Iran",      lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://en.mehrnews.com/rss" },
-
   { name:"Kyiv Independent",    lang:"en", cat:"ukraine", lat:50.45, lon:30.52, url:"https://kyivindependent.com/feed/" },
   { name:"Ukrinform",           lang:"en", cat:"ukraine", lat:50.45, lon:30.52, url:"https://www.ukrinform.net/rss" },
-
   { name:"Radio Dabanga",       lang:"en", cat:"sudan", lat:15.5, lon:32.5, url:"https://www.dabangasudan.org/en/rss" },
-
   { name:"Hespress",            lang:"ar", cat:"maroc", lat:34.02, lon:-6.83, url:"https://www.hespress.com/feed" },
   { name:"Hespress FR",         lang:"fr", cat:"maroc", lat:34.02, lon:-6.83, url:"https://fr.hespress.com/feed" },
   { name:"Le360",               lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://fr.le360.ma/rss" },
@@ -769,7 +939,6 @@ const FEEDS = [
   { name:"Lakome2",             lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
   { name:"TelQuel",             lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
   { name:"Morocco World News",  lang:"en", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.moroccoworldnews.com/feed/" },
-
   { name:"Al Jazeera AR",     lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
   { name:"Al Arabiya",        lang:"ar", cat:"mideast", lat:24.71, lon:46.67, url:"https://www.alarabiya.net/feed/rss2/ar.xml" },
   { name:"Sky News Arabia",   lang:"ar", cat:"mideast", lat:24.45, lon:54.37, url:"https://www.skynewsarabia.com/web/rss/95.xml" },
@@ -782,17 +951,14 @@ const FEEDS = [
   { name:"Anadolu AR",        lang:"ar", cat:"mideast", lat:39.93, lon:32.86, url:"https://www.aa.com.tr/ar/rss/default?cat=guncel" },
   { name:"Asharq Al-Awsat",   lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://aawsat.com/feed" },
   { name:"Al Masry Al Youm",  lang:"ar", cat:"mideast", lat:30.04, lon:31.24, url:"https://www.almasryalyoum.com/rss" },
-
   { name:"BBC World",     lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
   { name:"The Guardian",  lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://www.theguardian.com/world/rss" },
   { name:"NYT World",     lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
   { name:"France24 EN",   lang:"en", cat:"world", lat:48.85, lon:2.35,  url:"https://www.france24.com/en/rss" },
   { name:"DW English",    lang:"en", cat:"world", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-en-all" },
   { name:"CNN World",     lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"http://rss.cnn.com/rss/edition_world.rss" },
-
   { name:"NOS",            lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
   { name:"Nu.nl Algemeen", lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
-
   { name:"📡 Al Jazeera AR", lang:"ar", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/aljazeera" },
   { name:"📡 Al Arabiya",    lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" }
 ];
@@ -803,13 +969,32 @@ const FEEDS = [
 let allItems = [];
 let seenLinks = new Set();
 let activeCat = "all";
+let activeSource = "all";
 let currentView = "list";
 let map = null, markersLayer = null;
 let nextRefreshSeconds = REFRESH_MS / 1000;
 let isFirstLoad = true;
 let currentLiveChannel = "aljazeera-en";
+let favoritesOnly = false;
+let currentPage = 1;
+let failedFeeds = [];
 const targetLang = "nl";
 
+/* Favorieten */
+const FAV_KEY = "wardesk_favorites_v1";
+let favorites = new Set();
+try { favorites = new Set(JSON.parse(localStorage.getItem(FAV_KEY)) || []); } catch(e){}
+
+/* Gelezen artikelen */
+const READ_KEY = "wardesk_read_v1";
+let readArticles = new Set();
+try { readArticles = new Set(JSON.parse(localStorage.getItem(READ_KEY)) || []); } catch(e){}
+
+/* Notificaties */
+const NOTIF_KEY = "wardesk_notif";
+let notifEnabled = localStorage.getItem(NOTIF_KEY) === "1";
+
+/* ---------- DOM ---------- */
 const feedEl       = document.getElementById("feed");
 const statusEl     = document.getElementById("statusText");
 const trStatusEl   = document.getElementById("trStatus");
@@ -832,9 +1017,47 @@ const sectionTitle = document.getElementById("sectionTitle");
 const sectionCount = document.getElementById("sectionCount");
 const tickerTrack  = document.getElementById("tickerTrack");
 const refreshBtn   = document.getElementById("refresh");
+const searchInput  = document.getElementById("searchInput");
+const searchClear  = document.getElementById("searchClear");
+const searchWrap   = document.getElementById("searchWrap");
+const sourceSelect = document.getElementById("sourceSelect");
+const favToggle    = document.getElementById("favToggle");
+const favCountEl   = document.getElementById("favCount");
+const notifBtn     = document.getElementById("notifBtn");
+const failedToggle = document.getElementById("failedToggle");
+const failedCount  = document.getElementById("failedCount");
+const failedList   = document.getElementById("failedList");
+const toast        = document.getElementById("toast");
+const toastMsg     = document.getElementById("toastMsg");
 
-/* ---------- Vertaalcache ---------- */
-const TR_KEY = "wardesk_tr_v7";
+/* ==========================================================
+   TOAST
+   ========================================================== */
+let toastTimer = null;
+function showToast(msg, icon = "ℹ"){
+  toastMsg.textContent = msg;
+  toast.querySelector(".ic").textContent = icon;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
+/* ==========================================================
+   AUTO DARK MODE
+   ========================================================== */
+(function initTheme(){
+  const saved = localStorage.getItem("wardesk_theme");
+  if(saved === "light"){ document.body.classList.add("light"); return; }
+  if(saved === "dark"){ return; }
+  /* Geen opgeslagen voorkeur → auto op basis van uur */
+  const hour = new Date().getHours();
+  if(hour >= 7 && hour < 20){ document.body.classList.add("light"); }
+})();
+
+/* ==========================================================
+   VERTALING
+   ========================================================== */
+const TR_KEY = "wardesk_tr_v8";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -900,6 +1123,9 @@ function updateTrStatus(){
 }
 function resetTrCounters(){ trTotal = 0; trDone = 0; trStatusEl.style.display = "none"; }
 
+/* ==========================================================
+   HELPERS
+   ========================================================== */
 function stripHtml(s){ return (s||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim(); }
 function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({
@@ -921,30 +1147,33 @@ function isFresh(dateStr){
   if(isNaN(d)) return false;
   return (Date.now() - d.getTime()) < FRESH_MS;
 }
+function readTime(text){
+  const words = (text||"").split(/\s+/).length;
+  return Math.max(1, Math.round(words / 200));
+}
 function trKeyFor(text){ return targetLang + ":" + hash((text||"").slice(0,450)); }
 function getCachedTr(text){ return trCache[trKeyFor(text)] || ""; }
 function isArabic(t){ return /[\u0600-\u06FF]/.test(t||""); }
 function needsTranslation(lang){ return lang !== "nl"; }
 
+/* ==========================================================
+   DETECT TOPIC
+   ========================================================== */
 function detectTopic(title, desc, fallbackCat){
   const t = (title + " " + desc).toLowerCase();
-  if(/\b(gaza|rafah|khan younis|hamas|palestin|west bank|netanyahu|tel aviv|jerusalem)\b/.test(t))
-    return "gaza";
-  if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah)\b/.test(t))
-    return "lebanon";
-  if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf)\b/.test(t))
-    return "iran";
-  if(/\b(syria|syrian|damascus|assad|idlib|aleppo)\b/.test(t))
-    return "syria";
-  if(/\b(yemen|yemeni|houthi|sanaa|aden)\b/.test(t))
-    return "yemen";
-  if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|kharkiv|odesa|donbas|crimea)\b/.test(t))
-    return "ukraine";
-  if(/\b(sudan|sudanese|khartoum|darfur|rsf)\b/.test(t))
-    return "sudan";
+  if(/\b(gaza|rafah|khan younis|hamas|palestin|west bank|netanyahu|tel aviv|jerusalem)\b/.test(t)) return "gaza";
+  if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah)\b/.test(t)) return "lebanon";
+  if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf)\b/.test(t)) return "iran";
+  if(/\b(syria|syrian|damascus|assad|idlib|aleppo)\b/.test(t)) return "syria";
+  if(/\b(yemen|yemeni|houthi|sanaa|aden)\b/.test(t)) return "yemen";
+  if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|kharkiv|odesa|donbas|crimea)\b/.test(t)) return "ukraine";
+  if(/\b(sudan|sudanese|khartoum|darfur|rsf)\b/.test(t)) return "sudan";
   return fallbackCat;
 }
 
+/* ==========================================================
+   FETCH FEED
+   ========================================================== */
 async function fetchFeedData(url){
   let attempts = [];
   if(url.startsWith("rsshub://")){
@@ -965,6 +1194,38 @@ async function fetchFeedData(url){
   throw new Error("failed");
 }
 
+/* ==========================================================
+   DEDUPLICATE — groepeer artikelen met vergelijkbare titel
+   ========================================================== */
+function titleKey(title){
+  return (title||"").toLowerCase()
+    .replace(/[^a-z0-9 ]/g, "")
+    .split(/\s+/)
+    .filter(w => w.length > 3)
+    .slice(0, 6)
+    .join(" ");
+}
+function dedupe(items){
+  const map = new Map();
+  items.forEach(it => {
+    const key = titleKey(it.title);
+    if(!key){ 
+      map.set(it.link + Math.random(), it); 
+      return; 
+    }
+    if(!map.has(key)){
+      map.set(key, { ...it, sources: [it.source] });
+    } else {
+      const existing = map.get(key);
+      existing.sources.push(it.source);
+    }
+  });
+  return Array.from(map.values());
+}
+
+/* ==========================================================
+   LOAD FEEDS
+   ========================================================== */
 async function loadFeeds(isAuto = false){
   if(!isAuto){
     statusEl.textContent = "Feeds ophalen...";
@@ -990,7 +1251,7 @@ async function loadFeeds(isAuto = false){
             (it.content||"").match(/<img[^>]+src="([^"]+)"/i)?.[1] ||
             "";
           const titleClean = stripHtml(it.title || "");
-          const descClean  = stripHtml(rawDesc).slice(0, 280);
+          const descClean  = stripHtml(rawDesc).slice(0, 400);
           return {
             title: titleClean,
             link:  it.link  || "#",
@@ -1002,34 +1263,70 @@ async function loadFeeds(isAuto = false){
             lat: f.lat, lon: f.lon
           };
         })
-      )
+      ).then(d => ({ ok:true, name:f.name, data:d }))
+      .catch(e => ({ ok:false, name:f.name, error:String(e) }))
     )
   );
 
   const newItems = [];
   let okCount = 0;
   const freshLinks = new Set();
+  failedFeeds = [];
 
   results.forEach(r => {
     if(r.status === "fulfilled"){
-      okCount++;
-      r.value.forEach(it => {
-        const key = (it.link || it.title).toLowerCase().trim();
-        if(!freshLinks.has(key)){
-          freshLinks.add(key);
-          newItems.push(it);
-        }
-      });
+      const res = r.value;
+      if(res.ok){
+        okCount++;
+        res.data.forEach(it => {
+          const key = (it.link || it.title).toLowerCase().trim();
+          if(!freshLinks.has(key)){
+            freshLinks.add(key);
+            newItems.push(it);
+          }
+        });
+      } else {
+        failedFeeds.push(res.name);
+      }
     }
   });
 
-  newItems.sort((a,b) => new Date(b.date) - new Date(a.date));
+  /* Deduplicate */
+  const deduped = dedupe(newItems);
 
-  allItems = newItems;
+  deduped.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  /* Detect nieuwe artikelen → notificatie */
+  if(!isFirstLoad && notifEnabled && "Notification" in window && Notification.permission === "granted"){
+    const trulyNew = deduped.filter(it => {
+      const key = (it.link || it.title).toLowerCase().trim();
+      return !seenLinks.has(key);
+    });
+    if(trulyNew.length > 0){
+      try {
+        new Notification("WAR DESK · " + trulyNew.length + " nieuw", {
+          body: trulyNew[0].title.slice(0, 120),
+          tag: "wardesk"
+        });
+      } catch(e){}
+    }
+  }
+
+  allItems = deduped;
   seenLinks = freshLinks;
 
   statSources.textContent = `${okCount}/${FEEDS.length}`;
   statWar.textContent = allItems.filter(x => x.cat === "war").length;
+
+  /* Failed feeds UI */
+  if(failedFeeds.length){
+    failedCount.textContent = failedFeeds.length;
+    failedToggle.style.display = "inline-block";
+    failedList.innerHTML = `<strong>${failedFeeds.length} bronnen falen nu:</strong> ${failedFeeds.map(escapeHtml).join(" · ")}`;
+  } else {
+    failedToggle.style.display = "none";
+    failedList.classList.remove("show");
+  }
 
   refreshBtn.classList.remove("spin");
 
@@ -1043,6 +1340,8 @@ async function loadFeeds(isAuto = false){
 
   statusEl.textContent = `${allItems.length} berichten · bijgewerkt ${new Date().toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`;
 
+  populateSources();
+  currentPage = 1;
   render();
   renderHero();
   renderTicker();
@@ -1051,6 +1350,22 @@ async function loadFeeds(isAuto = false){
   nextRefreshSeconds = REFRESH_MS / 1000;
 }
 
+/* ==========================================================
+   SOURCE DROPDOWN
+   ========================================================== */
+function populateSources(){
+  const sources = [...new Set(allItems.map(it => it.source))].sort();
+  const current = sourceSelect.value;
+  sourceSelect.innerHTML = '<option value="all">Alle bronnen</option>' +
+    sources.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  if(sources.includes(current) || current === "all"){
+    sourceSelect.value = current;
+  }
+}
+
+/* ==========================================================
+   TICKER
+   ========================================================== */
 function renderTicker(){
   const top = allItems.slice(0, 15);
   if(!top.length) return;
@@ -1061,13 +1376,13 @@ function renderTicker(){
   tickerTrack.innerHTML = html + html;
 }
 
+/* ==========================================================
+   HERO
+   ========================================================== */
 function renderHero(){
-  const catFilter = activeCat === "all" || activeCat === "live"
-    ? allItems
-    : allItems.filter(it => it.cat === activeCat);
-
-  const withImg = catFilter.filter(it => it.img);
-  const picks = withImg.length >= 3 ? withImg.slice(0, 3) : catFilter.slice(0, 3);
+  const base = getFilteredBase();
+  const withImg = base.filter(it => it.img);
+  const picks = withImg.length >= 3 ? withImg.slice(0, 3) : base.slice(0, 3);
 
   if(picks.length < 3){ heroSection.style.display = "none"; return; }
   heroSection.style.display = "grid";
@@ -1115,18 +1430,31 @@ function getCatLabel(cat){
   return map[cat] || cat.toUpperCase();
 }
 
-function getFiltered(){
+/* ==========================================================
+   FILTERS
+   ========================================================== */
+function getFilteredBase(){
+  const q = searchInput.value.toLowerCase().trim();
   return allItems.filter(it => {
-    if(activeCat === "all" || activeCat === "live") return true;
-    return it.cat === activeCat;
+    if(favoritesOnly && !favorites.has(it.link)) return false;
+    if(activeCat !== "all" && activeCat !== "live" && it.cat !== activeCat) return false;
+    if(activeSource !== "all" && it.source !== activeSource) return false;
+    if(q){
+      const hay = (it.title + " " + it.desc + " " + it.source).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
   });
 }
 
+/* ==========================================================
+   RENDER GRID (met paginering)
+   ========================================================== */
 let currentRender = [];
 let lazyObserver = null;
 
 function render(){
-  const list = getFiltered();
+  const list = getFilteredBase();
   currentRender = list;
 
   const titleMap = {
@@ -1136,7 +1464,10 @@ function render(){
     sudan:"Soedan", tg:"Telegram", maroc:"Marokko",
     mideast:"Midden-Oosten", world:"Wereld", nl:"Nederland"
   };
-  sectionTitle.textContent = titleMap[activeCat] || activeCat.toUpperCase();
+  let title = titleMap[activeCat] || activeCat.toUpperCase();
+  if(favoritesOnly) title = "⭐ Favorieten";
+  if(activeSource !== "all") title = "Bron: " + activeSource;
+  sectionTitle.textContent = title;
   sectionCount.textContent = list.length + " berichten";
 
   if(!list.length){
@@ -1144,7 +1475,28 @@ function render(){
     return;
   }
 
-  feedEl.innerHTML = list.map((it, i) => cardHtml(it, i)).join("");
+  const toShow = list.slice(0, currentPage * PAGE_SIZE);
+  const hasMore = list.length > toShow.length;
+
+  let html = toShow.map((it, i) => cardHtml(it, i)).join("");
+
+  if(hasMore){
+    html += `
+      <div class="load-more">
+        <button id="loadMoreBtn">Meer laden</button>
+        <span class="progress">${toShow.length} van ${list.length} getoond</span>
+      </div>`;
+  }
+
+  feedEl.innerHTML = html;
+
+  const loadMoreBtn = document.getElementById("loadMoreBtn");
+  if(loadMoreBtn){
+    loadMoreBtn.addEventListener("click", () => {
+      currentPage++;
+      render();
+    });
+  }
 
   if(lazyObserver) lazyObserver.disconnect();
   lazyObserver = new IntersectionObserver(entries => {
@@ -1157,7 +1509,7 @@ function render(){
     });
   }, { rootMargin: "400px" });
 
-  list.forEach((_, i) => {
+  toShow.forEach((_, i) => {
     const el = document.getElementById("wcard-" + i);
     if(el) lazyObserver.observe(el);
   });
@@ -1179,25 +1531,39 @@ function cardHtml(it, i){
   const fresh = isFresh(it.date);
   const isTg = it.cat === "tg";
   const isWar = it.cat === "war";
-  const cls = [isWar?'war':'', isTg?'tg':''].filter(Boolean).join(' ');
+  const isFav = favorites.has(it.link);
+  const isRead = readArticles.has(it.link);
+  const sources = it.sources || [it.source];
+  const multiSrc = sources.length > 1;
+
+  const classes = [
+    isWar?'war':'', isTg?'tg':'', isRead?'read':''
+  ].filter(Boolean).join(' ');
 
   const badgeLang = isTg ? 'tg' : it.lang;
   const catLabel = getCatLabel(it.cat);
 
+  const minutes = readTime(dispDesc);
+
   return `
-    <article id="wcard-${i}" data-idx="${i}" class="${cls}" dir="${rtl?'rtl':'ltr'}"
-             onclick="if(event.target.tagName!=='A')window.open('${escapeHtml(it.link)}','_blank')">
+    <article id="wcard-${i}" data-idx="${i}" data-link="${escapeHtml(it.link)}" class="${classes}" dir="${rtl?'rtl':'ltr'}"
+             onclick="if(event.target.tagName!=='A' && !event.target.classList.contains('fav-btn'))window.open('${escapeHtml(it.link)}','_blank')">
       <div class="card-thumb">
         ${img}
         <div class="card-badges">
           <span class="badge ${badgeLang}">${isTg ? '📡 TG' : it.lang.toUpperCase()}</span>
+          ${multiSrc ? `<span class="badge multi">${sources.length}× BRON</span>` : ''}
         </div>
+        <button class="fav-btn ${isFav?'on':''}" data-fav="${escapeHtml(it.link)}" aria-label="Favoriet">
+          ${isFav ? '★' : '☆'}
+        </button>
         ${fresh ? '<span class="live-tag">LIVE</span>' : ''}
       </div>
       <div class="card-body">
         <div class="card-meta">
           <span class="card-source">${escapeHtml(it.source)}</span>
           <span class="card-cat">· ${catLabel}</span>
+          <span class="card-read">${minutes} min</span>
           <span class="card-time ${fresh?'fresh':''}">${timeAgo(it.date)}</span>
         </div>
         <h3 class="card-title ${translating?'translating':''}" data-role="title">${escapeHtml(dispTitle)}</h3>
@@ -1210,6 +1576,44 @@ function cardHtml(it, i){
     </article>`;
 }
 
+/* ==========================================================
+   FAVOURITES — klik handler
+   ========================================================== */
+feedEl.addEventListener("click", e => {
+  const btn = e.target.closest(".fav-btn");
+  if(!btn) return;
+  e.stopPropagation();
+  e.preventDefault();
+  const link = btn.dataset.fav;
+  if(favorites.has(link)){
+    favorites.delete(link);
+    btn.classList.remove("on");
+    btn.textContent = "☆";
+    showToast("Verwijderd uit favorieten", "☆");
+  } else {
+    favorites.add(link);
+    btn.classList.add("on");
+    btn.textContent = "★";
+    showToast("Toegevoegd aan favorieten", "★");
+  }
+  localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
+  updateFavCount();
+  if(favoritesOnly) render();
+});
+
+/* ==========================================================
+   MARK AS READ
+   ========================================================== */
+function markAsRead(link){
+  if(!readArticles.has(link)){
+    readArticles.add(link);
+    localStorage.setItem(READ_KEY, JSON.stringify([...readArticles]));
+  }
+}
+
+/* ==========================================================
+   TRANSLATIONS PER CARD
+   ========================================================== */
 function scheduleTranslation(it, idx){
   if(!it) return;
   if(!needsTranslation(it.lang)) return;
@@ -1245,6 +1649,9 @@ function scheduleTranslation(it, idx){
   }
 }
 
+/* ==========================================================
+   MAP
+   ========================================================== */
 function initMap(){
   if(map) return;
   map = L.map("map", { center:[30,38], zoom:3, worldCopyJump:true, zoomControl:true });
@@ -1258,7 +1665,7 @@ function renderMap(){
   if(!map) initMap();
   markersLayer.clearLayers();
 
-  const list = getFiltered();
+  const list = getFilteredBase();
   const bySource = {};
   list.forEach(it => {
     const key = it.source + "|" + it.lat + "," + it.lon;
@@ -1307,6 +1714,9 @@ function renderMap(){
   });
 }
 
+/* ==========================================================
+   LIVE TV
+   ========================================================== */
 function loadLiveChannel(key){
   const ch = LIVE_CHANNELS[key];
   if(!ch) return;
@@ -1328,6 +1738,9 @@ document.querySelectorAll(".live-chip").forEach(chip => {
   });
 });
 
+/* ==========================================================
+   VIEW SWITCH
+   ========================================================== */
 function showOnly(view){
   listView.style.display = "none";
   liveView.style.display = "none";
@@ -1355,12 +1768,16 @@ function switchView(v){
   localStorage.setItem("wardesk_view", v);
 }
 
+/* ==========================================================
+   EVENTS
+   ========================================================== */
 navTabs.addEventListener("click", e => {
   const tab = e.target.closest(".nav-tab");
   if(!tab) return;
   navTabs.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   tab.classList.add("active");
   activeCat = tab.dataset.cat;
+  currentPage = 1;
 
   if(activeCat === "live"){
     showOnly("live");
@@ -1377,6 +1794,96 @@ navTabs.addEventListener("click", e => {
   renderMap();
 });
 
+/* Zoeken */
+let searchTimer = null;
+searchInput.addEventListener("input", () => {
+  const val = searchInput.value.trim();
+  searchWrap.classList.toggle("has-value", val.length > 0);
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    currentPage = 1;
+    render();
+    renderHero();
+    renderMap();
+  }, 250);
+});
+
+searchClear.addEventListener("click", () => {
+  searchInput.value = "";
+  searchWrap.classList.remove("has-value");
+  currentPage = 1;
+  render();
+  renderHero();
+  renderMap();
+});
+
+/* Bron filter */
+sourceSelect.addEventListener("change", () => {
+  activeSource = sourceSelect.value;
+  currentPage = 1;
+  render();
+  renderHero();
+  renderMap();
+});
+
+/* Favorieten toggle */
+favToggle.addEventListener("click", () => {
+  favoritesOnly = !favoritesOnly;
+  favToggle.classList.toggle("active", favoritesOnly);
+  currentPage = 1;
+  render();
+  renderHero();
+  renderMap();
+  showToast(favoritesOnly ? "Favorieten ingeschakeld" : "Favorieten uitgeschakeld", "⭐");
+});
+
+function updateFavCount(){
+  favCountEl.textContent = favorites.size;
+  favToggle.classList.toggle("active", favoritesOnly);
+}
+updateFavCount();
+
+/* Failed feeds toggle */
+failedToggle.addEventListener("click", () => {
+  failedList.classList.toggle("show");
+});
+
+/* Notificaties */
+function updateNotifBtn(){
+  if(!("Notification" in window)){
+    notifBtn.style.display = "none";
+    return;
+  }
+  notifBtn.classList.toggle("on", notifEnabled && Notification.permission === "granted");
+  notifBtn.textContent = (notifEnabled && Notification.permission === "granted") ? "🔔" : "🔕";
+}
+updateNotifBtn();
+
+notifBtn.addEventListener("click", async () => {
+  if(!("Notification" in window)){
+    showToast("Notificaties niet ondersteund", "⚠");
+    return;
+  }
+  if(notifEnabled && Notification.permission === "granted"){
+    notifEnabled = false;
+    localStorage.setItem(NOTIF_KEY, "0");
+    showToast("Notificaties uit", "🔕");
+    updateNotifBtn();
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm === "granted"){
+    notifEnabled = true;
+    localStorage.setItem(NOTIF_KEY, "1");
+    showToast("Notificaties aan", "🔔");
+    try { new Notification("WAR DESK", { body: "Je krijgt nu meldingen bij breaking news." }); } catch(e){}
+  } else {
+    showToast("Notificaties geweigerd", "⚠");
+  }
+  updateNotifBtn();
+});
+
+/* Knoppen */
 refreshBtn.addEventListener("click", () => loadFeeds(false));
 viewListBtn.addEventListener("click", () => {
   if(activeCat === "live"){
@@ -1394,9 +1901,18 @@ document.getElementById("theme").addEventListener("click", () => {
   localStorage.setItem("wardesk_theme",
     document.body.classList.contains("light") ? "light" : "dark");
 });
-if(localStorage.getItem("wardesk_theme") === "light")
-  document.body.classList.add("light");
 
+/* Mark as read bij klik op kaart */
+feedEl.addEventListener("click", e => {
+  const card = e.target.closest("article");
+  if(!card) return;
+  const link = card.dataset.link;
+  if(link && e.target.tagName === "A") markAsRead(link);
+});
+
+/* ==========================================================
+   CLOCK + AUTO REFRESH
+   ========================================================== */
 setInterval(() => {
   const now = new Date();
   clockEl.textContent = now.toLocaleTimeString("nl-NL", {
@@ -1409,6 +1925,9 @@ setInterval(() => {
 
 setInterval(() => { loadFeeds(true); }, REFRESH_MS);
 
+/* ==========================================================
+   START
+   ========================================================== */
 initMap();
 const savedView = localStorage.getItem("wardesk_view") || "list";
 const savedLive = localStorage.getItem("wardesk_live") || "aljazeera-en";

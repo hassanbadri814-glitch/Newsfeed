@@ -904,7 +904,7 @@ const FRESH_MS    = 20 * 60 * 1000;
 const BREAKING_MS = 10 * 60 * 1000;
 const PAGE_SIZE   = 30;
 const TIMEOUT_MS  = 6000;
-const CACHE_KEY   = "wardesk_cache_v3";
+const CACHE_KEY   = "wardesk_cache_v4";
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
@@ -928,10 +928,9 @@ const LIVE_CHANNELS = {
 };
 
 /* ==========================================================
-   BRONNEN — 28 feeds met betere standaard-categorieën
+   BRONNEN
    ========================================================== */
 const FEEDS = [
-  /* ── HOGE PRIORITEIT ── */
   { name:"Al Jazeera",          lang:"en", cat:"algemeen", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
   { name:"BBC World",           lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
   { name:"BBC Arabic",          lang:"ar", cat:"algemeen", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/arabic/rss.xml" },
@@ -940,30 +939,21 @@ const FEEDS = [
   { name:"Times of Israel",     lang:"en", cat:"algemeen", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
   { name:"Jerusalem Post",      lang:"en", cat:"algemeen", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
 
-  /* ── OORLOG ── */
   { name:"Middle East Eye",     lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
   { name:"Al Monitor",          lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
   { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
 
-  /* ── GAZA ── */
   { name:"Middle East Monitor", lang:"en", cat:"gaza", lat:51.5, lon:-0.12, url:"https://www.middleeastmonitor.com/feed/" },
   { name:"Mondoweiss",          lang:"en", cat:"gaza", lat:40.71, lon:-74.00, url:"https://mondoweiss.net/feed/" },
 
-  /* ── JEMEN ── */
   { name:"SABA Yemen",          lang:"en", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.saba.ye/en/rsscatfeed14.htm" },
-
-  /* ── IRAN ── */
   { name:"Mehr News Iran",      lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://en.mehrnews.com/rss" },
-
-  /* ── SOEDAN ── */
   { name:"Radio Dabanga",       lang:"en", cat:"sudan", lat:15.5, lon:32.5, url:"https://www.dabangasudan.org/en/rss" },
 
-  /* ── MAROKKO ── */
   { name:"Yabiladi",            lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.yabiladi.com/rss/articles.xml" },
   { name:"Lakome2",             lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
   { name:"TelQuel",             lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
 
-  /* ── MIDDEN-OOSTEN (AR) ── */
   { name:"RT Arabic",           lang:"ar", cat:"mideast", lat:55.75, lon:37.61, url:"https://arabic.rt.com/rss/" },
   { name:"France24 AR",         lang:"ar", cat:"mideast", lat:48.85, lon:2.35,  url:"https://www.france24.com/ar/rss" },
   { name:"CNN Arabic",          lang:"ar", cat:"mideast", lat:25.20, lon:55.27, url:"https://arabic.cnn.com/api/v1/rss/rss.xml" },
@@ -971,12 +961,10 @@ const FEEDS = [
   { name:"Anadolu AR",          lang:"ar", cat:"mideast", lat:39.93, lon:32.86, url:"https://www.aa.com.tr/ar/rss/default?cat=guncel" },
   { name:"Asharq Al-Awsat",     lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://aawsat.com/feed" },
 
-  /* ── WERELD ── */
   { name:"The Guardian",        lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://www.theguardian.com/world/rss" },
   { name:"NYT World",           lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
   { name:"France24 EN",         lang:"en", cat:"world", lat:48.85, lon:2.35,  url:"https://www.france24.com/en/rss" },
 
-  /* ── NL ── */
   { name:"NOS",                 lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
   { name:"Nu.nl Algemeen",      lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" }
 ];
@@ -1086,10 +1074,8 @@ function showToast(msg, icon = "ℹ"){
   if(hour >= 7 && hour < 20){ document.body.classList.add("light"); }
 })();
 
-/* ==========================================================
-   TRANSLATION
-   ========================================================== */
-const TR_KEY = "wardesk_tr_v13";
+/* TRANSLATION */
+const TR_KEY = "wardesk_tr_v14";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1181,9 +1167,6 @@ function updateTrStatus(){
 }
 function resetTrCounters(){ trTotal = 0; trDone = 0; trStatusEl.style.display = "none"; }
 
-/* ==========================================================
-   HELPERS
-   ========================================================== */
 function stripHtml(s){ return (s||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim(); }
 function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({
@@ -1215,65 +1198,125 @@ function isArabic(t){ return /[\u0600-\u06FF]/.test(t||""); }
 function needsTranslation(lang){ return lang !== "nl"; }
 
 /* ==========================================================
-   DETECT TOPIC — verbeterde categorisering
+   DETECT TOPIC
    ========================================================== */
 function detectTopic(title, desc, fallbackCat){
   const t = (title + " " + desc).toLowerCase();
 
-  /* SPORT */
   if(/\b(football|soccer|match|league|goal|coach|player|team|trophy|cup final|olympics|champions league|fifa|uefa|world cup|tennis|basketball|nba|nfl|formula 1|grand prix|boxing|ufc|wrestling|cricket|rugby|golf|messi|ronaldo|salah|mbappé)\b/.test(t))
     return "sport";
 
-  /* ECONOMIE */
   if(/\b(economy|economic|market|stocks|shares|tariff|sanction|oil price|inflation|gdp|bank|banking|currency|dollar|euro|crypto|bitcoin|business|profit|revenue|financial|investment|trade deal|export|import)\b/.test(t))
     return "business";
 
-  /* TECH */
   if(/\b(technology|tech company|apple|google|microsoft|meta platforms|openai|chatgpt|artificial intelligence|cyber attack|hacker|software|iphone|android|robot|spacex|nasa|satellite|starlink)\b/.test(t))
     return "tech";
 
-  /* GEZONDHEID */
   if(/\b(health|covid|coronavirus|virus|vaccine|hospital|disease|cancer|who warns|pandemic|medicine|medical|outbreak|epidemic)\b/.test(t))
     return "health";
 
-  /* GAZA / PALESTINA (specifiek eerst) */
   if(/\b(gaza|rafah|khan younis|hamas|palestin|west bank|netanyahu|tel aviv|jerusalem|idf|hebron|jenin|nablus|ramallah)\b/.test(t))
     return "gaza";
 
-  /* LIBANON */
   if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah|sidon|tripoli|tyre)\b/.test(t))
     return "lebanon";
 
-  /* IRAN */
   if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf|pezeshkian)\b/.test(t))
     return "iran";
 
-  /* SYRIË */
   if(/\b(syria|syrian|damascus|assad|idlib|aleppo|homs|raqqa|sharaa)\b/.test(t))
     return "syria";
 
-  /* JEMEN */
   if(/\b(yemen|yemeni|houthi|sanaa|aden|taiz|hodeidah)\b/.test(t))
     return "yemen";
 
-  /* OEKRAÏNE */
   if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|kharkiv|odesa|donbas|crimea|donetsk|luhansk|mariupol|putin|kremlin|moscow)\b/.test(t))
     return "ukraine";
 
-  /* SOEDAN */
   if(/\b(sudan|sudanese|khartoum|darfur|rsf|omdurman)\b/.test(t))
     return "sudan";
 
-  /* MAROKKO */
   if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara|akhannouch)\b/.test(t))
     return "maroc";
 
-  /* ALGEMEEN OORLOG (laatste check) */
   if(/\b(war|conflict|strike|attack|shelling|bomb|missile|military|soldier|combat|troops|airstrike|ceasefire|cease fire|invasion|offensive|militant|extremist|terror|armed|weapon|drone)\b/.test(t))
     return "war";
 
-  /* Fallback → algemeen */
   return fallbackCat || "algemeen";
+}
+
+/* ==========================================================
+   DETECT LOCATION — locatie uit artikel halen
+   ========================================================== */
+function detectLocation(title, desc, fallbackLat, fallbackLon){
+  const t = (title + " " + desc).toLowerCase();
+
+  const locations = [
+    /* Midden-Oosten */
+    { k:/\b(gaza|rafah|khan younis)\b/, lat:31.5,  lon:34.47 },
+    { k:/\b(tel aviv|jaffa)\b/,          lat:32.08, lon:34.78 },
+    { k:/\b(jerusalem|al-quds)\b/,       lat:31.77, lon:35.21 },
+    { k:/\b(west bank|ramallah|jenin|nablus|hebron)\b/, lat:31.9, lon:35.2 },
+    { k:/\b(beirut|lebanon)\b/,          lat:33.89, lon:35.50 },
+    { k:/\b(damascus|syria)\b/,          lat:33.51, lon:36.29 },
+    { k:/\b(baghdad|iraq)\b/,            lat:33.31, lon:44.36 },
+    { k:/\b(tehran|iran)\b/,             lat:35.69, lon:51.39 },
+    { k:/\b(sanaa|yemen|aden)\b/,        lat:15.37, lon:44.19 },
+    { k:/\b(riyadh|saudi)\b/,            lat:24.71, lon:46.67 },
+    { k:/\b(dubai|abu dhabi|emirates|uae)\b/, lat:25.20, lon:55.27 },
+    { k:/\b(doha|qatar)\b/,              lat:25.28, lon:51.53 },
+    { k:/\b(ankara|turkey|türkiye)\b/,   lat:39.93, lon:32.86 },
+    { k:/\b(istanbul)\b/,                lat:41.01, lon:28.98 },
+    { k:/\b(cairo|egypt)\b/,             lat:30.04, lon:31.24 },
+    { k:/\b(amman|jordan)\b/,            lat:31.95, lon:35.93 },
+    { k:/\b(kuwait)\b/,                  lat:29.37, lon:47.98 },
+
+    /* Oekraïne / Rusland */
+    { k:/\b(kyiv|kiev)\b/,               lat:50.45, lon:30.52 },
+    { k:/\b(kharkiv)\b/,                 lat:49.99, lon:36.23 },
+    { k:/\b(odesa|odessa)\b/,            lat:46.48, lon:30.73 },
+    { k:/\b(donetsk|donbas)\b/,          lat:48.02, lon:37.80 },
+    { k:/\b(mariupol)\b/,                lat:47.09, lon:37.54 },
+    { k:/\b(crimea)\b/,                  lat:44.95, lon:34.10 },
+    { k:/\b(moscow|russia)\b/,           lat:55.75, lon:37.61 },
+
+    /* Europa */
+    { k:/\b(london|uk|britain)\b/,       lat:51.50, lon:-0.12 },
+    { k:/\b(paris|france)\b/,            lat:48.85, lon:2.35 },
+    { k:/\b(berlin|germany)\b/,          lat:52.52, lon:13.40 },
+    { k:/\b(brussels|belgium|eu)\b/,     lat:50.85, lon:4.35 },
+    { k:/\b(amsterdam|netherlands|nederland)\b/, lat:52.37, lon:4.90 },
+    { k:/\b(madrid|spain)\b/,            lat:40.42, lon:-3.70 },
+    { k:/\b(rome|italy)\b/,              lat:41.90, lon:12.50 },
+
+    /* VS */
+    { k:/\b(washington|white house|pentagon)\b/, lat:38.90, lon:-77.04 },
+    { k:/\b(new york|manhattan)\b/,      lat:40.71, lon:-74.00 },
+    { k:/\b(los angeles|california)\b/,  lat:34.05, lon:-118.24 },
+
+    /* Afrika */
+    { k:/\b(khartoum|sudan)\b/,          lat:15.50, lon:32.50 },
+    { k:/\b(tripoli|libya)\b/,           lat:32.89, lon:13.19 },
+
+    /* Azië */
+    { k:/\b(beijing|china)\b/,           lat:39.90, lon:116.40 },
+    { k:/\b(tokyo|japan)\b/,             lat:35.68, lon:139.69 },
+    { k:/\b(new delhi|india)\b/,         lat:28.61, lon:77.21 },
+    { k:/\b(kabul|afghanistan)\b/,       lat:34.53, lon:69.17 },
+
+    /* Marokko */
+    { k:/\b(rabat)\b/,                   lat:34.02, lon:-6.83 },
+    { k:/\b(casablanca)\b/,              lat:33.57, lon:-7.58 },
+    { k:/\b(marrakech)\b/,               lat:31.63, lon:-7.99 }
+  ];
+
+  for(const loc of locations){
+    if(loc.k.test(t)){
+      return { lat: loc.lat, lon: loc.lon };
+    }
+  }
+
+  return { lat: fallbackLat, lon: fallbackLon };
 }
 
 function fetchWithTimeout(promise, ms){
@@ -1316,6 +1359,7 @@ function processFeedResult(f, data){
       "";
     const titleClean = stripHtml(it.title || "");
     const descClean  = stripHtml(rawDesc).slice(0, 400);
+    const loc = detectLocation(titleClean, descClean, f.lat, f.lon);
     return {
       title: titleClean,
       link:  it.link  || "#",
@@ -1324,7 +1368,7 @@ function processFeedResult(f, data){
       source: f.name,
       cat: detectTopic(titleClean, descClean, f.cat),
       lang: f.lang,
-      lat: f.lat, lon: f.lon
+      lat: loc.lat, lon: loc.lon
     };
   });
 }

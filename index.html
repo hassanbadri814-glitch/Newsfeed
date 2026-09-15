@@ -900,7 +900,7 @@ const FRESH_MS    = 20 * 60 * 1000;
 const BREAKING_MS = 10 * 60 * 1000;
 const PAGE_SIZE   = 30;
 const TIMEOUT_MS  = 6000;
-const CACHE_KEY   = "wardesk_cache_v1";
+const CACHE_KEY   = "wardesk_cache_v2";
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
@@ -909,8 +909,8 @@ const RSSHUB_MIRRORS = [
 ];
 
 const HIGH_PRIORITY = [
-  "Al Jazeera", "Reuters", "AP News", "BBC World", "BBC Arabic",
-  "Al Jazeera AR", "TRT World", "Times of Israel", "Jerusalem Post"
+  "Al Jazeera", "BBC World", "BBC Arabic", "Al Jazeera AR",
+  "TRT World", "Times of Israel", "Jerusalem Post"
 ];
 
 const LIVE_CHANNELS = {
@@ -924,7 +924,7 @@ const LIVE_CHANNELS = {
 };
 
 /* ==========================================================
-   BRONNEN — 40 feeds, gecontroleerd
+   BRONNEN — 28 werkende feeds
    ========================================================== */
 const FEEDS = [
   /* ── HOGE PRIORITEIT ── */
@@ -936,44 +936,25 @@ const FEEDS = [
   { name:"Times of Israel",     lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
   { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
 
-  /* ── REUTERS & AP via Google News ── */
-  { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en" },
-  { name:"AP News",             lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://news.google.com/rss/search?q=site:apnews.com&hl=en-US&gl=US&ceid=US:en" },
-
-  /* ── OORLOG & CONFLICT ── */
+  /* ── OORLOG ── */
   { name:"Middle East Eye",     lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
-  { name:"The New Arab",        lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.newarab.com/rss" },
   { name:"Al Monitor",          lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
-  { name:"Al Mayadeen",         lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/rss" },
   { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
 
   /* ── GAZA ── */
-  { name:"Palestine Chronicle", lang:"en", cat:"gaza", lat:31.9, lon:35.2, url:"https://www.palestinechronicle.com/feed/" },
-
-  /* ── LIBANON ── */
-  { name:"Al Akhbar LB",        lang:"ar", cat:"lebanon", lat:33.89, lon:35.50, url:"https://al-akhbar.com/rss" },
-
-  /* ── SYRIË ── */
-  { name:"Syria Direct",        lang:"en", cat:"syria", lat:33.51, lon:36.29, url:"https://syriadirect.org/feed/" },
-  { name:"Rudaw English",       lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.rudaw.net/rss/english" },
+  { name:"Middle East Monitor", lang:"en", cat:"gaza", lat:51.5, lon:-0.12, url:"https://www.middleeastmonitor.com/feed/" },
+  { name:"Mondoweiss",          lang:"en", cat:"gaza", lat:40.71, lon:-74.00, url:"https://mondoweiss.net/feed/" },
 
   /* ── JEMEN ── */
   { name:"SABA Yemen",          lang:"en", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.saba.ye/en/rsscatfeed14.htm" },
 
   /* ── IRAN ── */
-  { name:"Iran International",  lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
   { name:"Mehr News Iran",      lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://en.mehrnews.com/rss" },
-
-  /* ── OEKRAÏNE ── */
-  { name:"Ukrinform",           lang:"en", cat:"ukraine", lat:50.45, lon:30.52, url:"https://www.ukrinform.net/rss" },
 
   /* ── SOEDAN ── */
   { name:"Radio Dabanga",       lang:"en", cat:"sudan", lat:15.5, lon:32.5, url:"https://www.dabangasudan.org/en/rss" },
 
-  /* ── MAROKKO ── */
-  { name:"Hespress",            lang:"ar", cat:"maroc", lat:34.02, lon:-6.83, url:"https://www.hespress.com/feed" },
-  { name:"Hespress FR",         lang:"fr", cat:"maroc", lat:34.02, lon:-6.83, url:"https://fr.hespress.com/feed" },
-  { name:"Le360",               lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://fr.le360.ma/rss" },
+  /* ── MAROKKO (werkende) ── */
   { name:"Yabiladi",            lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.yabiladi.com/rss/articles.xml" },
   { name:"Lakome2",             lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
   { name:"TelQuel",             lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
@@ -993,11 +974,7 @@ const FEEDS = [
 
   /* ── NL ── */
   { name:"NOS",                 lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
-  { name:"Nu.nl Algemeen",      lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
-
-  /* ── TELEGRAM ── */
-  { name:"📡 Al Jazeera AR",    lang:"ar", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/aljazeera" },
-  { name:"📡 Al Arabiya",       lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" }
+  { name:"Nu.nl Algemeen",      lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" }
 ];
 
 /* ==========================================================
@@ -1029,7 +1006,7 @@ try { readArticles = new Set(JSON.parse(localStorage.getItem(READ_KEY)) || []); 
 const NOTIF_KEY = "wardesk_notif";
 let notifEnabled = localStorage.getItem(NOTIF_KEY) === "1";
 
-const HEALTH_KEY = "wardesk_health_v1";
+const HEALTH_KEY = "wardesk_health_v2";
 let sourceHealth = {};
 try { sourceHealth = JSON.parse(localStorage.getItem(HEALTH_KEY)) || {}; } catch(e){}
 let disabledSources = new Set();
@@ -1105,10 +1082,8 @@ function showToast(msg, icon = "ℹ"){
   if(hour >= 7 && hour < 20){ document.body.classList.add("light"); }
 })();
 
-/* ==========================================================
-   TRANSLATION
-   ========================================================== */
-const TR_KEY = "wardesk_tr_v11";
+/* TRANSLATION */
+const TR_KEY = "wardesk_tr_v12";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1156,21 +1131,18 @@ async function gTranslate(text, target){
   const t = text.slice(0, 450);
   const key = target + ":" + hash(t);
   if(trCache[key]) return trCache[key];
-
   try{
     const out = await googleTranslate(t, target);
     trCache[key] = out;
     saveTrCache();
     return out;
   }catch(e){}
-
   try{
     const out = await myMemoryTranslate(t, target);
     trCache[key] = out;
     saveTrCache();
     return out;
   }catch(e){}
-
   return t;
 }
 
@@ -1203,9 +1175,6 @@ function updateTrStatus(){
 }
 function resetTrCounters(){ trTotal = 0; trDone = 0; trStatusEl.style.display = "none"; }
 
-/* ==========================================================
-   HELPERS
-   ========================================================== */
 function stripHtml(s){ return (s||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim(); }
 function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({
@@ -1248,9 +1217,6 @@ function detectTopic(title, desc, fallbackCat){
   return fallbackCat;
 }
 
-/* ==========================================================
-   FETCH WITH TIMEOUT
-   ========================================================== */
 function fetchWithTimeout(promise, ms){
   return Promise.race([
     promise,
@@ -1325,9 +1291,6 @@ function dedupe(items){
   return Array.from(map.values());
 }
 
-/* ==========================================================
-   HEALTH
-   ========================================================== */
 function recordHealth(name, ok){
   if(!sourceHealth[name]) sourceHealth[name] = { fails: 0, last: 0 };
   if(ok){ sourceHealth[name].fails = 0; } else { sourceHealth[name].fails++; }
@@ -1338,9 +1301,6 @@ function saveHealth(){
 }
 function isDisabled(name){ return disabledSources.has(name); }
 
-/* ==========================================================
-   BREAKING
-   ========================================================== */
 function detectBreaking(items){
   const groups = new Map();
   const now = Date.now();
@@ -1375,9 +1335,6 @@ function showBreaking(info){
 }
 breakingClose.addEventListener("click", () => breakingBanner.classList.remove("show"));
 
-/* ==========================================================
-   CACHE
-   ========================================================== */
 function saveCache(){
   try{
     const slim = allItems.slice(0, 200).map(it => ({
@@ -1399,9 +1356,6 @@ function loadCache(){
   }catch(e){ return []; }
 }
 
-/* ==========================================================
-   PROGRESSIVE LOADING
-   ========================================================== */
 let loadSession = 0;
 
 async function loadFeeds(isAuto = false){
@@ -1466,7 +1420,6 @@ async function loadFeeds(isAuto = false){
     }
   };
 
-  /* FASE 1: eerste batch */
   await Promise.allSettled(firstBatch.map(processOne));
   if(session !== loadSession) return;
 
@@ -1487,7 +1440,6 @@ async function loadFeeds(isAuto = false){
 
   progressBar.style.width = "30%";
 
-  /* FASE 2: rest */
   const CONCURRENCY = 5;
   let idx = 0;
   async function worker(){
@@ -1513,7 +1465,6 @@ async function loadFeeds(isAuto = false){
 
   if(session !== loadSession) return;
 
-  /* FINAL */
   const finalDeduped = dedupe(collected);
   finalDeduped.sort((a, b) => new Date(b.date) - new Date(a.date));
   allItems = finalDeduped;

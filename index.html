@@ -39,13 +39,78 @@
     -webkit-font-smoothing:antialiased; overflow-x:hidden; line-height:1.5;
     font-size:15px;
   }
-  .progress-bar{
-    position:fixed; top:0; left:0; height:2px;
-    background:linear-gradient(90deg,var(--gold),var(--crimson));
-    z-index:10000; width:0%;
-    transition:width .3s ease, opacity .3s ease;
+
+  /* ═══ LIVE TICKER ═══ */
+  .live-ticker{
+    background:var(--crimson);
+    color:#fff;
+    height:42px;
+    display:flex;
+    align-items:center;
+    overflow:hidden;
+    border-bottom:2px solid #000;
+    position:relative;
+    z-index:110;
+    box-shadow:0 2px 12px rgba(176,14,42,.5);
   }
-  .progress-bar.hidden{opacity:0}
+  .live-ticker .live-label{
+    background:#000;
+    color:var(--gold);
+    padding:0 1.1rem;
+    height:100%;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    font-weight:900;
+    font-size:.68rem;
+    letter-spacing:.22em;
+    flex-shrink:0;
+    z-index:2;
+  }
+  .live-ticker .live-label::before{
+    content:"";
+    width:8px; height:8px;
+    border-radius:50%;
+    background:var(--crimson-2);
+    box-shadow:0 0 8px var(--crimson-2);
+    animation:livePulse 1s infinite;
+  }
+  @keyframes livePulse{
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:.4;transform:scale(1.3)}
+  }
+  .live-ticker .live-track{
+    display:flex;
+    gap:3rem;
+    white-space:nowrap;
+    padding-left:1.5rem;
+    animation:liveScroll 200s linear infinite;
+    font-size:.85rem;
+    font-weight:600;
+    letter-spacing:.01em;
+  }
+  .live-ticker .live-track:hover{animation-play-state:paused}
+  .live-ticker .live-track a{
+    color:#fff;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:.6rem;
+    padding:.3rem 0;
+    transition:color .2s;
+  }
+  .live-ticker .live-track a:hover{color:var(--gold-2);text-decoration:underline}
+  .live-ticker .live-track a::before{
+    content:"●";
+    color:var(--gold);
+    font-size:.5rem;
+  }
+  .live-ticker .live-track a.fresh::before{
+    color:#fff;
+    animation:livePulse 1.2s infinite;
+  }
+  @keyframes liveScroll{to{transform:translateX(-50%)}}
+
   .breaking{
     position:fixed; top:0; left:0; right:0; z-index:9999;
     background:linear-gradient(90deg,var(--crimson) 0%,#7a0918 100%);
@@ -68,7 +133,6 @@
     display:-webkit-box; -webkit-line-clamp:2;
     -webkit-box-orient:vertical; overflow:hidden;
   }
-  .breaking-title[dir="rtl"]{font-family:"Noto Sans Arabic",sans-serif}
   .breaking-meta{font-size:.65rem; opacity:.85; margin-top:.2rem; font-weight:600}
   .breaking-close{
     background:transparent; border:1px solid rgba(255,255,255,.4);
@@ -76,33 +140,6 @@
     border-radius:50%; font-size:.9rem;
     cursor:pointer; flex-shrink:0;
   }
-  .ticker{
-    background:var(--bg-2); color:var(--ink-2);
-    height:32px; display:flex; align-items:center;
-    overflow:hidden; border-bottom:1px solid var(--line);
-    position:relative; z-index:100;
-  }
-  .ticker-label{
-    background:var(--crimson); color:#fff;
-    padding:0 .9rem; height:100%;
-    display:flex; align-items:center; gap:.4rem;
-    font-weight:800; font-size:.6rem;
-    letter-spacing:.18em; flex-shrink:0; z-index:2;
-  }
-  .ticker-label::before{
-    content:""; width:6px; height:6px; border-radius:50%;
-    background:#fff; animation:blink 1.5s infinite;
-  }
-  @keyframes blink{50%{opacity:.3}}
-  .ticker-track{
-    display:flex; gap:2.5rem; white-space:nowrap;
-    padding-left:1.2rem; animation:scroll 180s linear infinite;
-    font-size:.75rem; font-weight:500;
-  }
-  .ticker-track:hover{animation-play-state:paused}
-  .ticker-track span{display:inline-flex; align-items:center; gap:.5rem}
-  .ticker-track span::before{content:"·"; color:var(--gold); font-weight:900}
-  @keyframes scroll{to{transform:translateX(-50%)}}
   header{
     background:var(--bg-2); border-bottom:1px solid var(--line);
     position:sticky; top:0; z-index:99;
@@ -129,18 +166,6 @@
   .brand-text .tag{
     font-size:.55rem; color:var(--ink-3);
     letter-spacing:.22em; font-weight:600; margin-top:2px;
-  }
-  .live-pill{
-    display:inline-flex; align-items:center; gap:.35rem;
-    background:transparent; color:var(--crimson-2);
-    padding:.25rem .6rem;
-    font-size:.6rem; font-weight:800;
-    letter-spacing:.14em; text-transform:uppercase;
-    border:1px solid var(--crimson-2); border-radius:var(--radius-sm);
-  }
-  .live-pill::before{
-    content:""; width:5px; height:5px; background:var(--crimson-2);
-    border-radius:50%; animation:blink 1.5s infinite;
   }
   .stats{margin-left:auto; display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap}
   .stat{display:flex; flex-direction:column; gap:.1rem}
@@ -209,28 +234,6 @@
     max-width:170px;
   }
   .select:focus{border-color:var(--gold-3)}
-  .fav-toggle{
-    padding:.5rem .8rem;
-    background:transparent; border:1px solid var(--line);
-    color:var(--ink-3); font-family:inherit;
-    font-size:.72rem; font-weight:600;
-    letter-spacing:.08em; text-transform:uppercase;
-    border-radius:var(--radius-sm); cursor:pointer;
-    display:inline-flex; align-items:center; gap:.4rem;
-    transition:all .15s;
-  }
-  .fav-toggle:hover{color:var(--gold); border-color:var(--gold-3)}
-  .fav-toggle.active{color:var(--gold); border-color:var(--gold-3); background:rgba(184,153,104,.08)}
-  .fav-toggle .count{color:var(--ink-3); font-size:.68rem; font-weight:700}
-  .fav-toggle.active .count{color:var(--gold)}
-  .icon-sm{
-    width:32px; height:32px; padding:0;
-    display:grid; place-items:center;
-    background:transparent; border:1px solid var(--line);
-    color:var(--ink-3); border-radius:var(--radius-sm);
-    cursor:pointer; font-size:.85rem;
-  }
-  .icon-sm:hover{border-color:var(--gold-3); color:var(--gold)}
   .nav{
     background:var(--bg); border-bottom:1px solid var(--line);
     overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
@@ -261,6 +264,7 @@
     width:5px; height:5px; border-radius:50%;
     background:var(--crimson-2); animation:blink 1.5s infinite;
   }
+  @keyframes blink{50%{opacity:.3}}
   .statusbar{
     background:var(--bg-2); border-bottom:1px solid var(--line);
     padding:.5rem 1.25rem; font-size:.68rem; color:var(--ink-3);
@@ -430,7 +434,7 @@
   .badge.tg{background:#229ED9; color:#fff; border-color:transparent}
   .badge.multi{background:var(--crimson); color:#fff; border-color:transparent; cursor:pointer}
   .live-tag{
-    position:absolute; top:.55rem; right:2.8rem;
+    position:absolute; top:.55rem; right:.55rem;
     background:var(--crimson); color:#fff;
     padding:.15rem .5rem; font-size:.52rem; font-weight:800;
     letter-spacing:.12em; display:inline-flex; align-items:center;
@@ -440,17 +444,6 @@
     content:""; width:4px; height:4px; background:#fff;
     border-radius:50%; animation:blink 1.2s infinite;
   }
-  .fav-btn{
-    position:absolute; top:.45rem; right:.45rem;
-    width:28px; height:28px; border-radius:50%;
-    background:rgba(10,14,26,.7);
-    border:1px solid rgba(255,255,255,.1);
-    color:rgba(255,255,255,.6); font-size:.85rem;
-    cursor:pointer; display:grid; place-items:center;
-    z-index:3; transition:all .18s;
-  }
-  .fav-btn:hover{background:rgba(10,14,26,.95); color:var(--gold)}
-  .fav-btn.on{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
   .card-body{
     padding:.9rem 1rem 1.05rem;
     display:flex; flex-direction:column; gap:.5rem; flex:1;
@@ -614,8 +607,6 @@
     overflow:hidden;
     background:var(--bg-2);
   }
-
-  /* MARKERS */
   .leaflet-marker-icon.custom-marker{
     background:transparent !important;
     border:none !important;
@@ -660,8 +651,6 @@
     border:1px solid rgba(255,255,255,.4);
     font-family:"Inter",sans-serif;
   }
-
-  /* LEGENDA */
   .map-legend{
     position:absolute;
     bottom:20px; left:20px;
@@ -699,7 +688,6 @@
     font-weight:700; font-size:.62rem;
     font-variant-numeric:tabular-nums;
   }
-
   .leaflet-popup-content-wrapper, .leaflet-popup-tip{
     background:var(--card); color:var(--ink);
     border-radius:var(--radius); border:1px solid var(--gold-3);
@@ -778,7 +766,9 @@
     .nav-inner{padding:0 .9rem; height:42px}
     .nav-tab{padding:0 .7rem; font-size:.62rem}
     #map{height:60vh}
-    .ticker{height:28px; font-size:.65rem}
+    .live-ticker{height:36px}
+    .live-ticker .live-track{font-size:.78rem; gap:2rem}
+    .live-ticker .live-label{padding:0 .8rem; font-size:.6rem}
     .section-head h2{font-size:.9rem}
     .live-panel h3{font-size:1.1rem}
     .live-panel .icon{font-size:2.5rem}
@@ -799,7 +789,13 @@
 </head>
 <body>
 
-<div class="progress-bar" id="progressBar"></div>
+<!-- LIVE TICKER -->
+<div class="live-ticker">
+  <div class="live-label">LIVE</div>
+  <div class="live-track" id="liveTrack">
+    <a>Nieuwsfeed wordt geladen...</a>
+  </div>
+</div>
 
 <div class="breaking" id="breakingBanner">
   <div class="breaking-icon">🚨</div>
@@ -811,13 +807,6 @@
   <button class="breaking-close" id="breakingClose" aria-label="Sluiten">✕</button>
 </div>
 
-<div class="ticker">
-  <div class="ticker-label">BREAKING</div>
-  <div class="ticker-track" id="tickerTrack">
-    <span>Live conflict monitor — feeds worden geladen...</span>
-  </div>
-</div>
-
 <header>
   <div class="header-inner">
     <div class="brand">
@@ -827,7 +816,6 @@
         <span class="tag">LIVE CONFLICT MONITOR</span>
       </div>
     </div>
-    <span class="live-pill">Live</span>
     <div class="stats">
       <div class="stat">
         <span class="stat-label">Klok</span>
@@ -871,12 +859,6 @@
     <select class="select" id="sourceSelect" aria-label="Filter op bron">
       <option value="all">Alle bronnen</option>
     </select>
-    <button class="fav-toggle" id="favToggle">
-      ⭐ Favorieten <span class="count" id="favCount">0</span>
-    </button>
-    <button class="icon-sm" id="exportBtn" title="Export favorieten">📤</button>
-    <button class="icon-sm" id="importBtn" title="Import favorieten">📥</button>
-    <input type="file" id="importFile" accept=".json" style="display:none">
   </div>
 
   <nav class="nav">
@@ -998,9 +980,7 @@
 </div>
 
 <script>
-/* ==========================================================
-   CONFIG
-   ========================================================== */
+/* CONFIG */
 const PROXY_URL   = "https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED    = 5;
 const REFRESH_MS  = 30 * 1000;
@@ -1008,7 +988,7 @@ const FRESH_MS    = 20 * 60 * 1000;
 const BREAKING_MS = 10 * 60 * 1000;
 const PAGE_SIZE   = 30;
 const TIMEOUT_MS  = 6000;
-const CACHE_KEY   = "wardesk_cache_v7";
+const CACHE_KEY   = "wardesk_cache_v8";
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
@@ -1063,9 +1043,7 @@ const FEEDS = [
   { name:"Nu.nl Algemeen",      lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" }
 ];
 
-/* ==========================================================
-   STATE
-   ========================================================== */
+/* STATE */
 let allItems = [];
 let seenLinks = new Set();
 let activeCat = "all";
@@ -1076,14 +1054,9 @@ let map = null, markersLayer = null;
 let nextRefreshSeconds = REFRESH_MS / 1000;
 let isFirstLoad = true;
 let currentLiveChannel = "aljazeera-en";
-let favoritesOnly = false;
 let currentPage = 1;
 let failedFeeds = [];
 const targetLang = "nl";
-
-const FAV_KEY = "wardesk_favorites_v1";
-let favorites = new Set();
-try { favorites = new Set(JSON.parse(localStorage.getItem(FAV_KEY)) || []); } catch(e){}
 
 const READ_KEY = "wardesk_read_v1";
 let readArticles = new Set();
@@ -1102,6 +1075,7 @@ for(const [src, data] of Object.entries(sourceHealth)){
 
 /* DOM */
 const feedEl       = document.getElementById("feed");
+const liveTrack    = document.getElementById("liveTrack");
 const statusEl     = document.getElementById("statusText");
 const statusDot    = document.getElementById("statusDot");
 const trStatusEl   = document.getElementById("trStatus");
@@ -1122,24 +1096,18 @@ const heroItem1    = document.getElementById("heroItem1");
 const heroItem2    = document.getElementById("heroItem2");
 const sectionTitle = document.getElementById("sectionTitle");
 const sectionCount = document.getElementById("sectionCount");
-const tickerTrack  = document.getElementById("tickerTrack");
 const refreshBtn   = document.getElementById("refresh");
 const searchInput  = document.getElementById("searchInput");
 const searchClear  = document.getElementById("searchClear");
 const searchWrap   = document.getElementById("searchWrap");
 const sourceSelect = document.getElementById("sourceSelect");
 const timeSelect   = document.getElementById("timeSelect");
-const favToggle    = document.getElementById("favToggle");
-const favCountEl   = document.getElementById("favCount");
 const notifBtn     = document.getElementById("notifBtn");
 const failedToggle = document.getElementById("failedToggle");
 const failedCount  = document.getElementById("failedCount");
 const failedList   = document.getElementById("failedList");
 const toast        = document.getElementById("toast");
 const toastMsg     = document.getElementById("toastMsg");
-const exportBtn    = document.getElementById("exportBtn");
-const importBtn    = document.getElementById("importBtn");
-const importFile   = document.getElementById("importFile");
 const srcPopup     = document.getElementById("srcPopup");
 const srcTitle     = document.getElementById("srcTitle");
 const srcList      = document.getElementById("srcList");
@@ -1169,7 +1137,7 @@ function showToast(msg, icon = "ℹ"){
 })();
 
 /* TRANSLATION */
-const TR_KEY = "wardesk_tr_v17";
+const TR_KEY = "wardesk_tr_v18";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1492,6 +1460,21 @@ function loadCache(){
   }catch(e){ return []; }
 }
 
+/* LIVE TICKER RENDERING */
+function renderLiveTicker(){
+  const top = allItems.slice(0, 20);
+  if(!top.length){
+    liveTrack.innerHTML = '<a>Geen nieuws beschikbaar</a>';
+    return;
+  }
+  const items = top.map(it => {
+    const tr = getCachedTr(it.title) || it.title;
+    const fresh = isFresh(it.date);
+    return `<a href="${escapeHtml(it.link)}" target="_blank" rel="noopener" class="${fresh?'fresh':''}">${escapeHtml(tr.slice(0, 140))}</a>`;
+  }).join("");
+  liveTrack.innerHTML = items + items;
+}
+
 let loadSession = 0;
 
 async function loadFeeds(isAuto = false){
@@ -1504,7 +1487,7 @@ async function loadFeeds(isAuto = false){
       allItems = cached;
       render();
       renderHero();
-      renderTicker();
+      renderLiveTicker();
       statusEl.textContent = `${cached.length} gecachte berichten · updates binnenkort...`;
       statusDot.className = "dot loading";
     }
@@ -1561,7 +1544,7 @@ async function loadFeeds(isAuto = false){
   currentPage = 1;
   render();
   renderHero();
-  renderTicker();
+  renderLiveTicker();
   renderMap();
   isFirstLoad = false;
   firstRenderDone = true;
@@ -1582,7 +1565,7 @@ async function loadFeeds(isAuto = false){
         statWar.textContent = allItems.filter(x => x.cat === "war").length;
         render();
         renderHero();
-        renderTicker();
+        renderLiveTicker();
         const pct = 30 + Math.round((idx / secondBatch.length) * 65);
         progressBar.style.width = pct + "%";
       }
@@ -1644,7 +1627,7 @@ async function loadFeeds(isAuto = false){
   currentPage = 1;
   render();
   renderHero();
-  renderTicker();
+  renderLiveTicker();
   renderMap();
   nextRefreshSeconds = REFRESH_MS / 1000;
 }
@@ -1660,16 +1643,6 @@ function populateSources(){
   sourceSelect.innerHTML = '<option value="all">Alle bronnen</option>' +
     sources.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
   if(sources.includes(current) || current === "all") sourceSelect.value = current;
-}
-
-function renderTicker(){
-  const top = allItems.slice(0, 15);
-  if(!top.length) return;
-  const html = top.map(it => {
-    const tr = getCachedTr(it.title) || it.title;
-    return `<span>${escapeHtml(tr.slice(0, 120))}</span>`;
-  }).join("");
-  tickerTrack.innerHTML = html + html;
 }
 
 function renderHero(){
@@ -1728,7 +1701,6 @@ function getFilteredBase(){
   const now = Date.now();
   const timeLimit = activeTime === "all" ? Infinity : parseInt(activeTime, 10) * 60 * 60 * 1000;
   return allItems.filter(it => {
-    if(favoritesOnly && !favorites.has(it.link)) return false;
     if(activeCat !== "all" && activeCat !== "live" && it.cat !== activeCat) return false;
     if(activeSource !== "all" && it.source !== activeSource) return false;
     if(timeLimit !== Infinity){
@@ -1759,7 +1731,6 @@ function render(){
     tech:"Tech", health:"Gezondheid", algemeen:"Algemeen"
   };
   let title = titleMap[activeCat] || activeCat.toUpperCase();
-  if(favoritesOnly) title = "⭐ Favorieten";
   if(activeSource !== "all") title = "Bron: " + activeSource;
   if(activeTime !== "all"){
     const labels = { "1":"Laatste uur", "6":"Laatste 6 uur", "24":"Laatste 24u", "168":"Laatste week" };
@@ -1822,7 +1793,6 @@ function cardHtml(it, i){
   const fresh = isFresh(it.date);
   const isTg = it.cat === "tg";
   const isWar = it.cat === "war";
-  const isFav = favorites.has(it.link);
   const isRead = readArticles.has(it.link);
   const sources = it.sources || [it.source];
   const multiSrc = sources.length > 1;
@@ -1834,16 +1804,13 @@ function cardHtml(it, i){
 
   return `
     <article id="wcard-${i}" data-idx="${i}" data-link="${escapeHtml(it.link)}" class="${classes}" dir="${rtl?'rtl':'ltr'}"
-             onclick="if(event.target.tagName!=='A' && !event.target.classList.contains('fav-btn') && !event.target.classList.contains('badge'))window.open('${escapeHtml(it.link)}','_blank')">
+             onclick="if(event.target.tagName!=='A' && !event.target.classList.contains('badge'))window.open('${escapeHtml(it.link)}','_blank')">
       <div class="card-thumb">
         ${img}
         <div class="card-badges">
           <span class="badge ${badgeLang}">${isTg ? '📡 TG' : it.lang.toUpperCase()}</span>
           ${multiSrc ? `<span class="badge multi" data-sources='${escapeHtml(JSON.stringify(sources))}'>${sources.length}× bronnen</span>` : ''}
         </div>
-        <button class="fav-btn ${isFav?'on':''}" data-fav="${escapeHtml(it.link)}" aria-label="Favoriet">
-          ${isFav ? '★' : '☆'}
-        </button>
         ${fresh ? '<span class="live-tag">LIVE</span>' : ''}
       </div>
       <div class="card-body">
@@ -1864,25 +1831,6 @@ function cardHtml(it, i){
 }
 
 feedEl.addEventListener("click", e => {
-  const favBtn = e.target.closest(".fav-btn");
-  if(favBtn){
-    e.stopPropagation(); e.preventDefault();
-    const link = favBtn.dataset.fav;
-    if(favorites.has(link)){
-      favorites.delete(link);
-      favBtn.classList.remove("on"); favBtn.textContent = "☆";
-      showToast("Verwijderd uit favorieten", "☆");
-    } else {
-      favorites.add(link);
-      favBtn.classList.add("on"); favBtn.textContent = "★";
-      showToast("Toegevoegd aan favorieten", "★");
-    }
-    localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
-    updateFavCount();
-    if(favoritesOnly) render();
-    return;
-  }
-
   const multiBadge = e.target.closest(".badge.multi");
   if(multiBadge){
     e.stopPropagation();
@@ -1892,7 +1840,6 @@ feedEl.addEventListener("click", e => {
     } catch(err){}
     return;
   }
-
   const card = e.target.closest("article");
   if(card){
     const link = card.dataset.link;
@@ -1952,7 +1899,6 @@ function initMap(){
   if(map) return;
   map = L.map("map", { center:[30,38], zoom:3, worldCopyJump:true, zoomControl:true });
 
-  /* Esri tiles — gratis, geen API key */
   const isLight = document.body.classList.contains("light");
   const tileUrl = isLight
     ? "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
@@ -2175,58 +2121,6 @@ timeSelect.addEventListener("change", () => {
   render(); renderHero(); renderMap();
 });
 
-favToggle.addEventListener("click", () => {
-  favoritesOnly = !favoritesOnly;
-  favToggle.classList.toggle("active", favoritesOnly);
-  currentPage = 1;
-  render(); renderHero(); renderMap();
-  showToast(favoritesOnly ? "Favorieten ingeschakeld" : "Favorieten uitgeschakeld", "⭐");
-});
-
-function updateFavCount(){
-  favCountEl.textContent = favorites.size;
-  favToggle.classList.toggle("active", favoritesOnly);
-}
-updateFavCount();
-
-exportBtn.addEventListener("click", () => {
-  const data = {
-    version: 1,
-    exported: new Date().toISOString(),
-    favorites: [...favorites],
-    readArticles: [...readArticles]
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "wardesk-backup-" + new Date().toISOString().slice(0,10) + ".json";
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast("Backup gedownload", "📤");
-});
-
-importBtn.addEventListener("click", () => importFile.click());
-importFile.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if(data.favorites && Array.isArray(data.favorites)) data.favorites.forEach(f => favorites.add(f));
-      if(data.readArticles && Array.isArray(data.readArticles)) data.readArticles.forEach(r => readArticles.add(r));
-      localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
-      localStorage.setItem(READ_KEY, JSON.stringify([...readArticles]));
-      updateFavCount();
-      render();
-      showToast("Backup geïmporteerd", "📥");
-    } catch(err){ showToast("Ongeldige backup", "⚠"); }
-  };
-  reader.readAsText(file);
-  e.target.value = "";
-});
-
 failedToggle.addEventListener("click", () => failedList.classList.toggle("show"));
 
 function updateNotifBtn(){
@@ -2270,8 +2164,6 @@ viewMapBtn.addEventListener("click", () => switchView("map"));
 document.getElementById("theme").addEventListener("click", () => {
   document.body.classList.toggle("light");
   localStorage.setItem("wardesk_theme", document.body.classList.contains("light") ? "light" : "dark");
-
-  /* Herlaad kaart met nieuwe tiles */
   if(map){
     map.remove();
     map = null;

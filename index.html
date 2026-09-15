@@ -12,7 +12,7 @@
     --bg:#0b1220; --card:#151e2e; --card2:#1c2740;
     --text:#e6edf7; --muted:#8ea3bf; --accent:#38bdf8;
     --accent2:#22c55e; --border:#243049; --danger:#f87171;
-    --ar:#f59e0b; --tr:#a855f7;
+    --ar:#f59e0b; --tr:#a855f7; --war:#ef4444;
   }
   body.light{
     --bg:#f4f7fb; --card:#ffffff; --card2:#eef3fa;
@@ -25,7 +25,6 @@
     background:var(--bg); color:var(--text); min-height:100vh;
     transition:background .25s,color .25s; -webkit-font-smoothing:antialiased;
   }
-
   header{
     position:sticky; top:0; z-index:1000;
     background:rgba(11,18,32,.9); backdrop-filter:blur(14px);
@@ -38,10 +37,7 @@
     align-items:center; justify-content:space-between; flex-wrap:wrap;
   }
   .brand{display:flex; align-items:center; gap:.55rem}
-  .brand .dot{
-    width:11px; height:11px; border-radius:50%; background:var(--accent2);
-    animation:pulse 2s infinite;
-  }
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
   @keyframes pulse{
     0%{box-shadow:0 0 0 0 rgba(34,197,94,.7)}
     70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}
@@ -49,11 +45,7 @@
   }
   .brand h1{font-size:1.05rem; font-weight:700; letter-spacing:-.3px}
   .brand h1 span{color:var(--accent)}
-
-  .filters{
-    max-width:1400px; margin:.7rem auto 0; display:flex;
-    gap:.5rem; flex-wrap:wrap; align-items:center;
-  }
+  .filters{max-width:1400px; margin:.7rem auto 0; display:flex; gap:.5rem; flex-wrap:wrap; align-items:center}
   .chips{display:flex; gap:.35rem; flex-wrap:wrap}
   .chip{
     padding:.4rem .8rem; border-radius:99px; border:1px solid var(--border);
@@ -63,10 +55,11 @@
   }
   .chip:hover{color:var(--text); border-color:var(--accent)}
   .chip.active{background:var(--accent); color:#00121f; border-color:var(--accent)}
+  .chip.war{color:#fca5a5; border-color:rgba(239,68,68,.35)}
+  .chip.war.active{background:var(--war); color:#fff; border-color:var(--war)}
   .chip.ar.active{background:var(--ar); color:#1a1200}
   .chip.tr.active{background:var(--tr); color:#fff}
   .chip.small{font-size:.72rem; padding:.3rem .6rem}
-
   .tools{display:flex; gap:.4rem; align-items:center; margin-left:auto; flex-wrap:wrap}
   input[type="search"]{
     font:inherit; padding:.45rem .85rem; border-radius:10px;
@@ -84,28 +77,15 @@
   .iconbtn.active{background:var(--accent); color:#00121f; border-color:var(--accent)}
   .iconbtn.spinning span.icon{animation:spin 1s linear infinite; display:inline-block}
   @keyframes spin{to{transform:rotate(360deg)}}
-
   #status{
     max-width:1400px; margin:0 auto; padding:.65rem 1.1rem;
     color:var(--muted); font-size:.82rem;
     display:flex; gap:.7rem; align-items:center; flex-wrap:wrap;
   }
-  #status .live{
-    display:inline-flex; align-items:center; gap:.3rem;
-    color:var(--accent2); font-weight:700;
-  }
-  #status .live::before{
-    content:""; width:7px; height:7px; border-radius:50%;
-    background:var(--accent2); animation:pulse 2s infinite;
-  }
-  #status .tr{
-    color:var(--tr); font-weight:700;
-    display:inline-flex; align-items:center; gap:.3rem;
-  }
-  #status .tr::before{
-    content:"🌐"; font-size:.85rem;
-  }
-
+  #status .live{display:inline-flex; align-items:center; gap:.3rem; color:var(--accent2); font-weight:700}
+  #status .live::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--accent2); animation:pulse 2s infinite}
+  #status .tr{color:var(--tr); font-weight:700; display:inline-flex; align-items:center; gap:.3rem}
+  #status .tr::before{content:"🌐"; font-size:.85rem}
   .view{display:none} .view.active{display:block}
   .grid{
     display:grid; gap:1rem; padding:.3rem 1.1rem 3rem;
@@ -117,14 +97,10 @@
     border-radius:16px; overflow:hidden; display:flex;
     flex-direction:column; transition:transform .2s,border-color .2s,box-shadow .2s;
   }
-  article:hover{
-    transform:translateY(-4px); border-color:var(--accent);
-    box-shadow:0 12px 30px -12px rgba(56,189,248,.35);
-  }
-  article .thumb{
-    position:relative; width:100%; aspect-ratio:16/9;
-    background:linear-gradient(135deg,var(--card2),var(--bg)); overflow:hidden;
-  }
+  article:hover{transform:translateY(-4px); border-color:var(--accent); box-shadow:0 12px 30px -12px rgba(56,189,248,.35)}
+  article.war{border-left:3px solid var(--war)}
+  article.war:hover{border-color:var(--war); box-shadow:0 12px 30px -12px rgba(239,68,68,.4)}
+  article .thumb{position:relative; width:100%; aspect-ratio:16/9; background:linear-gradient(135deg,var(--card2),var(--bg)); overflow:hidden}
   article .thumb img{width:100%; height:100%; object-fit:cover; display:block}
   article .lang{
     position:absolute; top:.55rem; left:.55rem;
@@ -136,34 +112,32 @@
   article .lang.ar{background:var(--ar); color:#1a1200}
   article .lang.fr{background:#3b82f6; color:#fff}
   article .lang.nl{background:#f97316; color:#fff}
-
+  article .lang.he{background:#6366f1; color:#fff}
+  article .war-badge{
+    position:absolute; top:.55rem; right:.55rem;
+    background:var(--war); color:#fff;
+    padding:.15rem .5rem; border-radius:6px;
+    font-size:.65rem; font-weight:800; letter-spacing:.5px;
+    animation:pulse 2s infinite;
+  }
   article .body{padding:.95rem; display:flex; flex-direction:column; gap:.45rem; flex:1}
   article .meta{
     display:flex; gap:.45rem; flex-wrap:wrap; font-size:.68rem;
-    color:var(--muted); text-transform:uppercase;
-    letter-spacing:.4px; align-items:center;
+    color:var(--muted); text-transform:uppercase; letter-spacing:.4px; align-items:center;
   }
-  article .source{
-    background:var(--card2); padding:.12rem .5rem; border-radius:6px;
-    font-weight:700; color:var(--accent);
-  }
+  article .source{background:var(--card2); padding:.12rem .5rem; border-radius:6px; font-weight:700; color:var(--accent)}
   article h2{
     font-size:.98rem; line-height:1.4; font-weight:700;
     display:-webkit-box; -webkit-line-clamp:3;
     -webkit-box-orient:vertical; overflow:hidden;
   }
-  article[dir="rtl"] h2{
-    font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif; line-height:1.6;
-  }
-  article h2.translating{
-    color:var(--muted); font-style:italic; font-weight:500;
-  }
+  article[dir="rtl"] h2{font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif; line-height:1.6}
+  article h2.translating{color:var(--muted); font-style:italic; font-weight:500}
   article .original{
     font-size:.72rem; color:var(--muted); line-height:1.45;
     border-left:2px solid var(--border); padding-left:.5rem;
     display:-webkit-box; -webkit-line-clamp:2;
-    -webkit-box-orient:vertical; overflow:hidden; opacity:.8;
-    font-style:italic;
+    -webkit-box-orient:vertical; overflow:hidden; opacity:.8; font-style:italic;
   }
   body.light article .original{background:var(--card2); padding:.4rem .5rem; border-radius:6px}
   article[dir="rtl"] .original{
@@ -176,68 +150,30 @@
     display:-webkit-box; -webkit-line-clamp:3;
     -webkit-box-orient:vertical; overflow:hidden; flex:1;
   }
-  article[dir="rtl"] p{
-    font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif; line-height:1.75;
-  }
+  article[dir="rtl"] p{font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif; line-height:1.75}
   article .read{
     color:var(--accent); text-decoration:none; font-weight:700;
     font-size:.83rem; margin-top:.2rem;
     display:inline-flex; align-items:center; gap:.3rem;
   }
   article[dir="rtl"] .read{justify-content:flex-end}
-
   #mapView{padding:0 1.1rem 2rem; max-width:1400px; margin:0 auto}
-  #map{
-    height:70vh; min-height:400px; border-radius:16px;
-    border:1px solid var(--border); overflow:hidden;
-  }
-  body:not(.light) #map{
-    filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9);
-  }
-  .leaflet-popup-content-wrapper, .leaflet-popup-tip{
-    background:var(--card); color:var(--text); border:1px solid var(--border);
-  }
+  #map{height:70vh; min-height:400px; border-radius:16px; border:1px solid var(--border); overflow:hidden}
+  body:not(.light) #map{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip{background:var(--card); color:var(--text); border:1px solid var(--border)}
   .leaflet-popup-content{margin:.6rem .8rem; font-family:inherit; max-width:280px}
-  .leaflet-popup-content h3{
-    font-size:.88rem; line-height:1.35; margin-bottom:.35rem;
-  }
-  .leaflet-popup-content h3[dir="rtl"]{
-    font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif;
-    text-align:right; line-height:1.6;
-  }
-  .leaflet-popup-content .src{
-    display:inline-block; background:var(--card2); color:var(--accent);
-    padding:.1rem .45rem; border-radius:5px;
-    font-size:.68rem; font-weight:700; margin-bottom:.35rem;
-  }
-  .leaflet-popup-content a{
-    color:var(--accent); text-decoration:none;
-    font-weight:700; font-size:.8rem;
-  }
+  .leaflet-popup-content h3{font-size:.88rem; line-height:1.35; margin-bottom:.35rem}
+  .leaflet-popup-content h3[dir="rtl"]{font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif; text-align:right; line-height:1.6}
+  .leaflet-popup-content .src{display:inline-block; background:var(--card2); color:var(--accent); padding:.1rem .45rem; border-radius:5px; font-size:.68rem; font-weight:700; margin-bottom:.35rem}
+  .leaflet-popup-content a{color:var(--accent); text-decoration:none; font-weight:700; font-size:.8rem}
   .leaflet-container{background:#0a101d}
-
-  .loader{
-    grid-column:1/-1; display:flex; flex-direction:column;
-    align-items:center; gap:1rem; padding:4rem 1rem; color:var(--muted);
-  }
-  .loader .ring{
-    width:44px; height:44px; border-radius:50%;
-    border:3px solid var(--border); border-top-color:var(--accent);
-    animation:spin .9s linear infinite;
-  }
+  .loader{grid-column:1/-1; display:flex; flex-direction:column; align-items:center; gap:1rem; padding:4rem 1rem; color:var(--muted)}
+  .loader .ring{width:44px;height:44px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin .9s linear infinite}
   .empty{grid-column:1/-1; text-align:center; padding:3rem 1rem; color:var(--muted)}
   .empty .big{font-size:2.5rem; margin-bottom:.6rem}
-  .error{
-    grid-column:1/-1; background:rgba(248,113,113,.08);
-    border:1px solid rgba(248,113,113,.3); color:var(--danger);
-    padding:1rem 1.2rem; border-radius:12px; font-size:.9rem;
-  }
-  footer{
-    text-align:center; padding:1.6rem 1rem; color:var(--muted);
-    font-size:.75rem; border-top:1px solid var(--border);
-  }
+  .error{grid-column:1/-1; background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.3); color:var(--danger); padding:1rem 1.2rem; border-radius:12px; font-size:.9rem}
+  footer{text-align:center; padding:1.6rem 1rem; color:var(--muted); font-size:.75rem; border-top:1px solid var(--border)}
   footer a{color:var(--accent); text-decoration:none}
-
   @media(max-width:640px){
     .brand h1{font-size:.95rem}
     input[type="search"]{min-width:0; flex:1; font-size:.85rem}
@@ -270,6 +206,7 @@
   <div class="filters">
     <div class="chips" id="cats">
       <div class="chip active" data-cat="all">🌍 Alles</div>
+      <div class="chip war" data-cat="war">⚔️ OORLOG</div>
       <div class="chip" data-cat="maroc">🇲🇦 Marokko</div>
       <div class="chip" data-cat="mideast">🕌 Midden-Oosten</div>
       <div class="chip" data-cat="world">🌐 Wereld</div>
@@ -281,9 +218,7 @@
   </div>
 
   <div class="filters" style="margin-top:.4rem">
-    <span style="font-size:.75rem; color:var(--muted); font-weight:600">
-      🌐 Vertaal naar:
-    </span>
+    <span style="font-size:.75rem; color:var(--muted); font-weight:600">🌐 Vertaal naar:</span>
     <div class="chips" id="targets">
       <div class="chip small tr" data-t="nl">🇳🇱 NL</div>
       <div class="chip small tr" data-t="en">🇬🇧 EN</div>
@@ -294,11 +229,12 @@
       <div class="chip small tr" data-t="tr">🇹🇷 TR</div>
     </div>
     <div class="chips" id="langs" style="margin-left:auto">
-      <div class="chip small active" data-lang="all">Alle talen</div>
+      <div class="chip small active" data-lang="all">Alle</div>
       <div class="chip small" data-lang="ar">AR</div>
       <div class="chip small" data-lang="fr">FR</div>
       <div class="chip small" data-lang="en">EN</div>
       <div class="chip small" data-lang="nl">NL</div>
+      <div class="chip small" data-lang="he">HE</div>
     </div>
   </div>
 </header>
@@ -313,7 +249,7 @@
   <div class="grid" id="feed">
     <div class="loader">
       <div class="ring"></div>
-      <div>Nieuws ophalen van alle bronnen...</div>
+      <div>Nieuws ophalen van 53 bronnen...</div>
     </div>
   </div>
 </main>
@@ -323,26 +259,44 @@
 </section>
 
 <footer>
-  Live wereldkaart · 27 bronnen · Automatische vertaling via Google
+  53 bronnen · Live · Automatisch vertaald · Live kaart
 </footer>
 
 <script>
 /* ==========================================================
-   NIEUWSFEED — configuratie
-   cat: maroc | mideast | world | nl | business | tech | sport
-   lang: ar | fr | en | nl
+   NIEUWSFEED — 53 bronnen
+   cat: war | maroc | mideast | world | nl | business | tech | sport
+   lang: ar | fr | en | nl | he | es
    ========================================================== */
 const FEEDS = [
-  /* 🇲🇦 MAROKKO */
-  { name:"Hespress AR",     lang:"ar", cat:"maroc",   lat:34.02, lon:-6.83, url:"https://www.hespress.com/feed" },
-  { name:"Hespress FR",     lang:"fr", cat:"maroc",   lat:34.02, lon:-6.83, url:"https://fr.hespress.com/feed" },
-  { name:"Le360",           lang:"fr", cat:"maroc",   lat:33.57, lon:-7.58, url:"https://fr.le360.ma/rss" },
-  { name:"Yabiladi",        lang:"fr", cat:"maroc",   lat:33.57, lon:-7.58, url:"https://www.yabiladi.com/rss/articles.xml" },
-  { name:"Medias24",        lang:"fr", cat:"maroc",   lat:33.57, lon:-7.58, url:"https://www.medias24.com/feed/" },
-  { name:"Lakome2",         lang:"ar", cat:"maroc",   lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
-  { name:"TelQuel",         lang:"fr", cat:"maroc",   lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
+  /* ⚔️ OORLOG — MIDDEN-OOSTEN CONFLICTEN (14 bronnen) */
+  { name:"Al Jazeera ME",        lang:"en", cat:"war", lat:31.5,  lon:34.47, url:"https://www.aljazeera.com/xml/rss/all.xml" },
+  { name:"Middle East Eye",      lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
+  { name:"The New Arab",         lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.newarab.com/rss" },
+  { name:"Times of Israel",      lang:"en", cat:"war", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
+  { name:"Jerusalem Post",       lang:"en", cat:"war", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsfrontpage.aspx" },
+  { name:"Haaretz",              lang:"he", cat:"war", lat:32.07, lon:34.78, url:"https://www.haaretz.com/cmlink/1.628765" },
+  { name:"Iran International",   lang:"en", cat:"war", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
+  { name:"Rudaw English",        lang:"en", cat:"war", lat:36.19, lon:44.01, url:"https://www.rudaw.net/rss/english" },
+  { name:"Kurdistan24",          lang:"en", cat:"war", lat:36.19, lon:44.01, url:"https://www.kurdistan24.net/en/rss" },
+  { name:"Syrian Observatory",   lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.syriahr.com/en/feed/" },
+  { name:"Al Mayadeen EN",       lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/rss" },
+  { name:"I24 News AR",          lang:"ar", cat:"war", lat:32.07, lon:34.78, url:"https://www.i24news.tv/ar/rss" },
+  { name:"Palestine Today",      lang:"en", cat:"war", lat:31.5,  lon:34.47, url:"https://www.palestinetoday.net/feed" },
+  { name:"WAFA Palestine",       lang:"en", cat:"war", lat:31.9,  lon:35.2,  url:"http://english.wafa.ps/rss" },
+  { name:"Al Monitor",           lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
+  { name:"Al Masirah Yemen",     lang:"ar", cat:"war", lat:15.37, lon:44.19, url:"https://www.almasirah.net/rss" },
 
-  /* 🕌 MIDDEN-OOSTEN (Arabisch) */
+  /* 🇲🇦 MAROKKO (7) */
+  { name:"Hespress AR",  lang:"ar", cat:"maroc", lat:34.02, lon:-6.83, url:"https://www.hespress.com/feed" },
+  { name:"Hespress FR",  lang:"fr", cat:"maroc", lat:34.02, lon:-6.83, url:"https://fr.hespress.com/feed" },
+  { name:"Le360",        lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://fr.le360.ma/rss" },
+  { name:"Yabiladi",     lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.yabiladi.com/rss/articles.xml" },
+  { name:"Medias24",     lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.medias24.com/feed/" },
+  { name:"Lakome2",      lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
+  { name:"TelQuel",      lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
+
+  /* 🕌 MIDDEN-OOSTEN (Arabisch) — 17 */
   { name:"Al Jazeera AR",   lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
   { name:"Al Arabiya",      lang:"ar", cat:"mideast", lat:24.71, lon:46.67, url:"https://www.alarabiya.net/feed/rss2/ar.xml" },
   { name:"Sky News Arabia", lang:"ar", cat:"mideast", lat:24.45, lon:54.37, url:"https://www.skynewsarabia.com/web/rss/95.xml" },
@@ -351,47 +305,53 @@ const FEEDS = [
   { name:"DW Arabic",       lang:"ar", cat:"mideast", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-ar-all" },
   { name:"France24 AR",     lang:"ar", cat:"mideast", lat:48.85, lon:2.35,  url:"https://www.france24.com/ar/rss" },
   { name:"CNN Arabic",      lang:"ar", cat:"mideast", lat:25.20, lon:55.27, url:"https://arabic.cnn.com/api/v1/rss/rss.xml" },
+  { name:"Al Mayadeen AR",  lang:"ar", cat:"mideast", lat:33.89, lon:35.50, url:"https://www.almayadeen.net/rss" },
+  { name:"Al Akhbar LB",    lang:"ar", cat:"mideast", lat:33.89, lon:35.50, url:"https://al-akhbar.com/rss" },
+  { name:"Al Araby Al Jadeed", lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://www.alaraby.co.uk/rss" },
+  { name:"Al Quds Al Arabi",lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://www.alquds.co.uk/feed" },
+  { name:"Anadolu AR",      lang:"ar", cat:"mideast", lat:39.93, lon:32.86, url:"https://www.aa.com.tr/ar/rss/default?cat=guncel" },
+  { name:"Asharq Al-Awsat", lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://aawsat.com/feed" },
+  { name:"Al Khaleej",      lang:"ar", cat:"mideast", lat:25.35, lon:55.42, url:"https://www.alkhaleej.ae/rss" },
+  { name:"Al Masry Al Youm",lang:"ar", cat:"mideast", lat:30.04, lon:31.24, url:"https://www.almasryalyoum.com/rss" },
+  { name:"Youm7 Egypt",     lang:"ar", cat:"mideast", lat:30.04, lon:31.24, url:"https://www.youm7.com/rss/SectionRss?SectionID=65" },
 
-  /* 🌐 WERELD (EN) */
-  { name:"BBC World",       lang:"en", cat:"world",   lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
-  { name:"The Guardian",    lang:"en", cat:"world",   lat:51.50, lon:-0.12, url:"https://www.theguardian.com/world/rss" },
-  { name:"Al Jazeera EN",   lang:"en", cat:"world",   lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
-  { name:"France24 EN",     lang:"en", cat:"world",   lat:48.85, lon:2.35,  url:"https://www.france24.com/en/rss" },
-  { name:"DW English",      lang:"en", cat:"world",   lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-en-all" },
-  { name:"NYT World",       lang:"en", cat:"world",   lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
+  /* 🌐 WERELD (EN) — 6 */
+  { name:"BBC World",     lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
+  { name:"The Guardian",  lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://www.theguardian.com/world/rss" },
+  { name:"Al Jazeera EN", lang:"en", cat:"world", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
+  { name:"France24 EN",   lang:"en", cat:"world", lat:48.85, lon:2.35,  url:"https://www.france24.com/en/rss" },
+  { name:"DW English",    lang:"en", cat:"world", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-en-all" },
+  { name:"NYT World",     lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
 
-  /* 🇳🇱 NL / BE */
-  { name:"NOS",             lang:"nl", cat:"nl",      lat:52.37, lon:4.90,  url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
-  { name:"Nu.nl Algemeen",  lang:"nl", cat:"nl",      lat:52.37, lon:4.90,  url:"https://www.nu.nl/rss/Algemeen" },
-  { name:"Nu.nl Economie",  lang:"nl", cat:"business",lat:52.37, lon:4.90,  url:"https://www.nu.nl/rss/Economie" },
+  /* 🇳🇱 NL / BE (3) */
+  { name:"NOS",            lang:"nl", cat:"nl",       lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
+  { name:"Nu.nl Algemeen", lang:"nl", cat:"nl",       lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
+  { name:"Nu.nl Economie", lang:"nl", cat:"business", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Economie" },
 
-  /* 💻 TECH */
-  { name:"BBC Tech",        lang:"en", cat:"tech",    lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/technology/rss.xml" },
-  { name:"The Verge",       lang:"en", cat:"tech",    lat:40.71, lon:-74.00, url:"https://www.theverge.com/rss/index.xml" },
+  /* 💻 TECH (2) */
+  { name:"BBC Tech",  lang:"en", cat:"tech", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/technology/rss.xml" },
+  { name:"The Verge", lang:"en", cat:"tech", lat:40.71, lon:-74.00, url:"https://www.theverge.com/rss/index.xml" },
 
-  /* ⚽ SPORT */
-  { name:"BBC Sport",       lang:"en", cat:"sport",   lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/sport/rss.xml" },
-  { name:"Marca",           lang:"es", cat:"sport",   lat:40.42, lon:-3.70,  url:"https://e00-marca.uecdn.es/rss/portada.xml" }
+  /* ⚽ SPORT (2) */
+  { name:"BBC Sport", lang:"en", cat:"sport", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/sport/rss.xml" },
+  { name:"Marca",     lang:"es", cat:"sport", lat:40.42, lon:-3.70, url:"https://e00-marca.uecdn.es/rss/portada.xml" }
 ];
 
-const PROXY      = "https://api.rss2json.com/v1/api.json?rss_url=";
-const PER_FEED   = 8;                    /* max items per bron */
+const PROXY = "https://api.rss2json.com/v1/api.json?rss_url=";
+const PER_FEED = 6;
 const REFRESH_MS = 8 * 60 * 1000;
 
-/* ---------- State ---------- */
 let allItems = [];
 let activeCat = "all";
 let activeLang = "all";
 let currentView = "list";
 let map = null, markersLayer = null;
 
-/* Vertaal-doel onthouden */
 const TARGETS = ["nl","en","fr","ar","es","de","tr"];
 const browserLang = (navigator.language || "nl").slice(0,2);
 let targetLang = localStorage.getItem("news_target")
   || (TARGETS.includes(browserLang) ? browserLang : "nl");
 
-/* ---------- DOM ---------- */
 const feedEl    = document.getElementById("feed");
 const statusEl  = document.getElementById("statusText");
 const trStatusEl= document.getElementById("trStatus");
@@ -405,10 +365,8 @@ const mapView   = document.getElementById("mapView");
 const viewListBtn = document.getElementById("viewList");
 const viewMapBtn  = document.getElementById("viewMap");
 
-/* ==========================================================
-   VERTALING (Google gratis endpoint + cache)
-   ========================================================== */
-const TR_KEY = "news_tr_cache_v2";
+/* ---------- Vertaalcache ---------- */
+const TR_KEY = "news_tr_cache_v3";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -420,9 +378,9 @@ function hash(str){
 function saveTrCache(){
   try{
     const keys = Object.keys(trCache);
-    if(keys.length > 3000){
+    if(keys.length > 4000){
       const fresh = {};
-      keys.slice(-1800).forEach(k => fresh[k] = trCache[k]);
+      keys.slice(-2500).forEach(k => fresh[k] = trCache[k]);
       trCache = fresh;
     }
     localStorage.setItem(TR_KEY, JSON.stringify(trCache));
@@ -434,11 +392,9 @@ async function gTranslate(text, target){
   const t = text.slice(0, 450);
   const key = target + ":" + hash(t);
   if(trCache[key]) return trCache[key];
-
   const url = "https://translate.googleapis.com/translate_a/single"
     + "?client=gtx&sl=auto&tl=" + encodeURIComponent(target)
     + "&dt=t&q=" + encodeURIComponent(t);
-
   const r = await fetch(url);
   if(!r.ok) throw new Error("tr-" + r.status);
   const data = await r.json();
@@ -448,7 +404,6 @@ async function gTranslate(text, target){
   return out;
 }
 
-/* Queue met beperkte concurrency */
 let trActive = 0, trQueue = [], trDone = 0, trTotal = 0;
 function trEnqueue(fn){
   trTotal++;
@@ -458,7 +413,7 @@ function trEnqueue(fn){
   });
 }
 function trPump(){
-  while(trActive < 2 && trQueue.length){
+  while(trActive < 3 && trQueue.length){
     const {fn, res, rej} = trQueue.shift();
     trActive++;
     fn().then(res).catch(rej).finally(() => {
@@ -476,13 +431,8 @@ function updateTrStatus(){
     setTimeout(() => { trTotal = 0; trDone = 0; trStatusEl.style.display = "none"; }, 3000);
   }
 }
-function resetTrCounters(){
-  trTotal = 0; trDone = 0; trStatusEl.style.display = "none";
-}
+function resetTrCounters(){ trTotal = 0; trDone = 0; trStatusEl.style.display = "none"; }
 
-/* ==========================================================
-   HELPERS
-   ========================================================== */
 function stripHtml(s){ return (s||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim(); }
 function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({
@@ -499,13 +449,9 @@ function timeAgo(dateStr){
   if(diff < 604800) return Math.floor(diff/86400) + " d";
   return d.toLocaleDateString("nl-NL", { day:"numeric", month:"short" });
 }
-function isArabic(t){ return /[\u0600-\u06FF]/.test(t||""); }
 function trKeyFor(text){ return targetLang + ":" + hash((text||"").slice(0,450)); }
 function getCachedTr(text){ return trCache[trKeyFor(text)] || ""; }
 
-/* ==========================================================
-   FEEDS LADEN
-   ========================================================== */
 async function loadFeeds(){
   statusEl.textContent = "Feeds laden...";
   refreshEl.classList.add("spinning");
@@ -535,13 +481,9 @@ async function loadFeeds(){
               title: it.title || "",
               link:  it.link  || "#",
               desc:  stripHtml(rawDesc).slice(0, 280),
-              img,
-              date:  it.pubDate || "",
-              source: f.name,
-              cat:   f.cat,
-              lang:  f.lang,
-              lat:   f.lat,
-              lon:   f.lon
+              img, date: it.pubDate || "",
+              source: f.name, cat: f.cat, lang: f.lang,
+              lat: f.lat, lon: f.lon
             };
           });
         })
@@ -558,7 +500,7 @@ async function loadFeeds(){
   refreshEl.classList.remove("spinning");
 
   if(!allItems.length){
-    feedEl.innerHTML = `<div class="error">⚠️ Geen artikelen geladen. Controleer je internet of probeer opnieuw.</div>`;
+    feedEl.innerHTML = `<div class="error">⚠️ Geen artikelen geladen. Probeer opnieuw.</div>`;
     statusEl.textContent = "0 artikelen";
     return;
   }
@@ -571,9 +513,6 @@ async function loadFeeds(){
   renderMap();
 }
 
-/* ==========================================================
-   FILTERS
-   ========================================================== */
 function getFiltered(){
   const q = searchEl.value.toLowerCase().trim();
   return allItems.filter(it => {
@@ -587,9 +526,6 @@ function getFiltered(){
   });
 }
 
-/* ==========================================================
-   LIJST RENDEREN
-   ========================================================== */
 let currentRender = [];
 let lazyObserver = null;
 
@@ -604,7 +540,6 @@ function render(){
 
   feedEl.innerHTML = list.map((it, i) => cardHtml(it, i)).join("");
 
-  /* Lazy-vertalen: alleen kaarten in/bij viewport */
   if(lazyObserver) lazyObserver.disconnect();
   lazyObserver = new IntersectionObserver(entries => {
     entries.forEach(e => {
@@ -623,32 +558,31 @@ function render(){
 }
 
 function cardHtml(it, i){
-  /* Vertaalde tekst uit cache halen indien beschikbaar */
   const cachedTitle = getCachedTr(it.title);
   const cachedDesc  = getCachedTr(it.desc);
-
   const isRTL = targetLang === "ar";
   const dispTitle = cachedTitle || it.title;
   const dispDesc  = cachedDesc  || it.desc;
-
   const titleTranslating = !cachedTitle && it.lang !== targetLang;
+
   const catLabel = {
-    maroc:"MAROKKO", mideast:"MIDDEN-OOSTEN", world:"WERELD",
-    nl:"NL/BE", business:"ECONOMIE", tech:"TECH", sport:"SPORT"
+    war:"⚔️ OORLOG", maroc:"MAROKKO", mideast:"MIDDEN-OOSTEN",
+    world:"WERELD", nl:"NL/BE", business:"ECONOMIE", tech:"TECH", sport:"SPORT"
   }[it.cat] || it.cat;
 
   const img = it.img
     ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy"
             onerror="this.parentElement.style.display='none'">` : "";
 
-  /* Originele titel tonen als vertaling bestaat en verschilt */
   const showOriginal = cachedTitle && cachedTitle.trim() !== it.title.trim();
+  const isWar = it.cat === "war";
 
   return `
-    <article id="card-${i}" data-idx="${i}" dir="${isRTL?'rtl':'ltr'}">
+    <article id="card-${i}" data-idx="${i}" dir="${isRTL?'rtl':'ltr'}" class="${isWar?'war':''}">
       <div class="thumb">
         ${img}
         <span class="lang ${it.lang}">${it.lang.toUpperCase()}</span>
+        ${isWar ? '<span class="war-badge">⚔️ LIVE</span>' : ''}
       </div>
       <div class="body">
         <div class="meta">
@@ -666,27 +600,21 @@ function cardHtml(it, i){
     </article>`;
 }
 
-/* ==========================================================
-   VERTALING PER KAART
-   ========================================================== */
 function scheduleTranslation(it, idx){
   if(!it) return;
-  if(it.lang === targetLang) return;          /* al juiste taal */
-
+  if(it.lang === targetLang) return;
   const card = document.getElementById("card-" + idx);
   if(!card) return;
 
   const titleEl = card.querySelector('[data-role="title"]');
   const descEl  = card.querySelector('[data-role="desc"]');
 
-  /* Titel */
   if(it.title && !getCachedTr(it.title)){
     trEnqueue(() => gTranslate(it.title, targetLang))
       .then(tr => {
         if(!tr || !titleEl) return;
         titleEl.textContent = tr;
         titleEl.classList.remove("translating");
-        /* Originele titel invoegen als die bestaat */
         if(!card.querySelector('[data-role="orig"]')){
           const orig = document.createElement("div");
           orig.className = "original";
@@ -698,7 +626,6 @@ function scheduleTranslation(it, idx){
       .catch(() => { if(titleEl) titleEl.classList.remove("translating"); });
   }
 
-  /* Beschrijving (alleen als niet al in doel-taal) */
   if(it.desc && !getCachedTr(it.desc)){
     trEnqueue(() => gTranslate(it.desc.slice(0, 220), targetLang))
       .then(tr => {
@@ -708,12 +635,9 @@ function scheduleTranslation(it, idx){
   }
 }
 
-/* ==========================================================
-   KAART
-   ========================================================== */
 function initMap(){
   if(map) return;
-  map = L.map("map", { center:[25,20], zoom:3, worldCopyJump:true });
+  map = L.map("map", { center:[28,35], zoom:3, worldCopyJump:true });
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom:18, attribution:"© OpenStreetMap"
   }).addTo(map);
@@ -733,17 +657,18 @@ function renderMap(){
   });
 
   Object.values(bySource).forEach(({info, items}) => {
-    const color = info.lang === "ar" ? "#f59e0b"
+    const color = info.cat === "war" ? "#ef4444"
+                : info.lang === "ar" ? "#f59e0b"
                 : info.lang === "fr" ? "#3b82f6"
                 : info.lang === "nl" ? "#f97316"
+                : info.lang === "he" ? "#6366f1"
                 : "#22c55e";
 
     const icon = L.divIcon({
       className: "",
       html: `<div style="
         width:18px;height:18px;border-radius:50%;
-        background:${color};border:2px solid #fff;
-        position:relative;
+        background:${color};border:2px solid #fff;position:relative;
       ">
         <div style="
           position:absolute;top:-22px;left:50%;transform:translateX(-50%);
@@ -755,7 +680,6 @@ function renderMap(){
     });
 
     const marker = L.marker([info.lat, info.lon], { icon }).addTo(markersLayer);
-
     const top = items.slice(0, 4);
     const html = `
       <div style="min-width:200px">
@@ -776,9 +700,6 @@ function renderMap(){
   });
 }
 
-/* ==========================================================
-   WEERGAVE WISSELEN
-   ========================================================== */
 function switchView(v){
   currentView = v;
   if(v === "list"){
@@ -796,9 +717,6 @@ function switchView(v){
   localStorage.setItem("news_view", v);
 }
 
-/* ==========================================================
-   EVENTS
-   ========================================================== */
 searchEl.addEventListener("input", () => { render(); renderMap(); });
 
 catsEl.addEventListener("click", e => {
@@ -841,10 +759,6 @@ if(localStorage.getItem("news_theme") === "light")
 
 setInterval(loadFeeds, REFRESH_MS);
 
-/* ==========================================================
-   START
-   ========================================================== */
-/* Zet actieve vertaal-chip */
 targetsEl.querySelectorAll(".chip").forEach(c => {
   if(c.dataset.t === targetLang) c.classList.add("active");
   else c.classList.remove("active");

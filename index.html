@@ -6,8 +6,6 @@
 <meta name="theme-color" content="#0a0e1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="description" content="WAR DESK — Live conflict monitor met 50+ bronnen.">
 <title>WAR DESK · Live Conflict Monitor</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -42,7 +40,49 @@
     font-size:15px;
   }
 
-  /* ─── TICKER (subtieler) ─── */
+  /* ─── BREAKING BANNER ─── */
+  .breaking{
+    position:fixed; top:0; left:0; right:0; z-index:9999;
+    background:linear-gradient(90deg,var(--crimson) 0%,#7a0918 100%);
+    color:#fff; padding:.85rem 1rem;
+    display:flex; align-items:center; gap:.9rem;
+    box-shadow:0 4px 24px rgba(176,14,42,.6);
+    transform:translateY(-100%); transition:transform .4s ease;
+    border-bottom:2px solid #fff;
+  }
+  .breaking.show{transform:translateY(0)}
+  .breaking-icon{
+    font-size:1.4rem; animation:pulseBreak 1s infinite;
+  }
+  @keyframes pulseBreak{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.15)}
+  }
+  .breaking-text{
+    flex:1; min-width:0;
+  }
+  .breaking-label{
+    font-size:.6rem; font-weight:900; letter-spacing:.2em;
+    opacity:.85; text-transform:uppercase;
+  }
+  .breaking-title{
+    font-size:.85rem; font-weight:700; line-height:1.35;
+    margin-top:.15rem;
+    display:-webkit-box; -webkit-line-clamp:2;
+    -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .breaking-title[dir="rtl"]{font-family:"Noto Sans Arabic",sans-serif}
+  .breaking-meta{
+    font-size:.65rem; opacity:.85; margin-top:.2rem; font-weight:600;
+  }
+  .breaking-close{
+    background:transparent; border:1px solid rgba(255,255,255,.4);
+    color:#fff; width:28px; height:28px;
+    border-radius:50%; font-size:.9rem;
+    cursor:pointer; flex-shrink:0;
+  }
+
+  /* ─── TICKER ─── */
   .ticker{
     background:var(--bg-2); color:var(--ink-2);
     height:32px; display:flex; align-items:center;
@@ -71,7 +111,7 @@
   .ticker-track span::before{content:"·"; color:var(--gold); font-weight:900}
   @keyframes scroll{to{transform:translateX(-50%)}}
 
-  /* ─── HEADER (rustiger) ─── */
+  /* ─── HEADER ─── */
   header{
     background:var(--bg-2); border-bottom:1px solid var(--line);
     position:sticky; top:0; z-index:99;
@@ -137,7 +177,7 @@
   .btn.spin span{animation:spin 1s linear infinite; display:inline-block}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* ─── FILTERBAR (subtieler) ─── */
+  /* ─── FILTERBAR ─── */
   .filterbar{
     max-width:1500px; margin:0 auto;
     padding:.55rem 1.25rem;
@@ -167,7 +207,7 @@
     cursor:pointer; padding:.3rem; display:none;
   }
   .search-wrap.has-value .clear{display:block}
-  .source-select{
+  .select{
     padding:.5rem 1.7rem .5rem .7rem;
     background:transparent; border:1px solid var(--line);
     color:var(--ink-2); font-family:inherit; font-size:.78rem;
@@ -177,9 +217,9 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M1 3l4 4 4-4' stroke='%235f6a7d' stroke-width='1.4' fill='none'/></svg>");
     background-repeat:no-repeat;
     background-position:right .55rem center;
-    max-width:180px;
+    max-width:170px;
   }
-  .source-select:focus{border-color:var(--gold-3)}
+  .select:focus{border-color:var(--gold-3)}
   .fav-toggle{
     padding:.5rem .8rem;
     background:transparent; border:1px solid var(--line);
@@ -197,8 +237,16 @@
     font-size:.68rem; font-weight:700;
   }
   .fav-toggle.active .count{color:var(--gold)}
+  .icon-sm{
+    width:32px; height:32px;
+    padding:0; display:grid; place-items:center;
+    background:transparent; border:1px solid var(--line);
+    color:var(--ink-3); border-radius:var(--radius-sm);
+    cursor:pointer; font-size:.85rem;
+  }
+  .icon-sm:hover{border-color:var(--gold-3); color:var(--gold)}
 
-  /* ─── NAV (rustiger) ─── */
+  /* ─── NAV ─── */
   .nav{
     background:var(--bg); border-bottom:1px solid var(--line);
     overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
@@ -251,15 +299,23 @@
   .failed-list{
     display:none; padding:.6rem 1.25rem; max-width:1500px; margin:0 auto;
     background:var(--bg-2); border-bottom:1px solid var(--line);
-    font-size:.7rem; color:var(--ink-3); line-height:1.6;
+    font-size:.7rem; color:var(--ink-3); line-height:1.7;
   }
   .failed-list.show{display:block}
   .failed-list strong{color:var(--crimson-2)}
+  .failed-list .reset{
+    display:inline-block; margin-top:.5rem;
+    padding:.3rem .7rem; background:transparent;
+    border:1px solid var(--gold-3); color:var(--gold);
+    font-size:.65rem; font-weight:600;
+    border-radius:var(--radius-sm); cursor:pointer;
+    font-family:inherit;
+  }
 
   /* ─── MAIN ─── */
   main{max-width:1500px; margin:0 auto; padding:1.5rem 1.25rem 4rem}
 
-  /* ─── HERO (rustiger) ─── */
+  /* ─── HERO ─── */
   .hero{
     display:grid; grid-template-columns:1.6fr 1fr;
     gap:1px; background:var(--line);
@@ -299,7 +355,7 @@
     line-height:1.2; font-weight:700; color:#fff;
     display:-webkit-box; -webkit-line-clamp:3;
     -webkit-box-orient:vertical; overflow:hidden;
-    margin-bottom:.6rem; letter-spacing:-.01em;
+    margin-bottom:.6rem;
   }
   .hero-meta{
     color:rgba(255,255,255,.65); font-size:.68rem; font-weight:500;
@@ -341,7 +397,7 @@
   }
   .section-head h2{
     font-family:"Playfair Display",serif; font-size:1rem;
-    font-weight:700; color:var(--ink); letter-spacing:.01em;
+    font-weight:700; color:var(--ink);
   }
   .section-count{
     margin-left:auto; font-size:.65rem; color:var(--ink-3);
@@ -393,7 +449,10 @@
   .badge.ar{background:var(--gold); color:#0a0e1a; border-color:transparent}
   .badge.he{background:#4f52ba; color:#fff; border-color:transparent}
   .badge.tg{background:#229ED9; color:#fff; border-color:transparent}
-  .badge.multi{background:var(--crimson); color:#fff; border-color:transparent}
+  .badge.multi{
+    background:var(--crimson); color:#fff; border-color:transparent;
+    cursor:pointer;
+  }
   .live-tag{
     position:absolute; top:.55rem; right:2.8rem;
     background:var(--crimson); color:#fff;
@@ -413,7 +472,6 @@
     color:rgba(255,255,255,.6); font-size:.85rem;
     cursor:pointer; display:grid; place-items:center;
     z-index:3; transition:all .18s;
-    backdrop-filter:blur(6px);
   }
   .fav-btn:hover{background:rgba(10,14,26,.95); color:var(--gold)}
   .fav-btn.on{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
@@ -439,7 +497,7 @@
   .card-time.fresh{color:var(--crimson-2)}
   .card-title{
     font-size:.94rem; line-height:1.4; font-weight:600;
-    color:var(--ink); letter-spacing:-.005em;
+    color:var(--ink);
     display:-webkit-box; -webkit-line-clamp:3;
     -webkit-box-orient:vertical; overflow:hidden;
   }
@@ -475,6 +533,39 @@
   .card-link:hover{gap:.6rem; color:var(--gold-2)}
   article[dir="rtl"] .card-link{flex-direction:row-reverse}
 
+  /* ─── SOURCE POPUP ─── */
+  .src-popup{
+    position:fixed; inset:0; z-index:9000;
+    background:rgba(0,0,0,.7);
+    display:none; align-items:center; justify-content:center;
+    padding:1rem;
+  }
+  .src-popup.show{display:flex}
+  .src-box{
+    background:var(--card); border:1px solid var(--gold-3);
+    border-radius:var(--radius); padding:1.2rem;
+    max-width:400px; width:100%;
+    max-height:70vh; overflow-y:auto;
+  }
+  .src-box h3{
+    font-family:"Playfair Display",serif; font-size:1rem;
+    font-weight:700; color:var(--gold); margin-bottom:.9rem;
+  }
+  .src-box ul{list-style:none; display:flex; flex-direction:column; gap:.5rem}
+  .src-box li{
+    padding:.5rem .7rem; background:var(--bg-3);
+    border-left:2px solid var(--gold-3);
+    font-size:.78rem; color:var(--ink-2);
+    border-radius:var(--radius-sm);
+  }
+  .src-box .close{
+    margin-top:1rem; width:100%;
+    padding:.6rem; background:var(--gold); color:#0a0e1a;
+    border:none; font-family:inherit; font-weight:700;
+    font-size:.72rem; letter-spacing:.1em; text-transform:uppercase;
+    border-radius:var(--radius-sm); cursor:pointer;
+  }
+
   /* ─── LOAD MORE ─── */
   .load-more{
     grid-column:1/-1; text-align:center; padding:1.75rem 1rem .5rem;
@@ -488,9 +579,7 @@
     border-radius:var(--radius-sm); cursor:pointer;
     transition:all .18s;
   }
-  .load-more button:hover{
-    border-color:var(--gold-3); color:var(--gold);
-  }
+  .load-more button:hover{border-color:var(--gold-3); color:var(--gold)}
   .load-more .progress{
     display:block; margin-top:.7rem;
     font-size:.62rem; color:var(--ink-3);
@@ -509,9 +598,7 @@
     border-radius:var(--radius-sm); transition:all .18s;
   }
   .live-chip:hover{border-color:var(--gold-3); color:var(--gold)}
-  .live-chip.active{
-    background:var(--gold); color:#0a0e1a; border-color:var(--gold);
-  }
+  .live-chip.active{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
   .live-chip .pulse{
     width:6px; height:6px; border-radius:50%;
     background:var(--crimson-2); animation:blink 1.5s infinite;
@@ -541,11 +628,8 @@
     border:1px solid transparent;
   }
   .live-btn.youtube{background:#c00; color:#fff}
-  .live-btn.youtube:hover{background:#a00}
   .live-btn.tiktok{background:#000; color:#fff; border-color:#222}
-  .live-btn.tiktok:hover{background:#111}
   .live-btn.web{background:transparent; color:var(--gold); border-color:var(--gold-3)}
-  .live-btn.web:hover{background:var(--gold); color:#0a0e1a}
   .live-note{
     margin-top:1.25rem; padding:.9rem 1.1rem;
     background:rgba(184,153,104,.04);
@@ -567,7 +651,7 @@
     background:var(--card); color:var(--ink);
     border-radius:var(--radius); border:1px solid var(--gold-3);
   }
-  .leaflet-popup-content{margin:.7rem 1rem; max-width:290px; font-family:inherit}
+  .leaflet-popup-content{margin:.7rem 1rem; max-width:290px}
   .leaflet-popup-content .pop-src{
     color:var(--gold); font-weight:800; font-size:.58rem;
     letter-spacing:.12em; text-transform:uppercase;
@@ -581,7 +665,7 @@
     font-size:.62rem; letter-spacing:.12em; text-transform:uppercase;
   }
 
-  /* ─── LOADER ─── */
+  /* ─── LOADER / EMPTY ─── */
   .loader{
     grid-column:1/-1; display:flex; flex-direction:column;
     align-items:center; gap:1.25rem; padding:6rem 1rem; color:var(--ink-3);
@@ -637,14 +721,11 @@
     .stats{gap:.85rem; width:100%; margin-left:0; margin-top:.3rem}
     .stat:nth-child(4){display:none}
     .stat-value{font-size:.8rem}
-    .hero-main{min-height:340px}
-    .hero-title{font-size:1.2rem}
-    .hero-small .title{font-size:.85rem}
-    .hero-body{padding:1rem 1.1rem 1.2rem; margin-top:-70px}
+    .hero{display:none} /* ← HERO VERBERGEN OP MOBIEL */
     .grid{grid-template-columns:1fr; gap:.85rem}
     main{padding:1rem .9rem 3rem}
     .filterbar{padding:.5rem .9rem; gap:.4rem}
-    .source-select{max-width:100%; flex:1 1 100%}
+    .select{max-width:100%; flex:1 1 100%}
     .nav-inner{padding:0 .9rem; height:42px}
     .nav-tab{padding:0 .7rem; font-size:.62rem}
     #map{height:60vh}
@@ -653,10 +734,24 @@
     .live-panel h3{font-size:1.1rem}
     .live-panel .icon{font-size:2.5rem}
     .statusbar{padding:.45rem .9rem; font-size:.62rem; gap:.9rem}
+    .breaking{padding:.75rem .85rem}
+    .breaking-title{font-size:.78rem}
+    .breaking-icon{font-size:1.15rem}
   }
 </style>
 </head>
 <body>
+
+<!-- BREAKING BANNER -->
+<div class="breaking" id="breakingBanner">
+  <div class="breaking-icon">🚨</div>
+  <div class="breaking-text">
+    <div class="breaking-label">Breaking · <span id="breakingCount">0</span> bronnen</div>
+    <div class="breaking-title" id="breakingTitle" dir="ltr">—</div>
+    <div class="breaking-meta" id="breakingMeta">—</div>
+  </div>
+  <button class="breaking-close" id="breakingClose" aria-label="Sluiten">✕</button>
+</div>
 
 <div class="ticker">
   <div class="ticker-label">BREAKING</div>
@@ -708,12 +803,22 @@
       <input type="search" id="searchInput" placeholder="Zoek artikelen, bronnen..." aria-label="Zoeken">
       <button class="clear" id="searchClear" aria-label="Wissen">✕</button>
     </div>
-    <select class="source-select" id="sourceSelect" aria-label="Filter op bron">
+    <select class="select" id="timeSelect" aria-label="Tijdsfilter">
+      <option value="all">Alle tijden</option>
+      <option value="1">Laatste uur</option>
+      <option value="6">Laatste 6 uur</option>
+      <option value="24">Laatste 24 uur</option>
+      <option value="168">Laatste week</option>
+    </select>
+    <select class="select" id="sourceSelect" aria-label="Filter op bron">
       <option value="all">Alle bronnen</option>
     </select>
     <button class="fav-toggle" id="favToggle">
       ⭐ Favorieten <span class="count" id="favCount">0</span>
     </button>
+    <button class="icon-sm" id="exportBtn" title="Export favorieten">📤</button>
+    <button class="icon-sm" id="importBtn" title="Import favorieten">📥</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
   </div>
 
   <nav class="nav">
@@ -812,6 +917,15 @@
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
 </footer>
 
+<!-- Source popup -->
+<div class="src-popup" id="srcPopup">
+  <div class="src-box">
+    <h3 id="srcTitle">Bronnen</h3>
+    <ul id="srcList"></ul>
+    <button class="close" id="srcClose">Sluiten</button>
+  </div>
+</div>
+
 <div class="toast" id="toast">
   <span class="ic">ℹ</span>
   <span id="toastMsg">Klaar</span>
@@ -822,6 +936,7 @@ const PROXY      = "https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED   = 5;
 const REFRESH_MS = 30 * 1000;
 const FRESH_MS   = 20 * 60 * 1000;
+const BREAKING_MS = 10 * 60 * 1000;
 const PAGE_SIZE  = 30;
 
 const RSSHUB_MIRRORS = [
@@ -898,10 +1013,12 @@ const FEEDS = [
   { name:"📡 Al Arabiya",    lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" }
 ];
 
+/* ─── STATE ─── */
 let allItems = [];
 let seenLinks = new Set();
 let activeCat = "all";
 let activeSource = "all";
+let activeTime = "all";
 let currentView = "list";
 let map = null, markersLayer = null;
 let nextRefreshSeconds = REFRESH_MS / 1000;
@@ -923,6 +1040,16 @@ try { readArticles = new Set(JSON.parse(localStorage.getItem(READ_KEY)) || []); 
 const NOTIF_KEY = "wardesk_notif";
 let notifEnabled = localStorage.getItem(NOTIF_KEY) === "1";
 
+/* Source health tracking */
+const HEALTH_KEY = "wardesk_health_v1";
+let sourceHealth = {};
+try { sourceHealth = JSON.parse(localStorage.getItem(HEALTH_KEY)) || {}; } catch(e){}
+let disabledSources = new Set();
+for(const [src, data] of Object.entries(sourceHealth)){
+  if(data.fails >= 3) disabledSources.add(src);
+}
+
+/* DOM */
 const feedEl       = document.getElementById("feed");
 const statusEl     = document.getElementById("statusText");
 const trStatusEl   = document.getElementById("trStatus");
@@ -949,6 +1076,7 @@ const searchInput  = document.getElementById("searchInput");
 const searchClear  = document.getElementById("searchClear");
 const searchWrap   = document.getElementById("searchWrap");
 const sourceSelect = document.getElementById("sourceSelect");
+const timeSelect   = document.getElementById("timeSelect");
 const favToggle    = document.getElementById("favToggle");
 const favCountEl   = document.getElementById("favCount");
 const notifBtn     = document.getElementById("notifBtn");
@@ -957,6 +1085,18 @@ const failedCount  = document.getElementById("failedCount");
 const failedList   = document.getElementById("failedList");
 const toast        = document.getElementById("toast");
 const toastMsg     = document.getElementById("toastMsg");
+const exportBtn    = document.getElementById("exportBtn");
+const importBtn    = document.getElementById("importBtn");
+const importFile   = document.getElementById("importFile");
+const srcPopup     = document.getElementById("srcPopup");
+const srcTitle     = document.getElementById("srcTitle");
+const srcList      = document.getElementById("srcList");
+const srcClose     = document.getElementById("srcClose");
+const breakingBanner = document.getElementById("breakingBanner");
+const breakingTitle  = document.getElementById("breakingTitle");
+const breakingMeta   = document.getElementById("breakingMeta");
+const breakingCount  = document.getElementById("breakingCount");
+const breakingClose  = document.getElementById("breakingClose");
 
 let toastTimer = null;
 function showToast(msg, icon = "ℹ"){
@@ -975,7 +1115,8 @@ function showToast(msg, icon = "ℹ"){
   if(hour >= 7 && hour < 20){ document.body.classList.add("light"); }
 })();
 
-const TR_KEY = "wardesk_tr_v9";
+/* ─── TRANSLATION (Google → MyMemory fallback) ─── */
+const TR_KEY = "wardesk_tr_v10";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -995,21 +1136,52 @@ function saveTrCache(){
     localStorage.setItem(TR_KEY, JSON.stringify(trCache));
   }catch(e){}
 }
+
+async function googleTranslate(text, target){
+  const url = "https://translate.googleapis.com/translate_a/single"
+    + "?client=gtx&sl=auto&tl=" + encodeURIComponent(target)
+    + "&dt=t&q=" + encodeURIComponent(text);
+  const r = await fetch(url);
+  if(!r.ok) throw new Error("google-" + r.status);
+  const data = await r.json();
+  return Array.isArray(data?.[0]) ? data[0].map(x => x[0] || "").join("") : text;
+}
+
+async function myMemoryTranslate(text, target){
+  const url = "https://api.mymemory.translated.net/get?q="
+    + encodeURIComponent(text) + "&langpair=autodetect|" + target;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error("mymemory-" + r.status);
+  const data = await r.json();
+  if(data && data.responseData && data.responseData.translatedText){
+    return data.responseData.translatedText;
+  }
+  throw new Error("mymemory-empty");
+}
+
 async function gTranslate(text, target){
   if(!text) return "";
   const t = text.slice(0, 450);
   const key = target + ":" + hash(t);
   if(trCache[key]) return trCache[key];
-  const url = "https://translate.googleapis.com/translate_a/single"
-    + "?client=gtx&sl=auto&tl=" + encodeURIComponent(target)
-    + "&dt=t&q=" + encodeURIComponent(t);
-  const r = await fetch(url);
-  if(!r.ok) throw new Error("tr");
-  const data = await r.json();
-  const out = Array.isArray(data?.[0]) ? data[0].map(x => x[0] || "").join("") : t;
-  trCache[key] = out;
-  saveTrCache();
-  return out;
+
+  /* Probeer Google eerst */
+  try{
+    const out = await googleTranslate(t, target);
+    trCache[key] = out;
+    saveTrCache();
+    return out;
+  }catch(e){}
+
+  /* Fallback: MyMemory */
+  try{
+    const out = await myMemoryTranslate(t, target);
+    trCache[key] = out;
+    saveTrCache();
+    return out;
+  }catch(e){}
+
+  return t;
 }
 
 let trActive = 0, trQueue = [], trDone = 0, trTotal = 0;
@@ -1103,6 +1275,7 @@ async function fetchFeedData(url){
   throw new Error("failed");
 }
 
+/* ─── DEDUPE ─── */
 function titleKey(title){
   return (title||"").toLowerCase()
     .replace(/[^a-z0-9 ]/g, "")
@@ -1124,6 +1297,57 @@ function dedupe(items){
   return Array.from(map.values());
 }
 
+/* ─── SOURCE HEALTH ─── */
+function recordHealth(name, ok){
+  if(!sourceHealth[name]) sourceHealth[name] = { fails: 0, last: 0 };
+  if(ok){
+    sourceHealth[name].fails = 0;
+  } else {
+    sourceHealth[name].fails++;
+  }
+  sourceHealth[name].last = Date.now();
+}
+function saveHealth(){
+  try { localStorage.setItem(HEALTH_KEY, JSON.stringify(sourceHealth)); } catch(e){}
+}
+function isDisabled(name){ return disabledSources.has(name); }
+
+/* ─── BREAKING DETECTION ─── */
+function detectBreaking(items){
+  const groups = new Map();
+  const now = Date.now();
+  items.forEach(it => {
+    const age = now - new Date(it.date).getTime();
+    if(isNaN(age) || age > BREAKING_MS) return;
+    const key = titleKey(it.title);
+    if(!key) return;
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(it);
+  });
+  let best = null;
+  groups.forEach(items => {
+    const srcSet = new Set(items.map(i => i.source));
+    if(srcSet.size >= 3){
+      if(!best || srcSet.size > best.sources.length){
+        best = { item: items[0], sources: [...srcSet] };
+      }
+    }
+  });
+  return best;
+}
+
+function showBreaking(info){
+  breakingCount.textContent = info.sources.length;
+  const tr = getCachedTr(info.item.title) || info.item.title;
+  breakingTitle.textContent = tr.slice(0, 180);
+  breakingTitle.setAttribute("dir", isArabic(info.item.title) ? "rtl" : "ltr");
+  breakingMeta.textContent = info.sources.join(" · ");
+  breakingBanner.classList.add("show");
+  setTimeout(() => breakingBanner.classList.remove("show"), 30000);
+}
+breakingClose.addEventListener("click", () => breakingBanner.classList.remove("show"));
+
+/* ─── LOAD FEEDS ─── */
 async function loadFeeds(isAuto = false){
   if(!isAuto){
     statusEl.textContent = "Feeds ophalen...";
@@ -1138,10 +1362,14 @@ async function loadFeeds(isAuto = false){
     resetTrCounters();
   }
 
+  /* Filter uitgeschakelde bronnen */
+  const activeFeeds = FEEDS.filter(f => !isDisabled(f.name));
+
   const results = await Promise.allSettled(
-    FEEDS.map(f =>
-      fetchFeedData(f.url).then(data =>
-        data.items.slice(0, PER_FEED).map(it => {
+    activeFeeds.map(f =>
+      fetchFeedData(f.url).then(data => {
+        recordHealth(f.name, true);
+        return data.items.slice(0, PER_FEED).map(it => {
           const rawDesc = it.description || it.content || "";
           const img = it.thumbnail ||
             it.enclosure?.link ||
@@ -1160,11 +1388,16 @@ async function loadFeeds(isAuto = false){
             lang: f.lang,
             lat: f.lat, lon: f.lon
           };
-        })
-      ).then(d => ({ ok:true, name:f.name, data:d }))
-      .catch(e => ({ ok:false, name:f.name }))
+        });
+      })
+      .then(d => ({ ok:true, name:f.name, data:d }))
+      .catch(e => {
+        recordHealth(f.name, false);
+        return ({ ok:false, name:f.name });
+      })
     )
   );
+  saveHealth();
 
   const newItems = [];
   let okCount = 0;
@@ -1192,6 +1425,7 @@ async function loadFeeds(isAuto = false){
   const deduped = dedupe(newItems);
   deduped.sort((a,b) => new Date(b.date) - new Date(a.date));
 
+  /* Notificatie */
   if(!isFirstLoad && notifEnabled && "Notification" in window && Notification.permission === "granted"){
     const trulyNew = deduped.filter(it => {
       const key = (it.link || it.title).toLowerCase().trim();
@@ -1210,13 +1444,36 @@ async function loadFeeds(isAuto = false){
   allItems = deduped;
   seenLinks = freshLinks;
 
+  /* Breaking detectie */
+  const breaking = detectBreaking(allItems);
+  if(breaking && !isFirstLoad){ showBreaking(breaking); }
+
   statSources.textContent = `${okCount}/${FEEDS.length}`;
   statWar.textContent = allItems.filter(x => x.cat === "war").length;
 
-  if(failedFeeds.length){
-    failedCount.textContent = failedFeeds.length;
+  /* Failed feeds UI */
+  const disabledNow = [...disabledSources];
+  if(failedFeeds.length || disabledNow.length){
+    failedCount.textContent = failedFeeds.length + disabledNow.length;
     failedToggle.style.display = "inline-block";
-    failedList.innerHTML = `<strong>${failedFeeds.length} bronnen falen nu:</strong> ${failedFeeds.map(escapeHtml).join(" · ")}`;
+    let msg = '';
+    if(failedFeeds.length) msg += `<strong>${failedFeeds.length} bronnen falen nu:</strong> ${failedFeeds.map(escapeHtml).join(" · ")}`;
+    if(disabledNow.length){
+      if(msg) msg += '<br><br>';
+      msg += `<strong>${disabledNow.length} bronnen zijn uitgeschakeld</strong> (3× mislukt): ${disabledNow.map(escapeHtml).join(" · ")}`;
+      msg += '<br><button class="reset" id="resetHealth">↺ Reset uitgeschakelde bronnen</button>';
+    }
+    failedList.innerHTML = msg;
+    const resetBtn = document.getElementById("resetHealth");
+    if(resetBtn){
+      resetBtn.addEventListener("click", () => {
+        sourceHealth = {};
+        disabledSources = new Set();
+        saveHealth();
+        showToast("Bronnen gereset", "↺");
+        loadFeeds(false);
+      });
+    }
   } else {
     failedToggle.style.display = "none";
     failedList.classList.remove("show");
@@ -1265,6 +1522,9 @@ function renderTicker(){
 }
 
 function renderHero(){
+  /* Verberg hero op mobiel */
+  if(window.innerWidth <= 640){ heroSection.style.display = "none"; return; }
+  
   const base = getFilteredBase();
   const withImg = base.filter(it => it.img);
   const picks = withImg.length >= 3 ? withImg.slice(0, 3) : base.slice(0, 3);
@@ -1317,10 +1577,17 @@ function getCatLabel(cat){
 
 function getFilteredBase(){
   const q = searchInput.value.toLowerCase().trim();
+  const now = Date.now();
+  const timeLimit = activeTime === "all" ? Infinity : parseInt(activeTime, 10) * 60 * 60 * 1000;
+
   return allItems.filter(it => {
     if(favoritesOnly && !favorites.has(it.link)) return false;
     if(activeCat !== "all" && activeCat !== "live" && it.cat !== activeCat) return false;
     if(activeSource !== "all" && it.source !== activeSource) return false;
+    if(timeLimit !== Infinity){
+      const age = now - new Date(it.date).getTime();
+      if(isNaN(age) || age > timeLimit) return false;
+    }
     if(q){
       const hay = (it.title + " " + it.desc + " " + it.source).toLowerCase();
       if(!hay.includes(q)) return false;
@@ -1346,6 +1613,10 @@ function render(){
   let title = titleMap[activeCat] || activeCat.toUpperCase();
   if(favoritesOnly) title = "⭐ Favorieten";
   if(activeSource !== "all") title = "Bron: " + activeSource;
+  if(activeTime !== "all"){
+    const labels = { "1":"Laatste uur", "6":"Laatste 6 uur", "24":"Laatste 24u", "168":"Laatste week" };
+    title += " · " + (labels[activeTime] || "");
+  }
   sectionTitle.textContent = title;
   sectionCount.textContent = list.length + " berichten";
 
@@ -1425,12 +1696,12 @@ function cardHtml(it, i){
 
   return `
     <article id="wcard-${i}" data-idx="${i}" data-link="${escapeHtml(it.link)}" class="${classes}" dir="${rtl?'rtl':'ltr'}"
-             onclick="if(event.target.tagName!=='A' && !event.target.classList.contains('fav-btn'))window.open('${escapeHtml(it.link)}','_blank')">
+             onclick="if(event.target.tagName!=='A' && !event.target.classList.contains('fav-btn') && !event.target.classList.contains('badge'))window.open('${escapeHtml(it.link)}','_blank')">
       <div class="card-thumb">
         ${img}
         <div class="card-badges">
           <span class="badge ${badgeLang}">${isTg ? '📡 TG' : it.lang.toUpperCase()}</span>
-          ${multiSrc ? `<span class="badge multi">${sources.length}×</span>` : ''}
+          ${multiSrc ? `<span class="badge multi" data-sources='${escapeHtml(JSON.stringify(sources))}'>${sources.length}× bronnen</span>` : ''}
         </div>
         <button class="fav-btn ${isFav?'on':''}" data-fav="${escapeHtml(it.link)}" aria-label="Favoriet">
           ${isFav ? '★' : '☆'}
@@ -1454,26 +1725,58 @@ function cardHtml(it, i){
     </article>`;
 }
 
+/* Klik handlers op feed */
 feedEl.addEventListener("click", e => {
-  const btn = e.target.closest(".fav-btn");
-  if(!btn) return;
-  e.stopPropagation();
-  e.preventDefault();
-  const link = btn.dataset.fav;
-  if(favorites.has(link)){
-    favorites.delete(link);
-    btn.classList.remove("on");
-    btn.textContent = "☆";
-    showToast("Verwijderd uit favorieten", "☆");
-  } else {
-    favorites.add(link);
-    btn.classList.add("on");
-    btn.textContent = "★";
-    showToast("Toegevoegd aan favorieten", "★");
+  /* Favorieten */
+  const favBtn = e.target.closest(".fav-btn");
+  if(favBtn){
+    e.stopPropagation();
+    e.preventDefault();
+    const link = favBtn.dataset.fav;
+    if(favorites.has(link)){
+      favorites.delete(link);
+      favBtn.classList.remove("on");
+      favBtn.textContent = "☆";
+      showToast("Verwijderd uit favorieten", "☆");
+    } else {
+      favorites.add(link);
+      favBtn.classList.add("on");
+      favBtn.textContent = "★";
+      showToast("Toegevoegd aan favorieten", "★");
+    }
+    localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
+    updateFavCount();
+    if(favoritesOnly) render();
+    return;
   }
-  localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
-  updateFavCount();
-  if(favoritesOnly) render();
+
+  /* Multi-source badge */
+  const multiBadge = e.target.closest(".badge.multi");
+  if(multiBadge){
+    e.stopPropagation();
+    try {
+      const sources = JSON.parse(multiBadge.dataset.sources);
+      showSources(sources);
+    } catch(err){}
+    return;
+  }
+
+  /* Mark as read */
+  const card = e.target.closest("article");
+  if(card){
+    const link = card.dataset.link;
+    if(link && e.target.tagName === "A") markAsRead(link);
+  }
+});
+
+function showSources(sources){
+  srcList.innerHTML = sources.map(s => `<li>${escapeHtml(s)}</li>`).join("");
+  srcTitle.textContent = sources.length + " bronnen melden dit verhaal";
+  srcPopup.classList.add("show");
+}
+srcClose.addEventListener("click", () => srcPopup.classList.remove("show"));
+srcPopup.addEventListener("click", e => {
+  if(e.target === srcPopup) srcPopup.classList.remove("show");
 });
 
 function markAsRead(link){
@@ -1681,6 +1984,14 @@ sourceSelect.addEventListener("change", () => {
   renderMap();
 });
 
+timeSelect.addEventListener("change", () => {
+  activeTime = timeSelect.value;
+  currentPage = 1;
+  render();
+  renderHero();
+  renderMap();
+});
+
 favToggle.addEventListener("click", () => {
   favoritesOnly = !favoritesOnly;
   favToggle.classList.toggle("active", favoritesOnly);
@@ -1696,6 +2007,51 @@ function updateFavCount(){
   favToggle.classList.toggle("active", favoritesOnly);
 }
 updateFavCount();
+
+/* ─── EXPORT / IMPORT ─── */
+exportBtn.addEventListener("click", () => {
+  const data = {
+    version: 1,
+    exported: new Date().toISOString(),
+    favorites: [...favorites],
+    readArticles: [...readArticles]
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "wardesk-backup-" + new Date().toISOString().slice(0,10) + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Backup gedownload", "📤");
+});
+
+importBtn.addEventListener("click", () => importFile.click());
+importFile.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(data.favorites && Array.isArray(data.favorites)){
+        data.favorites.forEach(f => favorites.add(f));
+      }
+      if(data.readArticles && Array.isArray(data.readArticles)){
+        data.readArticles.forEach(r => readArticles.add(r));
+      }
+      localStorage.setItem(FAV_KEY, JSON.stringify([...favorites]));
+      localStorage.setItem(READ_KEY, JSON.stringify([...readArticles]));
+      updateFavCount();
+      render();
+      showToast("Backup geïmporteerd", "📥");
+    } catch(err){
+      showToast("Ongeldige backup", "⚠");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
 
 failedToggle.addEventListener("click", () => {
   failedList.classList.toggle("show");
@@ -1753,11 +2109,11 @@ document.getElementById("theme").addEventListener("click", () => {
     document.body.classList.contains("light") ? "light" : "dark");
 });
 
-feedEl.addEventListener("click", e => {
-  const card = e.target.closest("article");
-  if(!card) return;
-  const link = card.dataset.link;
-  if(link && e.target.tagName === "A") markAsRead(link);
+/* Herbereken hero bij resize */
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { renderHero(); }, 300);
 });
 
 setInterval(() => {

@@ -544,7 +544,7 @@ main{padding:1.25rem 1rem 3rem}
 </div>
 
 <script>
-/* WAR DESK v14 — alle bugs gefixt */
+/* WAR DESK v15 — alle bekende bugs gefixt */
 const PROXY_URL="https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED=5, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
 const PAGE_SIZE=30, TIMEOUT_MS=6000, INACTIVITY_MS=15000, CONCURRENCY=15;
@@ -692,7 +692,6 @@ const targetLang="nl";
 let favorites=new Set(), readArticles=new Set(), trCache={}, sourceHealth={}, disabledSources=new Set();
 let lastVisit=0, notifEnabled=false, db=null;
 
-/* ==== CACHES + data version ==== */
 let cachedFiltered=null, cachedFilterSig="";
 let cachedNavCounts=null, cachedNavSig="";
 let cachedForYouBase=null, cachedForYouSig="";
@@ -702,21 +701,15 @@ let dataVersion=0;
 const translateTimers=new Map();
 
 function bumpDataVersion(){ dataVersion++; }
-function invalidateFilterCaches(){
-  cachedFiltered=null; cachedFilterSig="";
-  cachedForYouBase=null; cachedForYouSig="";
-}
-function invalidateAllCaches(){
-  invalidateFilterCaches();
-  cachedNavCounts=null; cachedNavSig="";
-  cachedTickerHtml="";
-}
-function clearTranslateTimers(){
-  translateTimers.forEach(t=>clearTimeout(t));
-  translateTimers.clear();
+function invalidateFilterCaches(){ cachedFiltered=null; cachedFilterSig=""; cachedForYouBase=null; cachedForYouSig=""; }
+function invalidateAllCaches(){ invalidateFilterCaches(); cachedNavCounts=null; cachedNavSig=""; cachedTickerHtml=""; }
+function clearTranslateTimers(){ translateTimers.forEach(t=>clearTimeout(t)); translateTimers.clear(); }
+function isCardStillValid(idx, link){
+  const el=document.getElementById("wcard-"+idx);
+  if(!el) return false;
+  return el.dataset.link === link;
 }
 
-/* ==== IDB ==== */
 function openDB(){
   return new Promise(resolve=>{
     if(!("indexedDB" in window)){ resolve(null); return; }
@@ -796,7 +789,6 @@ async function loadArticlesDB(){
   }catch(e){ return []; }
 }
 
-/* ==== Leaflet lazy load met correcte foutafhandeling ==== */
 function loadCSS(href){
   return new Promise((res,rej)=>{
     const l=document.createElement("link");
@@ -844,7 +836,6 @@ async function loadLeaflet(){
   return leafletLoadPromise;
 }
 
-/* ==== DOM ==== */
 const $=id=>document.getElementById(id);
 const feedEl=$("feed"), statusEl=$("statusText"), statusDot=$("statusDot");
 const trStatusEl=$("trStatus"), trCountEl=$("trCount");
@@ -973,21 +964,26 @@ function detectLocation(title,desc,fbLat,fbLon){
   for(const loc of LOCATIONS){ if(loc.k.test(t)) return {lat:loc.lat,lon:loc.lon}; }
   return {lat:fbLat,lon:fbLon};
 }
-function fetchWithTimeout(promise, ms){ return Promise.race([promise, new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")), ms))]); }
 async function fetchWithRetry(url, timeoutMs=TIMEOUT_MS, maxRetries=1){
   let lastErr;
-  for(let attempt=0; attempt<=maxRetries; attempt++){
-    try{
-      const r=await fetchWithTimeout(fetch(PROXY_URL+encodeURIComponent(url)), timeoutMs);
-      const data=await r.json();
-      if(data && Array.isArray(data.items) && data.items.length) return data;
-      throw new Error("empty");
-    }catch(e){
-      lastErr=e;
-      if(attempt<maxRetries) await new Promise(r=>setTimeout(r, 300*(attempt+1)));
+  const controller=new AbortController();
+  const abortTimer=setTimeout(()=>controller.abort(), timeoutMs);
+  try{
+    const r=await fetch(PROXY_URL+encodeURIComponent(url), {signal:controller.signal});
+    clearTimeout(abortTimer);
+    if(!r.ok) throw new Error("http-"+r.status);
+    const data=await r.json();
+    if(data && Array.isArray(data.items) && data.items.length) return data;
+    throw new Error("empty");
+  }catch(e){
+    clearTimeout(abortTimer);
+    lastErr=e;
+    if(maxRetries>0 && e.name!=="AbortError"){
+      await new Promise(r=>setTimeout(r, 300));
+      return fetchWithRetry(url, timeoutMs, maxRetries-1);
     }
+    throw lastErr;
   }
-  throw lastErr||new Error("failed");
 }
 function processFeedResult(f,data){
   return data.items.slice(0,PER_FEED).map(it=>{
@@ -1001,21 +997,16 @@ function processFeedResult(f,data){
     return { title:titleClean, link:it.link||"#", desc:descClean, img, date:it.pubDate||"", source:f.name, cat:detectTopic(titleClean,descClean,f.cat), lang:f.lang, lat:loc.lat, lon:loc.lon };
   });
 }
-/* titleKey nu multi-language: werkt voor latijns, Arabisch, CJK */
 function titleKey(title){
   if(!title) return "";
   const t=String(title).toLowerCase().trim();
-  let words;
   try{
     const cleaned=t.replace(/[^\p{L}\p{N}\s]/gu,"").trim();
-    words=cleaned.split(/\s+/).filter(w=>w.length>3);
-    if(words.length>=2){
-      return words.slice(0,8).sort().join(" ");
-    }
-    // Fallback voor talen zonder spaties (Chinees, Japans)
+    const words=cleaned.split(/\s+/).filter(w=>w.length>3);
+    if(words.length>=2) return words.slice(0,8).sort().join(" ");
     return cleaned.slice(0,24);
   }catch(e){
-    words=t.replace(/[^a-z0-9\s]/g,"").split(/\s+/).filter(w=>w.length>3);
+    const words=t.replace(/[^a-z0-9\s]/g,"").split(/\s+/).filter(w=>w.length>3);
     return words.slice(0,8).sort().join(" ");
   }
 }
@@ -1054,7 +1045,7 @@ function areRelatedArticles(a,b){
 }
 function detectBreaking(items){
   const now=Date.now();
-  const recent=items.filter(it=>{ const age=now-safeTime(it.date); return !isNaN(age) && age<=BREAKING_MS; }).slice(0,60);
+  const recent=items.filter(it=>{ const age=now-safeTime(it.date); return age && age<=BREAKING_MS; }).slice(0,60);
   if(recent.length<3) return null;
   const groups=[], used=new Set();
   recent.forEach((a,i)=>{
@@ -1157,7 +1148,8 @@ async function loadFeeds(isAuto=false){
   function doPartialRender(){
     lastRender=Date.now();
     const dd=dedupe(collected); dd.sort((a,b)=>safeTime(b.date)-safeTime(a.date));
-    if(dd.length) allItems=dd;
+    if(dd.length > allItems.length) allItems=dd;
+    else if(dd.length && allItems.length===0) allItems=dd;
     statusEl.textContent=`${allItems.length} berichten · ${totalOk}/${totalCount} bronnen`;
     statusDot.className=totalTry<totalCount?"dot loading":"dot ok";
     statSources.textContent=`${totalOk}/${FEEDS.length}`;
@@ -1177,6 +1169,7 @@ async function loadFeeds(isAuto=false){
     totalTry++;
     try{
       const data=await fetchWithRetry(f.url, TIMEOUT_MS, 1);
+      if(session!==loadSession) return;
       recordHealth(f.name,true);
       processFeedResult(f,data).forEach(it=>{
         const key=(it.link||it.title).toLowerCase().trim();
@@ -1186,6 +1179,7 @@ async function loadFeeds(isAuto=false){
       if(!isAuto){ const pct=5+Math.round((totalTry/totalCount)*90); progressBar.style.width=pct+"%"; }
       scheduleRender();
     }catch(e){
+      if(session!==loadSession) return;
       recordHealth(f.name,false);
       failed.push(f.name);
       if(!isAuto){ const pct=5+Math.round((totalTry/totalCount)*90); progressBar.style.width=pct+"%"; }
@@ -1494,29 +1488,43 @@ function markAsRead(link){
 }
 
 function doTranslate(it, idx){
+  if(!isCardStillValid(idx, it.link)) return;
   const card=document.getElementById("wcard-"+idx);
   if(!card) return;
   const titleEl=card.querySelector('[data-role="title"]'), descEl=card.querySelector('[data-role="desc"]');
   if(it.title && !getCachedTr(it.title)){
-    trEnqueue(()=>gTranslate(it.title,targetLang))
-      .then(tr=>{ if(!tr||!titleEl) return; titleEl.textContent=tr; titleEl.classList.remove("translating"); })
+    const myTitle=it.title;
+    trEnqueue(()=>gTranslate(myTitle,targetLang))
+      .then(tr=>{
+        if(!tr) return;
+        if(!isCardStillValid(idx, it.link)) return;
+        if(titleEl){ titleEl.textContent=tr; titleEl.classList.remove("translating"); }
+      })
       .catch(()=>{ if(titleEl) titleEl.classList.remove("translating"); });
   }
   if(it.desc && !getCachedTr(it.desc) && descEl){
-    trEnqueue(()=>gTranslate(it.desc.slice(0,220),targetLang))
-      .then(tr=>{ if(tr&&descEl) descEl.textContent=tr.slice(0,240)+(tr.length>240?"…":""); })
+    const myDesc=it.desc;
+    trEnqueue(()=>gTranslate(myDesc.slice(0,220),targetLang))
+      .then(tr=>{
+        if(!tr) return;
+        if(!isCardStillValid(idx, it.link)) return;
+        if(descEl) descEl.textContent=tr.slice(0,240)+(tr.length>240?"…":"");
+      })
       .catch(()=>{});
   }
 }
 function scheduleTranslation(it,idx){
   if(!it) return;
   if(!needsTranslation(it.lang)) return;
-  if(getCachedTr(it.title)) return;
+  const titleDone = !it.title || !!getCachedTr(it.title);
+  const descDone = !it.desc || !!getCachedTr(it.desc);
+  if(titleDone && descDone) return;
   const key=it.link;
   const existing=translateTimers.get(key);
   if(existing) clearTimeout(existing);
   translateTimers.set(key, setTimeout(()=>{
     translateTimers.delete(key);
+    if(!isCardStillValid(idx, it.link)) return;
     const card=document.getElementById("wcard-"+idx);
     if(!card) return;
     const rect=card.getBoundingClientRect();
@@ -1724,12 +1732,14 @@ document.querySelectorAll(".cat-menu-item").forEach(item=>{
     else if(action==="map"){ switchView("map"); }
     else if(cat==="live"){
       activeCat="live"; currentPage=1;
+      clearTranslateTimers();
       showOnly("live");
       viewMapBtn.classList.remove("active");
       updateCatMenuActive();
     }
     else if(cat){
       activeCat=cat; currentPage=1;
+      clearTranslateTimers();
       showOnly("list");
       viewMapBtn.classList.remove("active");
       render();
@@ -1745,20 +1755,26 @@ function updateCatMenuActive(){
 }
 
 let searchTimer=null;
+function onFilterChange(){
+  currentPage=1;
+  clearTranslateTimers();
+  invalidateFilterCaches();
+  render();
+}
 searchInput.addEventListener("input",()=>{
   const val=searchInput.value.trim();
   searchWrap.classList.toggle("has-value",val.length>0);
   clearTimeout(searchTimer);
-  searchTimer=setTimeout(()=>{ currentPage=1; invalidateFilterCaches(); render(); },250);
+  searchTimer=setTimeout(onFilterChange,250);
 });
 searchClear.addEventListener("click",()=>{
   searchInput.value=""; searchWrap.classList.remove("has-value");
-  currentPage=1; invalidateFilterCaches(); render();
+  onFilterChange();
 });
-sourceSelect.addEventListener("change",()=>{ activeSource=sourceSelect.value; currentPage=1; invalidateFilterCaches(); render(); });
-timeSelect.addEventListener("change",()=>{ activeTime=timeSelect.value; currentPage=1; invalidateFilterCaches(); render(); });
-langSelect.addEventListener("change",()=>{ activeLang=langSelect.value; currentPage=1; invalidateFilterCaches(); render(); });
-sortSelect.addEventListener("change",()=>{ activeSort=sortSelect.value; currentPage=1; invalidateFilterCaches(); render(); });
+sourceSelect.addEventListener("change",()=>{ activeSource=sourceSelect.value; onFilterChange(); });
+timeSelect.addEventListener("change",()=>{ activeTime=timeSelect.value; onFilterChange(); });
+langSelect.addEventListener("change",()=>{ activeLang=langSelect.value; onFilterChange(); });
+sortSelect.addEventListener("change",()=>{ activeSort=sortSelect.value; onFilterChange(); });
 failedToggle.addEventListener("click",()=>failedList.classList.toggle("show"));
 
 function updateNotifBtn(){
@@ -1808,7 +1824,7 @@ document.addEventListener("keydown",e=>{
   else if(k==="t"){ e.preventDefault(); themeBtn.click(); }
   else if(k==="f"){
     e.preventDefault();
-    activeCat="fav"; currentPage=1; invalidateFilterCaches();
+    activeCat="fav"; currentPage=1; clearTranslateTimers(); invalidateFilterCaches();
     switchView("list"); render(); updateCatMenuActive();
   }
   else if(k==="escape"){

@@ -1,14 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#e0a458"/>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1220"/>
+      <stop offset="100%" stop-color="#16223a"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5c176"/>
+      <stop offset="50%" stop-color="#e0a458"/>
       <stop offset="100%" stop-color="#8a5f28"/>
     </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e0a458" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#e0a458" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="512" height="512" rx="96" fill="#0c1220"/>
-  <circle cx="256" cy="256" r="150" stroke="url(#g2)" stroke-width="22" fill="none"/>
-  <path d="M 256 106 L 256 200" stroke="#e0a458" stroke-width="20" stroke-linecap="round"/>
-  <path d="M 386 331 L 305 284" stroke="#e0a458" stroke-width="20" stroke-linecap="round"/>
-  <path d="M 126 331 L 207 284" stroke="#e0a458" stroke-width="20" stroke-linecap="round"/>
-  <circle cx="256" cy="256" r="42" fill="url(#g2)"/>
+  
+  <!-- Achtergrond -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- Binnenste amberen vierkant met afgeronde hoeken -->
+  <rect x="56" y="56" width="400" height="400" rx="80" fill="url(#amberGrad)"/>
+  
+  <!-- Glow effect -->
+  <circle cx="256" cy="256" r="180" fill="url(#glow)" opacity="0.6"/>
+  
+  <!-- Radar cirkel met pulsen -->
+  <g transform="translate(256,256)">
+    <!-- Centrum stip -->
+    <circle cx="0" cy="0" r="32" fill="#0c1220"/>
+    
+    <!-- Binnenste ring -->
+    <circle cx="0" cy="0" r="72" fill="none" stroke="#0c1220" stroke-width="14" opacity="0.9"/>
+    
+    <!-- Buitenste ring (gedeeltelijk, voor radar-effect) -->
+    <path d="M 0,-120 A 120,120 0 1,1 -120,0" fill="none" stroke="#0c1220" stroke-width="14" stroke-linecap="round" opacity="0.75"/>
+    <path d="M -120,0 A 120,120 0 0,1 0,120" fill="none" stroke="#0c1220" stroke-width="14" stroke-linecap="round" opacity="0.4"/>
+    
+    <!-- Signaalgolven (rechts-boven) -->
+    <path d="M 40,-40 Q 90,-90 130,-60" fill="none" stroke="#0c1220" stroke-width="16" stroke-linecap="round" opacity="0.95"/>
+    <path d="M 60,-70 Q 130,-130 180,-70" fill="none" stroke="#0c1220" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+    
+    <!-- Signaalgolven (links-onder) -->
+    <path d="M -40,40 Q -90,90 -130,60" fill="none" stroke="#0c1220" stroke-width="16" stroke-linecap="round" opacity="0.95"/>
+    <path d="M -60,70 Q -130,130 -180,70" fill="none" stroke="#0c1220" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+  </g>
+  
+  <!-- Kleine rode "live" indicator -->
+  <circle cx="398" cy="114" r="22" fill="#e63950"/>
+  <circle cx="398" cy="114" r="10" fill="#fff" opacity="0.95"/>
 </svg>

@@ -1,0 +1,28 @@
+{
+  "name": "WAR DESK · Live Conflict Monitor",
+  "short_name": "WAR DESK",
+  "description": "Live nieuwsfeed met 50+ bronnen, automatische vertaling en live kaart.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "lang": "nl",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["news", "education"]
+}

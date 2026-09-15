@@ -1,24 +1,18 @@
-/* WAR DESK Service Worker v3 — met cache-limieten (#6) */
-const CACHE_STATIC = "wardesk-static-v3";
-const CACHE_RUNTIME = "wardesk-runtime-v3";
-const MAX_RUNTIME_ENTRIES = 80;
+const CACHE_STATIC = "wardesk-static-v4";
+const CACHE_RUNTIME = "wardesk-runtime-v4";
+const MAX_RUNTIME_ENTRIES = 150;
 const MAX_STATIC_ENTRIES = 40;
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icoon.svg"];
 
 self.addEventListener("install", e => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_STATIC).then(c => c.addAll(ASSETS).catch(() => {}))
-  );
+  e.waitUntil(caches.open(CACHE_STATIC).then(c => c.addAll(ASSETS).catch(() => {})));
 });
 
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => ![CACHE_STATIC, CACHE_RUNTIME].includes(k))
-            .map(k => caches.delete(k))
-      )
+      Promise.all(keys.filter(k => ![CACHE_STATIC, CACHE_RUNTIME].includes(k)).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -38,7 +32,6 @@ self.addEventListener("fetch", e => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-
   if (url.origin !== self.location.origin) {
     e.respondWith(
       caches.open(CACHE_RUNTIME).then(cache =>
@@ -55,7 +48,6 @@ self.addEventListener("fetch", e => {
     );
     return;
   }
-
   e.respondWith(
     caches.match(req).then(cached => {
       if (cached) return cached;

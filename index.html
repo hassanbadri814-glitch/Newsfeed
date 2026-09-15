@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b1220">
-<title>Wereld Nieuws · Live + Vertaald</title>
+<title>Wereld Nieuws · Live + Vertaald + Telegram</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -13,6 +13,7 @@
     --text:#e6edf7; --muted:#8ea3bf; --accent:#38bdf8;
     --accent2:#22c55e; --border:#243049; --danger:#f87171;
     --ar:#f59e0b; --tr:#a855f7; --war:#ef4444; --new:#22d3ee;
+    --tg:#229ED9;
   }
   body.light{
     --bg:#f4f7fb; --card:#ffffff; --card2:#eef3fa;
@@ -26,7 +27,6 @@
     transition:background .25s,color .25s; -webkit-font-smoothing:antialiased;
   }
 
-  /* NIEUWE ARTIKELEN BANNER */
   #newBanner{
     position:fixed; top:12px; left:50%; transform:translate(-50%, -120%);
     z-index:5000; background:var(--accent2); color:#00121f;
@@ -92,6 +92,8 @@
   .chip.active{background:var(--accent); color:#00121f; border-color:var(--accent)}
   .chip.war{color:#fca5a5; border-color:rgba(239,68,68,.35)}
   .chip.war.active{background:var(--war); color:#fff; border-color:var(--war)}
+  .chip.tg{color:#7dd3fc; border-color:rgba(34,158,217,.4)}
+  .chip.tg.active{background:var(--tg); color:#fff; border-color:var(--tg)}
   .chip.ar.active{background:var(--ar); color:#1a1200}
   .chip.tr.active{background:var(--tr); color:#fff}
   .chip.small{font-size:.72rem; padding:.3rem .6rem}
@@ -122,7 +124,6 @@
   #status .live::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--accent2); animation:pulse 2s infinite}
   #status .tr{color:var(--tr); font-weight:700; display:inline-flex; align-items:center; gap:.3rem}
   #status .tr::before{content:"🌐"; font-size:.85rem}
-  #status .refreshInfo{color:var(--accent2); font-weight:600}
 
   .view{display:none} .view.active{display:block}
   .grid{
@@ -140,8 +141,9 @@
   article:hover{transform:translateY(-4px); border-color:var(--accent); box-shadow:0 12px 30px -12px rgba(56,189,248,.35)}
   article.war{border-left:3px solid var(--war)}
   article.war:hover{border-color:var(--war); box-shadow:0 12px 30px -12px rgba(239,68,68,.4)}
+  article.tg{border-left:3px solid var(--tg)}
+  article.tg:hover{border-color:var(--tg); box-shadow:0 12px 30px -12px rgba(34,158,217,.4)}
 
-  /* NIEUW artikel animatie */
   article.isNew{
     border-color:var(--new);
     box-shadow:0 0 0 1px var(--new), 0 12px 30px -12px rgba(34,211,238,.5);
@@ -151,9 +153,7 @@
     0%,100%{box-shadow:0 0 0 1px var(--new), 0 12px 30px -12px rgba(34,211,238,.4)}
     50%{box-shadow:0 0 0 1px var(--new), 0 20px 40px -12px rgba(34,211,238,.7)}
   }
-  article.fresh-enter{
-    animation:slideIn .6s cubic-bezier(.2,.9,.3,1.2);
-  }
+  article.fresh-enter{animation:slideIn .6s cubic-bezier(.2,.9,.3,1.2)}
   @keyframes slideIn{
     from{opacity:0; transform:translateY(-20px) scale(.96)}
     to{opacity:1; transform:translateY(0) scale(1)}
@@ -172,6 +172,7 @@
   article .lang.fr{background:#3b82f6; color:#fff}
   article .lang.nl{background:#f97316; color:#fff}
   article .lang.he{background:#6366f1; color:#fff}
+  article .lang.tg{background:var(--tg); color:#fff}
 
   article .war-badge{
     position:absolute; top:.55rem; right:.55rem;
@@ -195,6 +196,7 @@
     color:var(--muted); text-transform:uppercase; letter-spacing:.4px; align-items:center;
   }
   article .source{background:var(--card2); padding:.12rem .5rem; border-radius:6px; font-weight:700; color:var(--accent)}
+  article.tg .source{color:var(--tg)}
   article .fresh-time{color:var(--new); font-weight:800}
   article h2{
     font-size:.98rem; line-height:1.4; font-weight:700;
@@ -226,6 +228,7 @@
     font-size:.83rem; margin-top:.2rem;
     display:inline-flex; align-items:center; gap:.3rem;
   }
+  article.tg .read{color:var(--tg)}
   article[dir="rtl"] .read{justify-content:flex-end}
 
   #mapView{padding:0 1.1rem 2rem; max-width:1400px; margin:0 auto}
@@ -263,7 +266,6 @@
 </head>
 <body>
 
-<!-- NIEUWE ARTIKELEN BANNER -->
 <div id="newBanner">
   <span class="arrow">↑</span>
   <span class="count" id="newCount">0</span>
@@ -291,6 +293,7 @@
     <div class="chips" id="cats">
       <div class="chip active" data-cat="all">🌍 Alles</div>
       <div class="chip war" data-cat="war">⚔️ OORLOG</div>
+      <div class="chip tg" data-cat="tg">📡 Telegram</div>
       <div class="chip" data-cat="maroc">🇲🇦 Marokko</div>
       <div class="chip" data-cat="mideast">🕌 Midden-Oosten</div>
       <div class="chip" data-cat="world">🌐 Wereld</div>
@@ -327,14 +330,13 @@
   <span class="live">LIVE</span>
   <span id="statusText">Feeds laden...</span>
   <span class="tr" id="trStatus" style="display:none">0</span>
-  <span class="refreshInfo" id="refreshInfo"></span>
 </div>
 
 <main class="view active" id="listView">
   <div class="grid" id="feed">
     <div class="loader">
       <div class="ring"></div>
-      <div>Nieuws ophalen van 53 bronnen...</div>
+      <div>Nieuws ophalen van alle bronnen...</div>
     </div>
   </div>
 </main>
@@ -344,21 +346,34 @@
 </section>
 
 <footer>
-  53 bronnen · Live · Auto-refresh elke 60 seconden · Automatisch vertaald
+  96 bronnen · Live · Auto-refresh elke 60 seconden · Automatisch vertaald · Telegram
 </footer>
 
 <script>
 /* ==========================================================
    INSTELLINGEN
    ========================================================== */
-const PROXY         = "https://api.rss2json.com/v1/api.json?rss_url=";
-const PER_FEED      = 6;
-const REFRESH_MS    = 60 * 1000;           // 60 seconden
-const FRESH_MS      = 15 * 60 * 1000;      // artikel < 15 min = "NEW"
+const PROXY      = "https://api.rss2json.com/v1/api.json?rss_url=";
+const PER_FEED   = 6;
+const REFRESH_MS = 60 * 1000;
+const FRESH_MS   = 15 * 60 * 1000;
 
-/* ---------- FEEDS ---------- */
+/* RSSHub mirrors — als één plat ligt, probeert hij de volgende */
+const RSSHUB_MIRRORS = [
+  "https://rsshub.app",
+  "https://rsshub.rssforever.com",
+  "https://rsshub.feeded.xyz",
+  "https://rsshub.ktachibana.party",
+  "https://rsshub.pseudoyu.com",
+  "https://rsshub.henry.wang"
+];
+
+/* ==========================================================
+   BRONNEN — 53 RSS + 43 Telegram = 96 totaal
+   cat: war | tg | maroc | mideast | world | nl | business | tech | sport
+   ========================================================== */
 const FEEDS = [
-  /* ⚔️ OORLOG */
+  /* ⚔️ OORLOG — MIDDEN-OOSTEN (16) */
   { name:"Al Jazeera ME",      lang:"en", cat:"war", lat:31.5,  lon:34.47, url:"https://www.aljazeera.com/xml/rss/all.xml" },
   { name:"Middle East Eye",    lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
   { name:"The New Arab",       lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.newarab.com/rss" },
@@ -376,7 +391,7 @@ const FEEDS = [
   { name:"Al Monitor",         lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
   { name:"Al Masirah Yemen",   lang:"ar", cat:"war", lat:15.37, lon:44.19, url:"https://www.almasirah.net/rss" },
 
-  /* 🇲🇦 MAROKKO */
+  /* 🇲🇦 MAROKKO (7) */
   { name:"Hespress AR",  lang:"ar", cat:"maroc", lat:34.02, lon:-6.83, url:"https://www.hespress.com/feed" },
   { name:"Hespress FR",  lang:"fr", cat:"maroc", lat:34.02, lon:-6.83, url:"https://fr.hespress.com/feed" },
   { name:"Le360",        lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://fr.le360.ma/rss" },
@@ -385,7 +400,7 @@ const FEEDS = [
   { name:"Lakome2",      lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
   { name:"TelQuel",      lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
 
-  /* 🕌 MIDDEN-OOSTEN */
+  /* 🕌 MIDDEN-OOSTEN (17) */
   { name:"Al Jazeera AR",     lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
   { name:"Al Arabiya",        lang:"ar", cat:"mideast", lat:24.71, lon:46.67, url:"https://www.alarabiya.net/feed/rss2/ar.xml" },
   { name:"Sky News Arabia",   lang:"ar", cat:"mideast", lat:24.45, lon:54.37, url:"https://www.skynewsarabia.com/web/rss/95.xml" },
@@ -404,7 +419,7 @@ const FEEDS = [
   { name:"Al Masry Al Youm",  lang:"ar", cat:"mideast", lat:30.04, lon:31.24, url:"https://www.almasryalyoum.com/rss" },
   { name:"Youm7 Egypt",       lang:"ar", cat:"mideast", lat:30.04, lon:31.24, url:"https://www.youm7.com/rss/SectionRss?SectionID=65" },
 
-  /* 🌐 WERELD */
+  /* 🌐 WERELD (6) */
   { name:"BBC World",     lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
   { name:"The Guardian",  lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://www.theguardian.com/world/rss" },
   { name:"Al Jazeera EN", lang:"en", cat:"world", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
@@ -412,24 +427,83 @@ const FEEDS = [
   { name:"DW English",    lang:"en", cat:"world", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-en-all" },
   { name:"NYT World",     lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
 
-  /* 🇳🇱 NL/BE */
+  /* 🇳🇱 NL/BE (3) */
   { name:"NOS",            lang:"nl", cat:"nl",       lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
   { name:"Nu.nl Algemeen", lang:"nl", cat:"nl",       lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
   { name:"Nu.nl Economie", lang:"nl", cat:"business", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Economie" },
 
-  /* 💻 TECH */
+  /* 💻 TECH (2) */
   { name:"BBC Tech",  lang:"en", cat:"tech", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/technology/rss.xml" },
   { name:"The Verge", lang:"en", cat:"tech", lat:40.71, lon:-74.00, url:"https://www.theverge.com/rss/index.xml" },
 
-  /* ⚽ SPORT */
+  /* ⚽ SPORT (2) */
   { name:"BBC Sport", lang:"en", cat:"sport", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/sport/rss.xml" },
-  { name:"Marca",     lang:"es", cat:"sport", lat:40.42, lon:-3.70, url:"https://e00-marca.uecdn.es/rss/portada.xml" }
+  { name:"Marca",     lang:"es", cat:"sport", lat:40.42, lon:-3.70, url:"https://e00-marca.uecdn.es/rss/portada.xml" },
+
+  /* ============================================================
+     📡 TELEGRAM — 43 kanalen via RSSHub
+     ============================================================ */
+
+  /* --- Telegram: Midden-Oosten (Arabisch) --- */
+  { name:"📡 Al Jazeera AR",     lang:"ar", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/aljazeera" },
+  { name:"📡 Al Arabiya",        lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" },
+  { name:"📡 Sky News Arabia",   lang:"ar", cat:"tg", lat:24.45, lon:54.37, url:"rsshub://telegram/channel/SkyNewsArabia" },
+  { name:"📡 RT Arabic",         lang:"ar", cat:"tg", lat:55.75, lon:37.61, url:"rsshub://telegram/channel/RTarabic" },
+  { name:"📡 BBC Arabic",        lang:"ar", cat:"tg", lat:51.50, lon:-0.12, url:"rsshub://telegram/channel/bbcnewsarabic" },
+  { name:"📡 CNN Arabic",        lang:"ar", cat:"tg", lat:25.20, lon:55.27, url:"rsshub://telegram/channel/CNNArabic" },
+  { name:"📡 France24 AR",       lang:"ar", cat:"tg", lat:48.85, lon:2.35,  url:"rsshub://telegram/channel/France24_ar" },
+  { name:"📡 DW Arabic",         lang:"ar", cat:"tg", lat:52.52, lon:13.40, url:"rsshub://telegram/channel/dw_arabic" },
+  { name:"📡 Alhurra",           lang:"ar", cat:"tg", lat:38.9,  lon:-77.04, url:"rsshub://telegram/channel/alhurra" },
+  { name:"📡 Al Hadath",         lang:"ar", cat:"tg", lat:24.45, lon:54.37, url:"rsshub://telegram/channel/AlHadath" },
+  { name:"📡 Al Ekhbariya",      lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlEkhbariya" },
+  { name:"📡 Al Sumaria",        lang:"ar", cat:"tg", lat:33.32, lon:44.36, url:"rsshub://telegram/channel/alsumaria" },
+  { name:"📡 Alghad TV",         lang:"ar", cat:"tg", lat:31.95, lon:35.91, url:"rsshub://telegram/channel/Alghadtv" },
+  { name:"📡 Al Manar",          lang:"ar", cat:"tg", lat:33.89, lon:35.50, url:"rsshub://telegram/channel/AlManar" },
+  { name:"📡 Al Akhbar",         lang:"ar", cat:"tg", lat:33.89, lon:35.50, url:"rsshub://telegram/channel/alakhbar" },
+  { name:"📡 Quds News",         lang:"ar", cat:"tg", lat:31.9,  lon:35.2,  url:"rsshub://telegram/channel/QudsN" },
+
+  /* --- Telegram: Oorlog / Conflict --- */
+  { name:"📡 Al Mayadeen",       lang:"ar", cat:"tg", lat:33.89, lon:35.50, url:"rsshub://telegram/channel/AlMayadeenNews" },
+  { name:"📡 Palestine Today",   lang:"ar", cat:"tg", lat:31.5,  lon:34.47, url:"rsshub://telegram/channel/palestinetoday" },
+  { name:"📡 Shehab Agency",     lang:"ar", cat:"tg", lat:31.5,  lon:34.47, url:"rsshub://telegram/channel/shehabnews" },
+  { name:"📡 Al Masirah",        lang:"ar", cat:"tg", lat:15.37, lon:44.19, url:"rsshub://telegram/channel/Almasirah" },
+  { name:"📡 Times of Israel",   lang:"en", cat:"tg", lat:31.78, lon:35.22, url:"rsshub://telegram/channel/TimesofIsrael" },
+  { name:"📡 Middle East Eye",   lang:"en", cat:"tg", lat:51.5,  lon:-0.12, url:"rsshub://telegram/channel/MiddleEastEye" },
+  { name:"📡 The New Arab",      lang:"en", cat:"tg", lat:51.5,  lon:-0.12, url:"rsshub://telegram/channel/TheNewArab" },
+  { name:"📡 Iran Intl",         lang:"en", cat:"tg", lat:35.69, lon:51.39, url:"rsshub://telegram/channel/IranIntl" },
+  { name:"📡 Rudaw English",     lang:"en", cat:"tg", lat:36.19, lon:44.01, url:"rsshub://telegram/channel/RudawEnglish" },
+  { name:"📡 Kurdistan24",       lang:"en", cat:"tg", lat:36.19, lon:44.01, url:"rsshub://telegram/channel/kurdistan24" },
+  { name:"📡 Al Monitor",        lang:"en", cat:"tg", lat:38.9,  lon:-77.04, url:"rsshub://telegram/channel/AlMonitor" },
+
+  /* --- Telegram: Marokko --- */
+  { name:"📡 Hespress AR",       lang:"ar", cat:"tg", lat:34.02, lon:-6.83, url:"rsshub://telegram/channel/hesspress" },
+  { name:"📡 Hespress FR",       lang:"fr", cat:"tg", lat:34.02, lon:-6.83, url:"rsshub://telegram/channel/HespressFR" },
+  { name:"📡 Le360",             lang:"fr", cat:"tg", lat:33.57, lon:-7.58, url:"rsshub://telegram/channel/le360" },
+  { name:"📡 Yabiladi",          lang:"fr", cat:"tg", lat:33.57, lon:-7.58, url:"rsshub://telegram/channel/yabiladi" },
+  { name:"📡 Akhbarona",         lang:"ar", cat:"tg", lat:33.57, lon:-7.58, url:"rsshub://telegram/channel/Akhbarona" },
+  { name:"📡 ChoufTV",           lang:"ar", cat:"tg", lat:33.57, lon:-7.58, url:"rsshub://telegram/channel/chouftv" },
+  { name:"📡 Barlamane",         lang:"ar", cat:"tg", lat:33.57, lon:-7.58, url:"rsshub://telegram/channel/barlamane" },
+
+  /* --- Telegram: Wereld --- */
+  { name:"📡 Al Jazeera EN",     lang:"en", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/ajenglish" },
+  { name:"📡 BBC World",         lang:"en", cat:"tg", lat:51.50, lon:-0.12, url:"rsshub://telegram/channel/bbcnews" },
+  { name:"📡 Guardian",          lang:"en", cat:"tg", lat:51.50, lon:-0.12, url:"rsshub://telegram/channel/guardian" },
+  { name:"📡 Reuters",           lang:"en", cat:"tg", lat:51.50, lon:-0.12, url:"rsshub://telegram/channel/Reuters" },
+  { name:"📡 Sky News",          lang:"en", cat:"tg", lat:51.50, lon:-0.12, url:"rsshub://telegram/channel/SkyNews" },
+  { name:"📡 AP News",           lang:"en", cat:"tg", lat:40.71, lon:-74.00, url:"rsshub://telegram/channel/APNews" },
+
+  /* --- Telegram: NL --- */
+  { name:"📡 NOS",               lang:"nl", cat:"tg", lat:52.37, lon:4.90, url:"rsshub://telegram/channel/nosnl" },
+  { name:"📡 RTL Nieuws",        lang:"nl", cat:"tg", lat:52.37, lon:4.90, url:"rsshub://telegram/channel/rtlnieuws" },
+  { name:"📡 Telegraaf",         lang:"nl", cat:"tg", lat:52.37, lon:4.90, url:"rsshub://telegram/channel/telegraaf" }
 ];
 
-/* ---------- STATE ---------- */
+/* ==========================================================
+   STATE
+   ========================================================== */
 let allItems = [];
-let seenLinks = new Set();          // om duplicaten te herkennen
-let newCount = 0;                   // nieuwe sinds laatste weergave
+let seenLinks = new Set();
+let newCount = 0;
 let activeCat = "all";
 let activeLang = "all";
 let currentView = "list";
@@ -446,7 +520,6 @@ let targetLang = localStorage.getItem("news_target")
 const feedEl    = document.getElementById("feed");
 const statusEl  = document.getElementById("statusText");
 const trStatusEl= document.getElementById("trStatus");
-const refreshInfoEl = document.getElementById("refreshInfo");
 const searchEl  = document.getElementById("search");
 const catsEl    = document.getElementById("cats");
 const langsEl   = document.getElementById("langs");
@@ -462,7 +535,7 @@ const bannerEl  = document.getElementById("newBanner");
 const newCountEl= document.getElementById("newCount");
 
 /* ---------- Vertaalcache ---------- */
-const TR_KEY = "news_tr_cache_v3";
+const TR_KEY = "news_tr_cache_v4";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -553,7 +626,29 @@ function isFresh(dateStr){
 function trKeyFor(text){ return targetLang + ":" + hash((text||"").slice(0,450)); }
 function getCachedTr(text){ return trCache[trKeyFor(text)] || ""; }
 
-/* ---------- FEEDS LADEN ---------- */
+/* ==========================================================
+   FEED OPHALEN (met RSSHub fallback)
+   ========================================================== */
+async function fetchFeedData(url){
+  const attempts = url.startsWith("rsshub://")
+    ? RSSHUB_MIRRORS.map(m => m + "/" + url.slice(9))
+    : [url];
+
+  for(const u of attempts){
+    try{
+      const r = await fetch(PROXY + encodeURIComponent(u));
+      const data = await r.json();
+      if(data && data.status === "ok" && Array.isArray(data.items) && data.items.length){
+        return data;
+      }
+    }catch(e){ continue; }
+  }
+  throw new Error("all attempts failed for " + url);
+}
+
+/* ==========================================================
+   FEEDS LADEN
+   ========================================================== */
 async function loadFeeds(isAuto = false){
   if(!isAuto){
     statusEl.textContent = "Feeds laden...";
@@ -563,39 +658,34 @@ async function loadFeeds(isAuto = false){
       feedEl.innerHTML = `
         <div class="loader">
           <div class="ring"></div>
-          <div>Nieuws ophalen van ${FEEDS.length} bronnen...</div>
+          <div>${FEEDS.length} bronnen ophalen (RSS + Telegram)...</div>
         </div>`;
     }
   }
 
   const results = await Promise.allSettled(
     FEEDS.map(f =>
-      fetch(PROXY + encodeURIComponent(f.url))
-        .then(r => r.json())
-        .then(data => {
-          if(!data || data.status !== "ok" || !Array.isArray(data.items))
-            throw new Error("feed fail");
-          return data.items.slice(0, PER_FEED).map(it => {
-            const rawDesc = it.description || it.content || "";
-            const img = it.thumbnail ||
-              it.enclosure?.link ||
-              (rawDesc.match(/<img[^>]+src="([^"]+)"/i)?.[1]) ||
-              (it.content||"").match(/<img[^>]+src="([^"]+)"/i)?.[1] ||
-              "";
-            return {
-              title: it.title || "",
-              link:  it.link  || "#",
-              desc:  stripHtml(rawDesc).slice(0, 280),
-              img, date: it.pubDate || "",
-              source: f.name, cat: f.cat, lang: f.lang,
-              lat: f.lat, lon: f.lon
-            };
-          });
+      fetchFeedData(f.url).then(data =>
+        data.items.slice(0, PER_FEED).map(it => {
+          const rawDesc = it.description || it.content || "";
+          const img = it.thumbnail ||
+            it.enclosure?.link ||
+            (rawDesc.match(/<img[^>]+src="([^"]+)"/i)?.[1]) ||
+            (it.content||"").match(/<img[^>]+src="([^"]+)"/i)?.[1] ||
+            "";
+          return {
+            title: it.title || "",
+            link:  it.link  || "#",
+            desc:  stripHtml(rawDesc).slice(0, 280),
+            img, date: it.pubDate || "",
+            source: f.name, cat: f.cat, lang: f.lang,
+            lat: f.lat, lon: f.lon
+          };
         })
+      )
     )
   );
 
-  /* Verzamel + dedupliceer */
   const newItems = [];
   let okCount = 0;
   const freshLinks = new Set();
@@ -615,7 +705,6 @@ async function loadFeeds(isAuto = false){
 
   newItems.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-  /* Tel écht nieuwe artikelen */
   if(!isFirstLoad){
     const trulyNew = newItems.filter(it => {
       const key = (it.link || it.title).toLowerCase().trim();
@@ -633,7 +722,7 @@ async function loadFeeds(isAuto = false){
 
   if(!allItems.length){
     if(isFirstLoad){
-      feedEl.innerHTML = `<div class="error">⚠️ Geen artikelen geladen. Probeer opnieuw.</div>`;
+      feedEl.innerHTML = `<div class="error">⚠️ Geen artikelen geladen. Controleer je internet.</div>`;
     }
     statusEl.textContent = "0 artikelen";
     return;
@@ -643,19 +732,13 @@ async function loadFeeds(isAuto = false){
     `${allItems.length} artikelen · ${okCount}/${FEEDS.length} bronnen · ` +
     new Date().toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
 
-  /* Alleen volledig opnieuw renderen bij niet-auto refresh of grote wijziging */
-  if(isFirstLoad || !isAuto){
-    render();
-  } else {
-    render(); // bij auto: herrender (nieuwe kaarten gloeien)
-  }
+  render();
   renderMap();
-
   isFirstLoad = false;
   nextRefreshSeconds = REFRESH_MS / 1000;
 }
 
-/* ---------- NIEUWE ARTIKELEN BANNER ---------- */
+/* ---------- Banner ---------- */
 function showNewBanner(){
   newCountEl.textContent = newCount;
   bannerEl.classList.add("show");
@@ -666,7 +749,7 @@ bannerEl.addEventListener("click", () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-/* ---------- FILTERS ---------- */
+/* ---------- Filters ---------- */
 function getFiltered(){
   const q = searchEl.value.toLowerCase().trim();
   return allItems.filter(it => {
@@ -680,7 +763,7 @@ function getFiltered(){
   });
 }
 
-/* ---------- RENDER LIJST ---------- */
+/* ---------- Render ---------- */
 let currentRender = [];
 let lazyObserver = null;
 
@@ -721,8 +804,9 @@ function cardHtml(it, i){
   const titleTranslating = !cachedTitle && it.lang !== targetLang;
 
   const catLabel = {
-    war:"⚔️ OORLOG", maroc:"MAROKKO", mideast:"MIDDEN-OOSTEN",
-    world:"WERELD", nl:"NL/BE", business:"ECONOMIE", tech:"TECH", sport:"SPORT"
+    war:"⚔️ OORLOG", tg:"📡 TELEGRAM", maroc:"MAROKKO",
+    mideast:"MIDDEN-OOSTEN", world:"WERELD", nl:"NL/BE",
+    business:"ECONOMIE", tech:"TECH", sport:"SPORT"
   }[it.cat] || it.cat;
 
   const img = it.img
@@ -731,16 +815,17 @@ function cardHtml(it, i){
 
   const showOriginal = cachedTitle && cachedTitle.trim() !== it.title.trim();
   const isWar = it.cat === "war";
+  const isTg  = it.cat === "tg";
   const fresh = isFresh(it.date);
   const timeText = timeAgo(it.date);
   const timeClass = fresh ? "fresh-time" : "";
+  const classes = [isWar?'war':'', isTg?'tg':'', fresh?'isNew':''].filter(Boolean).join(' ');
 
   return `
-    <article id="card-${i}" data-idx="${i}" dir="${isRTL?'rtl':'ltr'}"
-             class="${isWar?'war':''} ${fresh?'isNew':''}">
+    <article id="card-${i}" data-idx="${i}" dir="${isRTL?'rtl':'ltr'}" class="${classes}">
       <div class="thumb">
         ${img}
-        <span class="lang ${it.lang}">${it.lang.toUpperCase()}</span>
+        <span class="lang ${isTg?'tg':it.lang}">${isTg?'📡 TG':it.lang.toUpperCase()}</span>
         ${isWar ? '<span class="war-badge">⚔️ LIVE</span>' : ''}
         ${fresh ? '<span class="new-badge">✨ NEW</span>' : ''}
       </div>
@@ -795,7 +880,7 @@ function scheduleTranslation(it, idx){
   }
 }
 
-/* ---------- KAART ---------- */
+/* ---------- Kaart ---------- */
 function initMap(){
   if(map) return;
   map = L.map("map", { center:[28,35], zoom:3, worldCopyJump:true });
@@ -819,6 +904,7 @@ function renderMap(){
 
   Object.values(bySource).forEach(({info, items}) => {
     const color = info.cat === "war" ? "#ef4444"
+                : info.cat === "tg"  ? "#229ED9"
                 : info.lang === "ar" ? "#f59e0b"
                 : info.lang === "fr" ? "#3b82f6"
                 : info.lang === "nl" ? "#f97316"
@@ -861,7 +947,7 @@ function renderMap(){
   });
 }
 
-/* ---------- WEERGAVE ---------- */
+/* ---------- Weergave ---------- */
 function switchView(v){
   currentView = v;
   if(v === "list"){
@@ -879,7 +965,7 @@ function switchView(v){
   localStorage.setItem("news_view", v);
 }
 
-/* ---------- EVENTS ---------- */
+/* ---------- Events ---------- */
 searchEl.addEventListener("input", () => { render(); renderMap(); });
 
 catsEl.addEventListener("click", e => {
@@ -920,7 +1006,7 @@ document.getElementById("theme").addEventListener("click", () => {
 if(localStorage.getItem("news_theme") === "light")
   document.body.classList.add("light");
 
-/* ---------- LIVE KLOK + COUNTDOWN ---------- */
+/* ---------- Klok + countdown ---------- */
 setInterval(() => {
   const now = new Date();
   clockEl.textContent = now.toLocaleTimeString("nl-NL", {
@@ -931,12 +1017,10 @@ setInterval(() => {
   nextEl.textContent = "↻ " + nextRefreshSeconds + "s";
 }, 1000);
 
-/* ---------- AUTO REFRESH ---------- */
-setInterval(() => {
-  loadFeeds(true);
-}, REFRESH_MS);
+/* ---------- Auto refresh ---------- */
+setInterval(() => { loadFeeds(true); }, REFRESH_MS);
 
-/* ---------- START ---------- */
+/* ---------- Start ---------- */
 targetsEl.querySelectorAll(".chip").forEach(c => {
   if(c.dataset.t === targetLang) c.classList.add("active");
   else c.classList.remove("active");

@@ -86,8 +86,18 @@ header::after{content:"";position:absolute;bottom:0;left:0;right:0;height:1px;ba
 .hstat.coral .hstat-value{color:var(--coral-2);text-shadow:0 0 12px rgba(230,57,80,.4)}
 .hstat.teal .hstat-value{color:var(--teal-2);text-shadow:0 0 12px rgba(20,184,166,.4)}
 .hstat.green .hstat-value{color:var(--green);text-shadow:0 0 12px rgba(16,185,129,.4)}
-.actions{display:flex;gap:.4rem;flex-wrap:wrap}
-.btn{min-width:42px;min-height:42px;background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);color:var(--ink-2);cursor:pointer;display:grid;place-items:center;font-size:.95rem;border-radius:10px;transition:all .18s cubic-bezier(.2,.9,.3,1);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.3);padding:0}
+.actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+.btn-menu-big{width:54px;height:54px;min-width:54px;min-height:54px;font-size:1.45rem;font-weight:600;border-radius:14px;background:linear-gradient(135deg,rgba(226,168,87,.18) 0%,rgba(226,168,87,.05) 100%);border:1.5px solid rgba(226,168,87,.4);color:var(--amber);box-shadow:0 4px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08),0 0 24px rgba(226,168,87,.15);transition:all .18s cubic-bezier(.2,.9,.3,1);cursor:pointer;display:grid;place-items:center;padding:0;font-family:inherit}
+.btn-menu-big:hover{background:linear-gradient(135deg,rgba(226,168,87,.32) 0%,rgba(226,168,87,.14) 100%);border-color:var(--amber);box-shadow:0 8px 24px rgba(226,168,87,.4),inset 0 1px 0 rgba(255,255,255,.14),0 0 36px rgba(226,168,87,.3);transform:translateY(-1px)}
+.btn-menu-big:active{transform:scale(.95)}
+.actions-group{display:flex;gap:.3rem;padding:.4rem;background:linear-gradient(180deg,rgba(13,21,34,.6),rgba(13,21,34,.25));border:1px solid var(--line-2);border-radius:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 2px 8px rgba(0,0,0,.2)}
+.btn-mini{width:40px;height:40px;min-width:40px;min-height:40px;font-size:.95rem;border-radius:10px;background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border:1px solid transparent;color:var(--ink-2);cursor:pointer;display:grid;place-items:center;transition:all .18s cubic-bezier(.2,.9,.3,1);font-family:inherit;padding:0}
+.btn-mini:hover{border-color:rgba(226,168,87,.5);color:var(--amber);background:linear-gradient(180deg,rgba(226,168,87,.14),rgba(226,168,87,.06));box-shadow:0 0 18px rgba(226,168,87,.25)}
+.btn-mini:active{transform:scale(.92)}
+.btn-mini.on{color:var(--teal);border-color:var(--teal);background:linear-gradient(180deg,rgba(20,184,166,.14),rgba(20,184,166,.06));box-shadow:0 0 18px rgba(20,184,166,.3)}
+.btn-mini.active{background:linear-gradient(135deg,var(--amber-2),var(--amber-3));color:#070c16;border-color:var(--amber);box-shadow:0 4px 14px rgba(226,168,87,.4)}
+.btn-mini.spin span{animation:spin 1s linear infinite;display:inline-block}
+.btn{min-width:42px;min-height:42px;background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);color:var(--ink-2);cursor:pointer;display:grid;place-items:center;font-size:.95rem;border-radius:10px;transition:all .18s cubic-bezier(.2,.9,.3,1);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.3);padding:0;font-family:inherit}
 .btn:hover{border-color:var(--amber);color:var(--amber);background:linear-gradient(180deg,rgba(226,168,87,.12),rgba(226,168,87,.05));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 20px rgba(226,168,87,.25)}
 .btn:active{transform:scale(.94)}
 .btn.active{background:linear-gradient(135deg,var(--amber-2),var(--amber-3));color:#070c16;border-color:var(--amber);box-shadow:0 4px 16px rgba(226,168,87,.4)}
@@ -271,6 +281,9 @@ body{font-size:14px}
 .header-stats{gap:1rem;width:100%;margin-left:0;margin-top:.3rem}
 .hstat:nth-child(5){display:none}
 .hstat-value{font-size:.78rem}
+.btn-menu-big{width:48px;height:48px;min-width:48px;min-height:48px;font-size:1.25rem;border-radius:12px}
+.btn-mini{width:36px;height:36px;min-width:36px;min-height:36px;font-size:.85rem}
+.actions-group{gap:.25rem;padding:.35rem;border-radius:14px}
 .grid{grid-template-columns:1fr;gap:1.1rem}
 main{padding:1.25rem 1rem 3rem}
 #map,#mapView .map-loader{height:60vh}
@@ -346,11 +359,12 @@ main{padding:1.25rem 1rem 3rem}
       <div class="hstat teal"><span class="hstat-label">Refresh</span><span class="hstat-value" id="nextRefresh">30s</span></div>
     </div>
     <div class="actions">
-      <button class="btn" id="notifBtn" title="Meldingen" aria-label="Meldingen aan/uit">🔕</button>
-      <button class="btn" id="viewList" title="Menu" aria-label="Menu openen">☰</button>
-      <button class="btn" id="viewMap" title="Kaart (M)" aria-label="Kaartweergave">◉</button>
-      <button class="btn" id="refresh" title="Verversen (R)" aria-label="Verversen"><span>↻</span></button>
-      <button class="btn" id="theme" title="Thema (T)" aria-label="Thema wisselen">◐</button>
+      <button class="btn-menu-big" id="viewList" title="Menu" aria-label="Menu openen">☰</button>
+      <div class="actions-group">
+        <button class="btn-mini" id="viewMap" title="Kaart (M)" aria-label="Kaartweergave">◉</button>
+        <button class="btn-mini" id="refresh" title="Verversen (R)" aria-label="Verversen"><span>↻</span></button>
+        <button class="btn-mini" id="theme" title="Thema (T)" aria-label="Thema wisselen">◐</button>
+      </div>
     </div>
   </div>
 </header>
@@ -540,11 +554,19 @@ main{padding:1.25rem 1rem 3rem}
       <button class="cat-menu-item" data-cat="health"><span class="emoji">🏥</span>Gezondheid</button>
       <button class="cat-menu-item" data-cat="algemeen"><span class="emoji">📰</span>Algemeen</button>
     </div>
+    <div class="cat-menu-title">Instellingen</div>
+    <div class="cat-menu-grid">
+      <button class="cat-menu-item" id="notifBtn" type="button">
+        <span class="emoji" id="notifIcon">🔕</span><span id="notifText">Meldingen aan</span>
+      </button>
+    </div>
   </div>
 </div>
 
 <script>
-/* WAR DESK v15 — alle bekende bugs gefixt */
+/* ==========================================================
+   WAR DESK v16 — header redesign + notif naar menu
+   ========================================================== */
 const PROXY_URL="https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED=5, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
 const PAGE_SIZE=30, TIMEOUT_MS=6000, INACTIVITY_MS=15000, CONCURRENCY=15;
@@ -1725,6 +1747,7 @@ viewListBtn.addEventListener("click",(e)=>{
 catMenuClose.addEventListener("click",()=>catMenu.classList.remove("show"));
 catMenu.addEventListener("click",(e)=>{ if(e.target===catMenu) catMenu.classList.remove("show"); });
 document.querySelectorAll(".cat-menu-item").forEach(item=>{
+  if(item.id === "notifBtn") return;
   item.addEventListener("click",()=>{
     const cat=item.dataset.cat;
     const action=item.dataset.action;
@@ -1778,9 +1801,15 @@ sortSelect.addEventListener("change",()=>{ activeSort=sortSelect.value; onFilter
 failedToggle.addEventListener("click",()=>failedList.classList.toggle("show"));
 
 function updateNotifBtn(){
-  if(!("Notification" in window)){ notifBtn.style.display="none"; return; }
-  notifBtn.classList.toggle("on", notifEnabled && Notification.permission==="granted");
-  notifBtn.textContent=(notifEnabled && Notification.permission==="granted")?"🔔":"🔕";
+  const btn = document.getElementById("notifBtn");
+  if(!btn) return;
+  if(!("Notification" in window)){ btn.style.display="none"; return; }
+  const granted = notifEnabled && Notification.permission === "granted";
+  const icon = document.getElementById("notifIcon");
+  const text = document.getElementById("notifText");
+  if(icon) icon.textContent = granted ? "🔔" : "🔕";
+  if(text) text.textContent = granted ? "Meldingen uit" : "Meldingen aan";
+  btn.classList.toggle("active", granted);
 }
 notifBtn.addEventListener("click",async()=>{
   if(!("Notification" in window)){ showToast("Notificaties niet ondersteund","⚠"); return; }

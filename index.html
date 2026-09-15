@@ -9,15 +9,17 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
-    --bg:#0b0d10; --bg2:#0f1318; --card:#141a21; --card2:#1a212a;
-    --text:#eceff3; --muted:#8a929c; --dim:#525b66;
-    --red:#c8102e; --red2:#e11d48; --amber:#eab308;
-    --green:#16a34a; --blue:#2563eb; --cyan:#06b6d4;
-    --border:#1e252e; --border2:#2a333e;
+    --bg:#0a0a0a; --bg2:#111111; --card:#1a1a1a; --card2:#222222;
+    --text:#e8e8e8; --muted:#888888; --dim:#555555;
+    --red:#dc2626; --red2:#ef4444;
+    --gold:#d4af37; --gold2:#e8c547;
+    --silver:#b8b8b8; --silver2:#d0d0d0;
+    --border:#2a2a2a; --border2:#3a3a3a;
   }
   body.light{
-    --bg:#ffffff; --bg2:#f7f8fa; --card:#ffffff; --card2:#f0f2f5;
-    --text:#0a0a0a; --muted:#5b6673; --dim:#8a94a0; --border:#e5e7eb; --border2:#d1d5db;
+    --bg:#f5f5f5; --bg2:#ffffff; --card:#ffffff; --card2:#f0f0f0;
+    --text:#0a0a0a; --muted:#666666; --dim:#999999;
+    --border:#e0e0e0; --border2:#cccccc;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -28,116 +30,126 @@
     overflow-x:hidden;
   }
 
-  /* ═══════════ BREAKING TICKER ═══════════ */
+  /* ═══════════ BREAKING TICKER (ROOD) ═══════════ */
   .ticker{
     background:var(--red); color:#fff;
-    height:34px; overflow:hidden;
+    height:36px; overflow:hidden;
     display:flex; align-items:center;
     border-bottom:2px solid #000;
     position:relative; z-index:100;
   }
   .ticker .label{
-    background:#000; color:#fff;
+    background:#000; color:var(--gold);
     padding:.35rem 1rem; height:100%;
-    display:flex; align-items:center; gap:.4rem;
-    font-weight:900; font-size:.7rem;
+    display:flex; align-items:center; gap:.5rem;
+    font-weight:900; font-size:.72rem;
     letter-spacing:.18em; white-space:nowrap;
     z-index:2; flex-shrink:0;
   }
   .ticker .label::before{
-    content:""; width:7px; height:7px; border-radius:50%;
+    content:""; width:8px; height:8px; border-radius:50%;
     background:var(--red2); animation:blink 1s infinite;
   }
   @keyframes blink{50%{opacity:.2}}
   .ticker .track{
     display:flex; gap:3rem; white-space:nowrap;
-    animation:scroll 100s linear infinite;
+    animation:scroll 120s linear infinite;
     padding-left:1rem;
   }
   .ticker .track:hover{animation-play-state:paused}
   .ticker .track span{
     display:inline-flex; align-items:center; gap:.6rem;
-    font-weight:600; font-size:.8rem;
+    font-weight:600; font-size:.82rem;
   }
   .ticker .track span::before{
-    content:"▸"; opacity:.6;
+    content:"▸"; color:var(--gold); opacity:.9;
   }
   @keyframes scroll{to{transform:translateX(-50%)}}
 
-  /* ═══════════ HEADER ═══════════ */
+  /* ═══════════ HEADER (ZWART + GOUD) ═══════════ */
   header{
     background:var(--bg2);
     border-bottom:1px solid var(--border);
     position:sticky; top:0; z-index:99;
+    box-shadow:0 2px 20px rgba(0,0,0,.5);
   }
   .header-top{
     max-width:1600px; margin:0 auto;
-    padding:.9rem 1.2rem;
+    padding:1rem 1.2rem;
     display:flex; align-items:center; gap:1.2rem;
     flex-wrap:wrap;
   }
   .logo{
-    display:flex; align-items:center; gap:.7rem;
+    display:flex; align-items:center; gap:.8rem;
     font-weight:900;
   }
   .logo-mark{
-    width:38px; height:38px;
-    background:var(--red);
+    width:42px; height:42px;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
     display:grid; place-items:center;
-    font-size:1.15rem; color:#fff;
+    font-size:1.3rem; color:#000;
     flex-shrink:0;
+    box-shadow:0 0 20px rgba(212,175,55,.3);
   }
   .logo-text{display:flex; flex-direction:column; line-height:1}
   .logo-text .a{
-    font-size:1.15rem; letter-spacing:.08em;
-    font-weight:900;
+    font-size:1.25rem; letter-spacing:.12em;
+    font-weight:900; color:var(--gold);
   }
   .logo-text .b{
-    font-size:.58rem; color:var(--muted);
-    letter-spacing:.22em; font-weight:600;
-    margin-top:2px;
+    font-size:.6rem; color:var(--silver);
+    letter-spacing:.25em; font-weight:600;
+    margin-top:3px;
   }
   .live-pill{
     display:inline-flex; align-items:center; gap:.4rem;
     background:var(--red); color:#fff;
-    padding:.3rem .7rem; font-size:.65rem;
-    font-weight:900; letter-spacing:.12em;
+    padding:.35rem .8rem; font-size:.68rem;
+    font-weight:900; letter-spacing:.15em;
     text-transform:uppercase;
+    border:1px solid var(--red2);
   }
   .live-pill::before{
-    content:""; width:6px; height:6px;
+    content:""; width:7px; height:7px;
     background:#fff; border-radius:50%;
     animation:blink 1.2s infinite;
   }
   .header-meta{
-    margin-left:auto; display:flex; gap:1.4rem;
+    margin-left:auto; display:flex; gap:1.5rem;
     align-items:center; flex-wrap:wrap;
   }
   .meta-stat{
     display:flex; flex-direction:column;
-    font-size:.6rem; color:var(--muted);
-    text-transform:uppercase; letter-spacing:.1em;
+    font-size:.62rem; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.12em;
     font-weight:700;
   }
   .meta-stat strong{
-    color:var(--text); font-size:.9rem;
+    color:var(--text); font-size:.95rem;
     font-variant-numeric:tabular-nums;
-    letter-spacing:0; margin-top:2px;
+    letter-spacing:0; margin-top:3px;
     font-weight:800;
   }
   .meta-stat.red strong{color:var(--red2)}
-  .meta-stat.green strong{color:var(--green)}
-  .header-actions{display:flex; gap:.4rem}
+  .meta-stat.gold strong{color:var(--gold)}
+  .header-actions{display:flex; gap:.5rem}
   .btn-icon{
-    width:38px; height:38px;
-    background:var(--card); border:1px solid var(--border);
-    color:var(--text); cursor:pointer;
+    width:40px; height:40px;
+    background:var(--card); border:1px solid var(--border2);
+    color:var(--silver); cursor:pointer;
     display:grid; place-items:center;
     font-size:1rem; font-weight:700;
-    transition:all .15s;
+    transition:all .2s;
   }
-  .btn-icon:hover{border-color:var(--red); color:var(--red2)}
-  .btn-icon.active{background:var(--red); color:#fff; border-color:var(--red)}
+  .btn-icon:hover{
+    border-color:var(--gold);
+    color:var(--gold);
+    box-shadow:0 0 15px rgba(212,175,55,.2);
+  }
+  .btn-icon.active{
+    background:var(--gold); color:#000;
+    border-color:var(--gold);
+  }
 
   /* ═══════════ NAV TABS ═══════════ */
   .nav-tabs{
@@ -150,38 +162,38 @@
     max-width:1600px; margin:0 auto;
     padding:0 1.2rem;
     display:flex; gap:.1rem; align-items:stretch;
-    height:48px;
+    height:52px;
   }
   .nav-tab{
     padding:0 1.1rem; height:100%;
     background:transparent; border:none;
-    color:var(--muted); font-size:.75rem;
-    font-weight:800; letter-spacing:.1em;
+    color:var(--muted); font-size:.72rem;
+    font-weight:800; letter-spacing:.12em;
     text-transform:uppercase; cursor:pointer;
     white-space:nowrap; position:relative;
     display:inline-flex; align-items:center; gap:.5rem;
-    transition:color .15s;
+    transition:color .2s;
   }
   .nav-tab::after{
     content:""; position:absolute;
     bottom:0; left:1.1rem; right:1.1rem;
-    height:3px; background:var(--red);
+    height:3px; background:var(--gold);
     transform:scaleX(0); transform-origin:left;
-    transition:transform .2s;
+    transition:transform .25s;
   }
-  .nav-tab:hover{color:var(--text)}
+  .nav-tab:hover{color:var(--gold)}
   .nav-tab:hover::after{transform:scaleX(1)}
-  .nav-tab.active{color:var(--text)}
+  .nav-tab.active{color:var(--gold)}
   .nav-tab.active::after{transform:scaleX(1)}
   .nav-tab .live-dot{
-    width:6px; height:6px; border-radius:50%;
+    width:7px; height:7px; border-radius:50%;
     background:var(--red2); animation:blink 1.5s infinite;
   }
 
   /* ═══════════ STATUS BAR ═══════════ */
   .statusbar{
     background:var(--bg2); border-bottom:1px solid var(--border);
-    padding:.5rem 1.2rem;
+    padding:.55rem 1.2rem;
     font-size:.72rem; color:var(--muted);
     display:flex; gap:1.5rem; align-items:center;
     flex-wrap:wrap; font-weight:600;
@@ -189,11 +201,11 @@
     max-width:1600px; margin:0 auto;
   }
   .statusbar .dot{
-    display:inline-block; width:6px; height:6px;
+    display:inline-block; width:7px; height:7px;
     border-radius:50%; margin-right:.4rem;
   }
-  .statusbar .dot.ok{background:var(--green); animation:blink 2s infinite}
-  .statusbar .dot.warn{background:var(--amber)}
+  .statusbar .dot.ok{background:#22c55e; animation:blink 2s infinite}
+  .statusbar .dot.warn{background:var(--gold)}
   .statusbar .dot.err{background:var(--red2)}
 
   /* ═══════════ MAIN LAYOUT ═══════════ */
@@ -202,14 +214,14 @@
     padding:1.5rem 1.2rem 5rem;
   }
 
-  /* Hero — Al Jazeera-style */
+  /* Hero — Al Jazeera/Reuters-style */
   .hero{
     display:grid;
     grid-template-columns:1.65fr 1fr;
     gap:1px;
-    background:var(--border);
+    background:var(--border2);
     margin-bottom:2rem;
-    border:1px solid var(--border);
+    border:1px solid var(--border2);
   }
   @media(max-width:900px){.hero{grid-template-columns:1fr}}
 
@@ -218,33 +230,33 @@
     display:flex; flex-direction:column;
     cursor:pointer; transition:background .2s;
     position:relative; overflow:hidden;
-    min-height:420px;
+    min-height:440px;
   }
   .hero-main:hover{background:var(--card2)}
   .hero-main .hero-img{
-    flex:1; min-height:220px;
+    flex:1; min-height:240px;
     background-size:cover; background-position:center;
     background-color:var(--card2);
     position:relative;
   }
   .hero-main .hero-img::after{
     content:""; position:absolute; inset:0;
-    background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.9));
+    background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.95));
   }
   .hero-main .hero-content{
-    padding:1.4rem 1.5rem 1.6rem;
+    padding:1.5rem 1.6rem 1.8rem;
     position:relative; z-index:2;
-    margin-top:-80px;
+    margin-top:-100px;
   }
   .hero-main .cat-tag{
     display:inline-block;
-    background:var(--red); color:#fff;
-    padding:.3rem .7rem; font-size:.62rem;
+    background:var(--gold); color:#000;
+    padding:.3rem .8rem; font-size:.62rem;
     font-weight:900; letter-spacing:.15em;
-    text-transform:uppercase; margin-bottom:.8rem;
+    text-transform:uppercase; margin-bottom:.9rem;
   }
   .hero-main h1{
-    font-size:1.65rem; line-height:1.22;
+    font-size:1.7rem; line-height:1.2;
     font-weight:800; letter-spacing:-.02em;
     color:#fff;
     display:-webkit-box; -webkit-line-clamp:3;
@@ -255,31 +267,31 @@
     line-height:1.45;
   }
   .hero-main .hero-meta{
-    color:rgba(255,255,255,.75);
+    color:rgba(255,255,255,.7);
     font-size:.72rem; font-weight:600;
-    margin-top:.8rem; letter-spacing:.05em;
-    display:flex; gap:.7rem; align-items:center;
+    margin-top:.9rem; letter-spacing:.05em;
+    display:flex; gap:.8rem; align-items:center;
   }
 
   .hero-side{
     display:grid; grid-template-rows:1fr 1fr;
-    gap:1px; background:var(--border);
+    gap:1px; background:var(--border2);
   }
   .hero-item{
     background:var(--card);
-    padding:1.2rem;
-    display:flex; flex-direction:column; gap:.5rem;
+    padding:1.3rem;
+    display:flex; flex-direction:column; gap:.6rem;
     cursor:pointer; transition:background .15s;
     position:relative;
   }
   .hero-item:hover{background:var(--card2)}
   .hero-item .cat-tag{
     font-size:.6rem; font-weight:900;
-    letter-spacing:.15em; color:var(--red2);
+    letter-spacing:.15em; color:var(--gold);
     text-transform:uppercase;
   }
   .hero-item h3{
-    font-size:.95rem; line-height:1.35;
+    font-size:.98rem; line-height:1.35;
     font-weight:700; letter-spacing:-.01em;
     display:-webkit-box; -webkit-line-clamp:4;
     -webkit-box-orient:vertical; overflow:hidden;
@@ -297,17 +309,18 @@
 
   /* Section head */
   .section-head{
-    display:flex; align-items:center; gap:.8rem;
-    padding-bottom:.8rem;
-    border-bottom:2px solid var(--text);
-    margin-bottom:1.4rem;
+    display:flex; align-items:center; gap:.9rem;
+    padding-bottom:.9rem;
+    border-bottom:2px solid var(--gold);
+    margin-bottom:1.5rem;
   }
   .section-head .bar{
-    width:5px; height:22px; background:var(--red);
+    width:5px; height:24px; background:var(--gold);
   }
   .section-head h2{
-    font-size:1.05rem; font-weight:900;
+    font-size:1.1rem; font-weight:900;
     letter-spacing:.12em; text-transform:uppercase;
+    color:var(--silver2);
   }
   .section-head .count{
     margin-left:auto; font-size:.72rem;
@@ -324,15 +337,15 @@
   }
   article{
     background:var(--card);
-    border:1px solid var(--border);
+    border:1px solid var(--border2);
     display:flex; flex-direction:column;
-    cursor:pointer; transition:all .2s;
+    cursor:pointer; transition:all .25s;
     position:relative;
   }
   article:hover{
-    border-color:var(--red);
-    transform:translateY(-3px);
-    box-shadow:0 15px 40px -15px rgba(200,16,46,.35);
+    border-color:var(--gold);
+    transform:translateY(-4px);
+    box-shadow:0 15px 50px -15px rgba(212,175,55,.25);
   }
   article.war{border-top:3px solid var(--red)}
   article.tg{border-top:3px solid #229ED9}
@@ -345,35 +358,37 @@
   }
   article .thumb img{
     width:100%; height:100%; object-fit:cover;
-    display:block; transition:transform .4s;
+    display:block; transition:transform .5s;
   }
-  article:hover .thumb img{transform:scale(1.05)}
+  article:hover .thumb img{transform:scale(1.08)}
 
   article .badges{
     position:absolute; top:.6rem; left:.6rem;
     display:flex; gap:.35rem; z-index:2;
   }
   article .badge{
-    background:rgba(0,0,0,.85); color:#fff;
-    padding:.2rem .5rem; font-size:.6rem;
+    background:rgba(0,0,0,.88); color:var(--silver2);
+    padding:.2rem .55rem; font-size:.6rem;
     font-weight:900; letter-spacing:.1em;
     backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,.15);
   }
-  article .badge.ar{background:var(--amber); color:#000}
-  article .badge.tg{background:#229ED9}
-  article .badge.he{background:#6366f1}
+  article .badge.ar{background:var(--gold); color:#000; border-color:transparent}
+  article .badge.tg{background:#229ED9; color:#fff; border-color:transparent}
+  article .badge.he{background:#6366f1; color:#fff; border-color:transparent}
 
   article .live-flag{
     position:absolute; top:.6rem; right:.6rem;
     background:var(--red); color:#fff;
-    padding:.25rem .55rem;
+    padding:.25rem .6rem;
     font-size:.58rem; font-weight:900;
     letter-spacing:.12em;
     z-index:2;
     display:inline-flex; align-items:center; gap:.3rem;
+    border:1px solid var(--red2);
   }
   article .live-flag::before{
-    content:""; width:5px; height:5px;
+    content:""; width:6px; height:6px;
     background:#fff; border-radius:50%;
     animation:blink 1.2s infinite;
   }
@@ -388,7 +403,7 @@
     font-size:.62rem; font-weight:800;
     letter-spacing:.12em; text-transform:uppercase;
   }
-  article .source{color:var(--red2)}
+  article .source{color:var(--gold)}
   article .cat-label{color:var(--muted)}
   article .time{
     margin-left:auto; color:var(--dim);
@@ -445,13 +460,13 @@
   }
   article .read-link{
     display:inline-flex; align-items:center; gap:.35rem;
-    color:var(--red2); text-decoration:none;
+    color:var(--gold); text-decoration:none;
     font-weight:900; font-size:.68rem;
     letter-spacing:.14em; text-transform:uppercase;
     padding-top:.3rem;
     transition:gap .15s;
   }
-  article .read-link:hover{gap:.6rem}
+  article .read-link:hover{gap:.6rem; color:var(--gold2)}
   article[dir="rtl"] .read-link{flex-direction:row-reverse}
 
   /* ═══════════ LIVE TV ═══════════ */
@@ -461,62 +476,78 @@
     margin-bottom:1.5rem;
   }
   .live-chip{
-    padding:.6rem 1.1rem;
-    background:var(--card); border:1px solid var(--border);
+    padding:.65rem 1.2rem;
+    background:var(--card); border:1px solid var(--border2);
     color:var(--muted); cursor:pointer;
     font-size:.72rem; font-weight:800;
     letter-spacing:.1em; text-transform:uppercase;
     display:inline-flex; align-items:center; gap:.5rem;
-    transition:all .15s;
+    transition:all .2s;
   }
-  .live-chip:hover{color:var(--text); border-color:var(--border2)}
+  .live-chip:hover{color:var(--gold); border-color:var(--gold)}
   .live-chip.active{
-    background:var(--red); color:#fff;
-    border-color:var(--red);
+    background:var(--gold); color:#000;
+    border-color:var(--gold);
   }
   .live-chip .live-dot{
-    width:6px; height:6px; border-radius:50%;
+    width:7px; height:7px; border-radius:50%;
     background:var(--red2); animation:blink 1.5s infinite;
   }
-  .live-chip.active .live-dot{background:#fff}
+  .live-chip.active .live-dot{background:#000}
 
-  .live-player-wrap{
-    background:#000; border:1px solid var(--border);
-    overflow:hidden; position:relative;
+  .live-panel{
+    background:var(--card); border:1px solid var(--border2);
+    padding:2.5rem 1.5rem; text-align:center;
   }
-  .live-player-wrap .bar{
-    background:var(--red); color:#fff;
-    padding:.55rem 1rem;
-    display:flex; align-items:center; gap:.6rem;
-    font-size:.72rem; font-weight:900;
-    letter-spacing:.15em; text-transform:uppercase;
+  .live-panel .icon{font-size:3.5rem; margin-bottom:1rem}
+  .live-panel h3{
+    font-size:1.3rem; margin-bottom:.5rem;
+    font-weight:900; color:var(--gold);
   }
-  .live-player-wrap .bar::before{
-    content:""; width:7px; height:7px;
-    background:#fff; border-radius:50%;
-    animation:blink 1.2s infinite;
+  .live-panel p{
+    color:var(--muted); font-size:.9rem;
+    margin-bottom:2rem; line-height:1.6;
   }
-  .live-player{
-    position:relative; padding-bottom:56.25%; height:0;
+  .live-buttons{
+    display:flex; gap:.8rem; justify-content:center;
+    flex-wrap:wrap;
   }
-  .live-player iframe{
-    position:absolute; top:0; left:0;
-    width:100%; height:100%; border:0;
+  .live-btn{
+    padding:.95rem 1.8rem; font-weight:900;
+    text-decoration:none; letter-spacing:.12em;
+    font-size:.72rem; text-transform:uppercase;
+    display:inline-flex; align-items:center; gap:.5rem;
+    transition:all .2s;
   }
+  .live-btn.youtube{
+    background:#ff0000; color:#fff;
+  }
+  .live-btn.youtube:hover{background:#cc0000; transform:translateY(-2px)}
+  .live-btn.tiktok{
+    background:#000; color:#fff;
+    border:1px solid #333;
+  }
+  .live-btn.tiktok:hover{background:#111; transform:translateY(-2px)}
+  .live-btn.web{
+    background:var(--card2); color:var(--gold);
+    border:1px solid var(--gold);
+  }
+  .live-btn.web:hover{background:var(--gold); color:#000; transform:translateY(-2px)}
+
   .live-note{
-    margin-top:1rem; padding:1rem 1.1rem;
-    background:var(--card); border:1px solid var(--border);
+    margin-top:1.5rem; padding:1.1rem 1.3rem;
+    background:var(--card); border-left:3px solid var(--gold);
     font-size:.75rem; color:var(--muted);
-    line-height:1.6;
+    line-height:1.7;
   }
-  .live-note strong{color:var(--text)}
+  .live-note strong{color:var(--gold)}
 
   /* ═══════════ MAP ═══════════ */
   #mapView{display:none}
   #mapView.active{display:block}
   #map{
     height:75vh; min-height:500px;
-    border:1px solid var(--border);
+    border:1px solid var(--border2);
     overflow:hidden;
   }
   body:not(.light) #map{
@@ -525,11 +556,11 @@
   .leaflet-popup-content-wrapper,
   .leaflet-popup-tip{
     background:var(--card); color:var(--text);
-    border-radius:0; border:1px solid var(--border);
+    border-radius:0; border:1px solid var(--gold);
   }
   .leaflet-popup-content{margin:.8rem 1rem; max-width:300px; font-family:inherit}
   .leaflet-popup-content .pop-src{
-    color:var(--red2); font-weight:900;
+    color:var(--gold); font-weight:900;
     font-size:.65rem; letter-spacing:.12em;
     text-transform:uppercase;
   }
@@ -542,7 +573,7 @@
     line-height:1.55;
   }
   .leaflet-popup-content a{
-    color:var(--red2); text-decoration:none;
+    color:var(--gold); text-decoration:none;
     font-weight:900; font-size:.7rem;
     letter-spacing:.12em; text-transform:uppercase;
   }
@@ -555,9 +586,9 @@
     padding:6rem 1rem; color:var(--muted);
   }
   .loader .ring{
-    width:44px; height:44px;
-    border:3px solid var(--border);
-    border-top-color:var(--red);
+    width:48px; height:48px;
+    border:3px solid var(--border2);
+    border-top-color:var(--gold);
     border-radius:50%;
     animation:spin .9s linear infinite;
   }
@@ -565,6 +596,7 @@
   .loader .txt{
     font-size:.75rem; font-weight:800;
     letter-spacing:.15em; text-transform:uppercase;
+    color:var(--gold);
   }
   .empty{
     grid-column:1/-1; text-align:center;
@@ -584,7 +616,7 @@
     border-top:1px solid var(--border);
     background:var(--bg2);
   }
-  footer a{color:var(--red2); text-decoration:none; font-weight:700}
+  footer a{color:var(--gold); text-decoration:none; font-weight:700}
 
   /* ═══════════ MOBIEL ═══════════ */
   @media(max-width:640px){
@@ -597,10 +629,10 @@
     .hero-main h1{font-size:1.2rem}
     .grid{grid-template-columns:1fr; gap:1rem}
     main{padding:1rem .8rem 3rem}
-    .nav-tabs-inner{padding:0 .9rem}
-    .nav-tab{padding:0 .8rem; font-size:.68rem}
+    .nav-tabs-inner{padding:0 .9rem; height:46px}
+    .nav-tab{padding:0 .8rem; font-size:.66rem}
     #map{height:60vh}
-    .ticker{height:30px; font-size:.72rem}
+    .ticker{height:32px; font-size:.72rem}
     .section-head h2{font-size:.9rem}
   }
 </style>
@@ -628,10 +660,10 @@
     <span class="live-pill">Live</span>
     <div class="header-meta">
       <div class="meta-stat">
-        <span>KLok</span>
+        <span>Klok</span>
         <strong id="clock">--:--:--</strong>
       </div>
-      <div class="meta-stat green">
+      <div class="meta-stat gold">
         <span>Bronnen</span>
         <strong id="statSources">0/0</strong>
       </div>
@@ -641,7 +673,7 @@
       </div>
       <div class="meta-stat">
         <span>Refresh</span>
-        <strong id="nextRefresh">60s</strong>
+        <strong id="nextRefresh">30s</strong>
       </div>
     </div>
     <div class="header-actions">
@@ -665,7 +697,6 @@
       <button class="nav-tab" data-cat="ukraine">OEKRAÏNE</button>
       <button class="nav-tab" data-cat="sudan">SOEDAN</button>
       <button class="nav-tab" data-cat="tg">📡 TELEGRAM</button>
-      <button class="nav-tab" data-cat="maroc">MAROKKO</button>
     </div>
   </nav>
 </header>
@@ -720,25 +751,24 @@
       <button class="live-chip" data-live="alarabiya"><span class="live-dot"></span>العربية</button>
       <button class="live-chip" data-live="france24-en"><span class="live-dot"></span>France24 EN</button>
       <button class="live-chip" data-live="dw-en"><span class="live-dot"></span>DW News</button>
+      <button class="live-chip" data-live="trt"><span class="live-dot"></span>TRT World</button>
     </div>
 
-    <div class="live-player-wrap">
-      <div class="bar">Live uitzending</div>
-      <div class="live-player">
-        <iframe id="livePlayer"
-          src=""
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowfullscreen
-          referrerpolicy="origin">
-        </iframe>
+    <div class="live-panel">
+      <div class="icon" id="liveIcon">📺</div>
+      <h3 id="liveChannelName">Al Jazeera English</h3>
+      <p id="liveChannelDesc">24/7 Engelstalig nieuws uit Qatar</p>
+      <div class="live-buttons">
+        <a id="liveYoutube" class="live-btn youtube" target="_blank" rel="noopener">▶ YouTube Live</a>
+        <a id="liveTiktok" class="live-btn tiktok" target="_blank" rel="noopener">♪ TikTok Live</a>
+        <a id="liveWeb" class="live-btn web" target="_blank" rel="noopener">🌐 Website</a>
       </div>
     </div>
 
     <div class="live-note">
-      <strong>⚠ Let op:</strong> Live streams via YouTube kunnen regio-gebonden zijn of tijdelijk
-      niet beschikbaar. <strong>TikTok Live kan niet worden ingesloten</strong> — TikTok's API
-      staat geen externe embeds toe. Als een stream zwart blijft, probeer een andere zender.
-      Al Jazeera English en France24 werken het meest betrouwbaar.
+      <strong>⚠ Let op:</strong> Live streams worden geopend in YouTube, TikTok of de website van de zender.
+      Directe insluiting (embedden) wordt door YouTube en TikTok geblokkeerd voor de meeste nieuwszenders.
+      Deze methode werkt <strong>altijd</strong> en geeft de beste kwaliteit.
     </div>
   </div>
 
@@ -756,7 +786,7 @@
 
 <footer>
   WAR DESK · Live conflict monitor · Bronnen: Al Jazeera, BBC, Reuters, AP, Middle East Eye,
-  Times of Israel, Haaretz, Iran International, Rudaw, Al Mayadeen, Al Arabiya, en meer · 
+  Times of Israel, Haaretz, Iran International, Rudaw, Al Mayadeen, Al Arabiya, RT, TRT, en meer · 
   Eigen RSSHub via <a href="https://rss-hub-red-nine.vercel.app" target="_blank" rel="noopener">Vercel</a>
 </footer>
 
@@ -766,7 +796,7 @@
    ========================================================== */
 const PROXY      = "https://api.rss2json.com/v1/api.json?rss_url=";
 const PER_FEED   = 5;
-const REFRESH_MS = 60 * 1000;
+const REFRESH_MS = 30 * 1000;         // 30 seconden
 const FRESH_MS   = 20 * 60 * 1000;
 
 const RSSHUB_MIRRORS = [
@@ -775,40 +805,71 @@ const RSSHUB_MIRRORS = [
   "https://rsshub.rssforever.com"
 ];
 
-/* YouTube live-streams — kanaal-ID's.
-   Deze kunnen door YouTube worden gewijzigd. Als een stream zwart blijft,
-   werkt het ID niet meer. De eerste twee zijn het meest betrouwbaar. */
+/* YouTube live-pagina's per zender */
 const LIVE_CHANNELS = {
   "aljazeera-en": {
     label: "Al Jazeera English",
-    url: "https://www.youtube.com/embed/live_stream?channel=UCNye-wNBqNL5ZzHSJj3l8Bg"
+    desc: "24/7 Engelstalig nieuws uit Qatar",
+    icon: "🌍",
+    youtube: "https://www.youtube.com/@aljazeeraenglish/live",
+    tiktok:  "https://www.tiktok.com/@aljazeeraenglish",
+    web:     "https://www.aljazeera.com/live"
   },
   "aljazeera-ar": {
-    label: "Al Jazeera Arabic",
-    url: "https://www.youtube.com/embed/live_stream?channel=UCfiwzLy-8yKzIbsmZTzxDgw"
+    label: "الجزيرة",
+    desc: "Al Jazeera Arabic — 24/7 nieuws",
+    icon: "🕌",
+    youtube: "https://www.youtube.com/@aljazeera/live",
+    tiktok:  "https://www.tiktok.com/@aljazeera",
+    web:     "https://www.aljazeera.net/live"
   },
   "skynews-ar": {
-    label: "Sky News Arabia",
-    url: "https://www.youtube.com/embed/live_stream?channel=UCuT0uD0z3f0eQhV3iK5QK5A"
+    label: "سكاي نيوز عربية",
+    desc: "Sky News Arabia",
+    icon: "📡",
+    youtube: "https://www.youtube.com/@skynewsarabia/live",
+    tiktok:  "https://www.tiktok.com/@skynewsarabia",
+    web:     "https://www.skynewsarabia.com/live"
   },
   "alarabiya": {
-    label: "Al Arabiya",
-    url: "https://www.youtube.com/embed/live_stream?channel=UCRvX8jNkMFM1JqUjL2mKxGQ"
+    label: "العربية",
+    desc: "Al Arabiya — 24/7 nieuws",
+    icon: "🗞️",
+    youtube: "https://www.youtube.com/@AlArabiya/live",
+    tiktok:  "https://www.tiktok.com/@alarabiya",
+    web:     "https://www.alarabiya.net/live"
   },
   "france24-en": {
     label: "France24 English",
-    url: "https://www.youtube.com/embed/live_stream?channel=UCQfwfsi5VrQ8yKZ-UWmAEFg"
+    desc: "France24 in het Engels",
+    icon: "🇫🇷",
+    youtube: "https://www.youtube.com/@FRANCE24English/live",
+    tiktok:  "https://www.tiktok.com/@france24",
+    web:     "https://www.france24.com/en/live"
   },
   "dw-en": {
     label: "DW News",
-    url: "https://www.youtube.com/embed/live_stream?channel=UCknLrEdhRCp1aegoMqRaCZg"
+    desc: "Deutsche Welle English",
+    icon: "🇩🇪",
+    youtube: "https://www.youtube.com/@dwnews/live",
+    tiktok:  "https://www.tiktok.com/@dwnews",
+    web:     "https://www.dw.com/en/live-tv/channel-english"
+  },
+  "trt": {
+    label: "TRT World",
+    desc: "TRT World — Turkse staatstelevisie",
+    icon: "🇹🇷",
+    youtube: "https://www.youtube.com/@trtworld/live",
+    tiktok:  "https://www.tiktok.com/@trtworld",
+    web:     "https://www.trtworld.com/live"
   }
 };
 
 /* ==========================================================
-   BRONNEN
+   BRONNEN — 50+ feeds, inclusief Reuters & AP via Ground News
    ========================================================== */
 const FEEDS = [
+
   /* ⚔️ OORLOG — ALGEMEEN */
   { name:"Al Jazeera",          lang:"en", cat:"war", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
   { name:"Middle East Eye",     lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
@@ -816,9 +877,13 @@ const FEEDS = [
   { name:"Al Monitor",          lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
   { name:"Al Mayadeen",         lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/rss" },
 
-  /* 🕌 GAZA */
+  /* 📰 REUTERS & AP via Ground News */
+  { name:"Reuters (via Ground)", lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://ground.news/rss/source/reuters" },
+  { name:"AP (via Ground)",      lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://ground.news/rss/source/associated-press" },
+
+  /* 🕌 GAZA / PALESTINA */
   { name:"Times of Israel",     lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
-  { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsfrontpage.aspx" },
+  { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
   { name:"Haaretz",             lang:"he", cat:"gaza", lat:32.07, lon:34.78, url:"https://www.haaretz.com/cmlink/1.628765" },
   { name:"Palestine Today",     lang:"en", cat:"gaza", lat:31.5,  lon:34.47, url:"https://www.palestinetoday.net/feed" },
   { name:"WAFA Palestine",      lang:"en", cat:"gaza", lat:31.9,  lon:35.2,  url:"http://english.wafa.ps/rss" },
@@ -837,6 +902,7 @@ const FEEDS = [
 
   /* 🇮🇷 IRAN */
   { name:"Iran International",  lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
+  { name:"Mehr News Iran",      lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://en.mehrnews.com/rss" },
 
   /* 🇺🇦 OEKRAÏNE */
   { name:"Kyiv Independent",    lang:"en", cat:"ukraine", lat:50.45, lon:30.52, url:"https://kyivindependent.com/feed/" },
@@ -845,13 +911,14 @@ const FEEDS = [
   /* 🇸🇩 SOEDAN */
   { name:"Radio Dabanga",       lang:"en", cat:"sudan", lat:15.5, lon:32.5, url:"https://www.dabangasudan.org/en/rss" },
 
-  /* 🇲🇦 MAROKKO */
-  { name:"Hespress AR",  lang:"ar", cat:"maroc", lat:34.02, lon:-6.83, url:"https://www.hespress.com/feed" },
-  { name:"Hespress FR",  lang:"fr", cat:"maroc", lat:34.02, lon:-6.83, url:"https://fr.hespress.com/feed" },
-  { name:"Le360",        lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://fr.le360.ma/rss" },
-  { name:"Medias24",     lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.medias24.com/feed/" },
+  /* 🇷🇺 RT (Rusland) */
+  { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
+  { name:"RT Russia",           lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/russia/" },
 
-  /* 🕌 MIDDEN-OOSTEN */
+  /* 🇹🇷 TRT (Turkije) */
+  { name:"TRT World",           lang:"en", cat:"war", lat:39.93, lon:32.86, url:"https://www.trtworld.com/feed/rss.xml" },
+
+  /* 🕌 MIDDEN-OOSTEN — Arabisch */
   { name:"Al Jazeera AR",     lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
   { name:"Al Arabiya",        lang:"ar", cat:"mideast", lat:24.71, lon:46.67, url:"https://www.alarabiya.net/feed/rss2/ar.xml" },
   { name:"Sky News Arabia",   lang:"ar", cat:"mideast", lat:24.45, lon:54.37, url:"https://www.skynewsarabia.com/web/rss/95.xml" },
@@ -871,12 +938,13 @@ const FEEDS = [
   { name:"NYT World",     lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
   { name:"France24 EN",   lang:"en", cat:"world", lat:48.85, lon:2.35,  url:"https://www.france24.com/en/rss" },
   { name:"DW English",    lang:"en", cat:"world", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-en-all" },
+  { name:"CNN World",     lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"http://rss.cnn.com/rss/edition_world.rss" },
 
   /* 🇳🇱 NL */
   { name:"NOS",            lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
   { name:"Nu.nl Algemeen", lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
 
-  /* 📡 TELEGRAM */
+  /* 📡 TELEGRAM — alleen bevestigd werkende kanalen */
   { name:"📡 Al Jazeera AR", lang:"ar", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/aljazeera" },
   { name:"📡 Al Arabiya",    lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" }
 ];
@@ -919,10 +987,9 @@ const heroItem2   = document.getElementById("heroItem2");
 const sectionTitle= document.getElementById("sectionTitle");
 const sectionCount= document.getElementById("sectionCount");
 const tickerTrack = document.getElementById("tickerTrack");
-const livePlayer  = document.getElementById("livePlayer");
 
 /* ---------- Vertaalcache ---------- */
-const TR_KEY = "wardesk_tr_v2";
+const TR_KEY = "wardesk_tr_v3";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -934,9 +1001,9 @@ function hash(str){
 function saveTrCache(){
   try{
     const keys = Object.keys(trCache);
-    if(keys.length > 4000){
+    if(keys.length > 5000){
       const fresh = {};
-      keys.slice(-2500).forEach(k => fresh[k] = trCache[k]);
+      keys.slice(-3000).forEach(k => fresh[k] = trCache[k]);
       trCache = fresh;
     }
     localStorage.setItem(TR_KEY, JSON.stringify(trCache));
@@ -1014,6 +1081,48 @@ function getCachedTr(text){ return trCache[trKeyFor(text)] || ""; }
 function isArabic(t){ return /[\u0600-\u06FF]/.test(t||""); }
 
 /* ==========================================================
+   TREFWOORD-DETECTIE — bepaalt juiste categorie per artikel
+   ========================================================== */
+function detectTopic(title, desc, fallbackCat){
+  const t = (title + " " + desc).toLowerCase();
+
+  /* Gaza / Palestina */
+  if(/\b(gaza|rafah|khan younis|hamas|palestin|west bank|idf|netanyahu|tel aviv|jerusalem)\b/.test(t))
+    return "gaza";
+
+  /* Libanon */
+  if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah)\b/.test(t))
+    return "lebanon";
+
+  /* Iran */
+  if(/\b(iran|iranian|tehran|irgc|khamenei|rouhani|ahmadinejad|persian gulf)\b/.test(t))
+    return "iran";
+
+  /* Syrië */
+  if(/\b(syria|syrian|damascus|assad|idlib|aleppo)\b/.test(t))
+    return "syria";
+
+  /* Jemen */
+  if(/\b(yemen|yemeni|houthi|sanaa|aden|sana'a)\b/.test(t))
+    return "yemen";
+
+  /* Oekraïne */
+  if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|zelenskyy|kharkiv|odesa|donbas|crimea)\b/.test(t))
+    return "ukraine";
+
+  /* Soedan */
+  if(/\b(sudan|sudanese|khartoum|darfur|rsf)\b/.test(t))
+    return "sudan";
+
+  /* Marokko */
+  if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara)\b/.test(t))
+    return "maroc";
+
+  /* Val terug op de bron-categorie */
+  return fallbackCat;
+}
+
+/* ==========================================================
    FEED OPHALEN
    ========================================================== */
 async function fetchFeedData(url){
@@ -1062,12 +1171,16 @@ async function loadFeeds(isAuto = false){
             (rawDesc.match(/<img[^>]+src="([^"]+)"/i)?.[1]) ||
             (it.content||"").match(/<img[^>]+src="([^"]+)"/i)?.[1] ||
             "";
+          const titleClean = stripHtml(it.title || "");
+          const descClean  = stripHtml(rawDesc).slice(0, 280);
           return {
-            title: it.title || "",
+            title: titleClean,
             link:  it.link  || "#",
-            desc:  stripHtml(rawDesc).slice(0, 280),
+            desc:  descClean,
             img, date: it.pubDate || "",
-            source: f.name, cat: f.cat, lang: f.lang,
+            source: f.name,
+            cat: detectTopic(titleClean, descClean, f.cat),
+            lang: f.lang,
             lat: f.lat, lon: f.lon
           };
         })
@@ -1120,7 +1233,7 @@ async function loadFeeds(isAuto = false){
 
 /* ---------- Ticker ---------- */
 function renderTicker(){
-  const top = allItems.slice(0, 12);
+  const top = allItems.slice(0, 15);
   if(!top.length) return;
   const html = top.map(it => {
     const tr = getCachedTr(it.title) || it.title;
@@ -1152,13 +1265,7 @@ function renderHero(){
 function heroCardHtml(it){
   const tr = getCachedTr(it.title) || it.title;
   const rtl = it.lang === "ar" || isArabic(it.title);
-  const catLabel = {
-    war:"OORLOG", gaza:"GAZA", lebanon:"LIBANON", syria:"SYRIË",
-    yemen:"JEMEN", iran:"IRAN", ukraine:"OEKRAÏNE", sudan:"SOEDAN",
-    tg:"TELEGRAM", maroc:"MAROKKO", mideast:"MIDDEN-OOSTEN",
-    world:"WERELD", nl:"NL"
-  }[it.cat] || it.cat.toUpperCase();
-
+  const catLabel = getCatLabel(it.cat);
   return `
     <div class="hero-img" style="background-image:url('${escapeHtml(it.img)}')"></div>
     <div class="hero-content">
@@ -1175,17 +1282,21 @@ function heroCardHtml(it){
 function heroSideHtml(it){
   const tr = getCachedTr(it.title) || it.title;
   const rtl = it.lang === "ar" || isArabic(it.title);
-  const catLabel = {
-    war:"OORLOG", gaza:"GAZA", lebanon:"LIBANON", syria:"SYRIË",
-    yemen:"JEMEN", iran:"IRAN", ukraine:"OEKRAÏNE", sudan:"SOEDAN",
-    tg:"TELEGRAM", maroc:"MAROKKO", mideast:"MIDDEN-OOSTEN",
-    world:"WERELD", nl:"NL"
-  }[it.cat] || it.cat.toUpperCase();
-
+  const catLabel = getCatLabel(it.cat);
   return `
     <span class="cat-tag">${catLabel}</span>
     <h3 dir="${rtl?'rtl':'ltr'}">${escapeHtml(tr)}</h3>
     <span class="hero-meta">${escapeHtml(it.source)} · ${timeAgo(it.date)}</span>`;
+}
+
+function getCatLabel(cat){
+  const map = {
+    war:"OORLOG", gaza:"GAZA", lebanon:"LIBANON", syria:"SYRIË",
+    yemen:"JEMEN", iran:"IRAN", ukraine:"OEKRAÏNE", sudan:"SOEDAN",
+    tg:"TELEGRAM", maroc:"MAROKKO", mideast:"MIDDEN-OOSTEN",
+    world:"WERELD", nl:"NL"
+  };
+  return map[cat] || cat.toUpperCase();
 }
 
 /* ---------- Filter ---------- */
@@ -1257,12 +1368,7 @@ function cardHtml(it, i){
   const cls = [isWar?'war':'', isTg?'tg':''].filter(Boolean).join(' ');
 
   const badgeLang = isTg ? 'tg' : it.lang;
-  const catLabel = {
-    war:"OORLOG", gaza:"GAZA", lebanon:"LIBANON", syria:"SYRIË",
-    yemen:"JEMEN", iran:"IRAN", ukraine:"OEKRAÏNE", sudan:"SOEDAN",
-    tg:"TELEGRAM", maroc:"MAROKKO", mideast:"MIDDEN-OOSTEN",
-    world:"WERELD", nl:"NL"
-  }[it.cat] || it.cat.toUpperCase();
+  const catLabel = getCatLabel(it.cat);
 
   return `
     <article id="wcard-${i}" data-idx="${i}" class="${cls}" dir="${rtl?'rtl':'ltr'}"
@@ -1347,10 +1453,10 @@ function renderMap(){
   });
 
   Object.values(bySource).forEach(({info, items}) => {
-    const color = info.cat === "war" ? "#c8102e"
-                : info.cat === "gaza" ? "#e11d48"
+    const color = info.cat === "war" ? "#dc2626"
+                : info.cat === "gaza" ? "#ef4444"
                 : info.cat === "tg"  ? "#229ED9"
-                : "#eab308";
+                : "#d4af37";
 
     const icon = L.divIcon({
       className: "",
@@ -1390,9 +1496,23 @@ function renderMap(){
 /* ---------- LIVE TV ---------- */
 function loadLiveChannel(key){
   const ch = LIVE_CHANNELS[key];
-  if(!ch || !livePlayer) return;
+  if(!ch) return;
   currentLiveChannel = key;
-  livePlayer.src = ch.url;
+
+  const nameEl = document.getElementById("liveChannelName");
+  const descEl = document.getElementById("liveChannelDesc");
+  const iconEl = document.getElementById("liveIcon");
+  const ytEl   = document.getElementById("liveYoutube");
+  const ttEl   = document.getElementById("liveTiktok");
+  const webEl  = document.getElementById("liveWeb");
+
+  if(nameEl) nameEl.textContent = ch.label;
+  if(descEl) descEl.textContent = ch.desc;
+  if(iconEl) iconEl.textContent = ch.icon;
+  if(ytEl)   ytEl.href = ch.youtube;
+  if(ttEl)   ttEl.href = ch.tiktok;
+  if(webEl)  webEl.href = ch.web;
+
   localStorage.setItem("wardesk_live", key);
 }
 
@@ -1413,7 +1533,7 @@ function showOnly(view){
   if(view === "list") listView.style.display = "block";
   else if(view === "live"){
     liveView.style.display = "block";
-    if(!livePlayer.src) loadLiveChannel(currentLiveChannel);
+    loadLiveChannel(currentLiveChannel);
   }
   else if(view === "map"){
     mapView.classList.add("active");

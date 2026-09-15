@@ -893,7 +893,6 @@
 /* ==========================================================
    CONFIG
    ========================================================== */
-const PROXY       = "https://nieuwsproxy.hassanbadri814.vercel.app"; // fallback for safety
 const PROXY_URL   = "https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED    = 5;
 const REFRESH_MS  = 30 * 1000;
@@ -909,11 +908,9 @@ const RSSHUB_MIRRORS = [
   "https://rsshub.rssforever.com"
 ];
 
-/* Prioriteit: 1 = eerst laden, 2 = daarna, 3 = als laatste */
 const HIGH_PRIORITY = [
   "Al Jazeera", "Reuters", "AP News", "BBC World", "BBC Arabic",
-  "Al Jazeera AR", "Al Arabiya", "Sky News Arabia", "TRT World",
-  "Times of Israel", "Jerusalem Post", "Iran International"
+  "Al Jazeera AR", "TRT World", "Times of Israel", "Jerusalem Post"
 ];
 
 const LIVE_CHANNELS = {
@@ -926,61 +923,79 @@ const LIVE_CHANNELS = {
   "trt":          { label:"TRT World", desc:"TRT World — Turkse staatstelevisie", icon:"🇹🇷", youtube:"https://www.youtube.com/@trtworld/live", tiktok:"https://www.tiktok.com/@trtworld", web:"https://www.trtworld.com/live" }
 };
 
+/* ==========================================================
+   BRONNEN — 40 feeds, gecontroleerd
+   ========================================================== */
 const FEEDS = [
+  /* ── HOGE PRIORITEIT ── */
   { name:"Al Jazeera",          lang:"en", cat:"war", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
-  { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://www.reutersagency.com/feed/?best-regions=world&post_type=best" },
-  { name:"AP News",             lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://apnews.com/hub/ap-top-news?format=rss" },
   { name:"BBC World",           lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
   { name:"BBC Arabic",          lang:"ar", cat:"mideast", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/arabic/rss.xml" },
   { name:"Al Jazeera AR",       lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
-  { name:"Al Arabiya",          lang:"ar", cat:"mideast", lat:24.71, lon:46.67, url:"https://www.alarabiya.net/feed/rss2/ar.xml" },
-  { name:"Sky News Arabia",     lang:"ar", cat:"mideast", lat:24.45, lon:54.37, url:"https://www.skynewsarabia.com/web/rss/95.xml" },
   { name:"TRT World",           lang:"en", cat:"war", lat:39.93, lon:32.86, url:"https://www.trtworld.com/feed/rss.xml" },
   { name:"Times of Israel",     lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
   { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
-  { name:"Iran International",  lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
 
+  /* ── REUTERS & AP via Google News ── */
+  { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en" },
+  { name:"AP News",             lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://news.google.com/rss/search?q=site:apnews.com&hl=en-US&gl=US&ceid=US:en" },
+
+  /* ── OORLOG & CONFLICT ── */
   { name:"Middle East Eye",     lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
   { name:"The New Arab",        lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.newarab.com/rss" },
   { name:"Al Monitor",          lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
-  { name:"Al Mayadeen",         lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/feed.rss" },
+  { name:"Al Mayadeen",         lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/rss" },
   { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
-  { name:"Haaretz",             lang:"he", cat:"gaza", lat:32.07, lon:34.78, url:"https://www.haaretz.com/cmlink/1.628765" },
-  { name:"Palestine Today",     lang:"en", cat:"gaza", lat:31.5,  lon:34.47, url:"https://www.palestinetoday.net/feed" },
-  { name:"WAFA Palestine",      lang:"en", cat:"gaza", lat:31.9,  lon:35.2,  url:"http://english.wafa.ps/rss" },
+
+  /* ── GAZA ── */
+  { name:"Palestine Chronicle", lang:"en", cat:"gaza", lat:31.9, lon:35.2, url:"https://www.palestinechronicle.com/feed/" },
+
+  /* ── LIBANON ── */
   { name:"Al Akhbar LB",        lang:"ar", cat:"lebanon", lat:33.89, lon:35.50, url:"https://al-akhbar.com/rss" },
-  { name:"L'Orient Today",      lang:"en", cat:"lebanon", lat:33.89, lon:35.50, url:"https://today.lorientlejour.com/rss" },
+
+  /* ── SYRIË ── */
   { name:"Syria Direct",        lang:"en", cat:"syria", lat:33.51, lon:36.29, url:"https://syriadirect.org/feed/" },
   { name:"Rudaw English",       lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.rudaw.net/rss/english" },
-  { name:"Kurdistan24",         lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.kurdistan24.net/en/rss" },
+
+  /* ── JEMEN ── */
   { name:"SABA Yemen",          lang:"en", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.saba.ye/en/rsscatfeed14.htm" },
+
+  /* ── IRAN ── */
+  { name:"Iran International",  lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
   { name:"Mehr News Iran",      lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://en.mehrnews.com/rss" },
-  { name:"Kyiv Independent",    lang:"en", cat:"ukraine", lat:50.45, lon:30.52, url:"https://kyivindependent.com/feed/" },
+
+  /* ── OEKRAÏNE ── */
   { name:"Ukrinform",           lang:"en", cat:"ukraine", lat:50.45, lon:30.52, url:"https://www.ukrinform.net/rss" },
+
+  /* ── SOEDAN ── */
   { name:"Radio Dabanga",       lang:"en", cat:"sudan", lat:15.5, lon:32.5, url:"https://www.dabangasudan.org/en/rss" },
+
+  /* ── MAROKKO ── */
   { name:"Hespress",            lang:"ar", cat:"maroc", lat:34.02, lon:-6.83, url:"https://www.hespress.com/feed" },
   { name:"Hespress FR",         lang:"fr", cat:"maroc", lat:34.02, lon:-6.83, url:"https://fr.hespress.com/feed" },
   { name:"Le360",               lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://fr.le360.ma/rss" },
   { name:"Yabiladi",            lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.yabiladi.com/rss/articles.xml" },
-  { name:"Medias24",            lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.medias24.com/feed/" },
   { name:"Lakome2",             lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
   { name:"TelQuel",             lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
-  { name:"Morocco World News",  lang:"en", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.moroccoworldnews.com/feed/" },
+
+  /* ── MIDDEN-OOSTEN (AR) ── */
   { name:"RT Arabic",           lang:"ar", cat:"mideast", lat:55.75, lon:37.61, url:"https://arabic.rt.com/rss/" },
-  { name:"DW Arabic",           lang:"ar", cat:"mideast", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-ar-all" },
   { name:"France24 AR",         lang:"ar", cat:"mideast", lat:48.85, lon:2.35,  url:"https://www.france24.com/ar/rss" },
   { name:"CNN Arabic",          lang:"ar", cat:"mideast", lat:25.20, lon:55.27, url:"https://arabic.cnn.com/api/v1/rss/rss.xml" },
   { name:"Al Quds Al Arabi",    lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://www.alquds.co.uk/feed" },
   { name:"Anadolu AR",          lang:"ar", cat:"mideast", lat:39.93, lon:32.86, url:"https://www.aa.com.tr/ar/rss/default?cat=guncel" },
   { name:"Asharq Al-Awsat",     lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://aawsat.com/feed" },
-  { name:"Al Masry Al Youm",    lang:"ar", cat:"mideast", lat:30.04, lon:31.24, url:"https://www.almasryalyoum.com/rss" },
+
+  /* ── WERELD ── */
   { name:"The Guardian",        lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://www.theguardian.com/world/rss" },
   { name:"NYT World",           lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
   { name:"France24 EN",         lang:"en", cat:"world", lat:48.85, lon:2.35,  url:"https://www.france24.com/en/rss" },
-  { name:"DW English",          lang:"en", cat:"world", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-en-all" },
-  { name:"CNN World",           lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"http://rss.cnn.com/rss/edition_world.rss" },
+
+  /* ── NL ── */
   { name:"NOS",                 lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
   { name:"Nu.nl Algemeen",      lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
+
+  /* ── TELEGRAM ── */
   { name:"📡 Al Jazeera AR",    lang:"ar", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/aljazeera" },
   { name:"📡 Al Arabiya",       lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" }
 ];
@@ -1093,7 +1108,7 @@ function showToast(msg, icon = "ℹ"){
 /* ==========================================================
    TRANSLATION
    ========================================================== */
-const TR_KEY = "wardesk_tr_v10";
+const TR_KEY = "wardesk_tr_v11";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1234,7 +1249,7 @@ function detectTopic(title, desc, fallbackCat){
 }
 
 /* ==========================================================
-   FETCH WITH TIMEOUT + PROGRESSIVE LOADING
+   FETCH WITH TIMEOUT
    ========================================================== */
 function fetchWithTimeout(promise, ms){
   return Promise.race([
@@ -1289,7 +1304,6 @@ function processFeedResult(f, data){
   });
 }
 
-/* Dedupe over alle items */
 function titleKey(title){
   return (title||"").toLowerCase()
     .replace(/[^a-z0-9 ]/g, "")
@@ -1312,15 +1326,11 @@ function dedupe(items){
 }
 
 /* ==========================================================
-   SOURCE HEALTH
+   HEALTH
    ========================================================== */
 function recordHealth(name, ok){
   if(!sourceHealth[name]) sourceHealth[name] = { fails: 0, last: 0 };
-  if(ok){
-    sourceHealth[name].fails = 0;
-  } else {
-    sourceHealth[name].fails++;
-  }
+  if(ok){ sourceHealth[name].fails = 0; } else { sourceHealth[name].fails++; }
   sourceHealth[name].last = Date.now();
 }
 function saveHealth(){
@@ -1329,7 +1339,7 @@ function saveHealth(){
 function isDisabled(name){ return disabledSources.has(name); }
 
 /* ==========================================================
-   BREAKING DETECTION
+   BREAKING
    ========================================================== */
 function detectBreaking(items){
   const groups = new Map();
@@ -1366,7 +1376,7 @@ function showBreaking(info){
 breakingClose.addEventListener("click", () => breakingBanner.classList.remove("show"));
 
 /* ==========================================================
-   CACHE — vorige resultaten bewaren
+   CACHE
    ========================================================== */
 function saveCache(){
   try{
@@ -1375,10 +1385,7 @@ function saveCache(){
       date: it.date, source: it.source, cat: it.cat, lang: it.lang,
       lat: it.lat, lon: it.lon, sources: it.sources
     }));
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
-      time: Date.now(),
-      items: slim
-    }));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), items: slim }));
   }catch(e){}
 }
 function loadCache(){
@@ -1387,7 +1394,6 @@ function loadCache(){
     if(!raw) return [];
     const data = JSON.parse(raw);
     if(!data.items || !Array.isArray(data.items)) return [];
-    /* Max 2 uur oud */
     if(Date.now() - data.time > 2 * 60 * 60 * 1000) return [];
     return data.items;
   }catch(e){ return []; }
@@ -1402,7 +1408,6 @@ async function loadFeeds(isAuto = false){
   const session = ++loadSession;
   const activeFeeds = FEEDS.filter(f => !isDisabled(f.name));
 
-  /* Toon eerst cache (indien aanwezig) */
   if(isFirstLoad){
     const cached = loadCache();
     if(cached.length){
@@ -1410,7 +1415,6 @@ async function loadFeeds(isAuto = false){
       render();
       renderHero();
       renderTicker();
-      const t = new Date(loadCache()[0]?.date || Date.now());
       statusEl.textContent = `${cached.length} gecachte berichten · updates binnenkort...`;
       statusDot.className = "dot loading";
     }
@@ -1421,16 +1425,14 @@ async function loadFeeds(isAuto = false){
     resetTrCounters();
   }
 
-  /* Sorteer: hoge prioriteit eerst */
   const sorted = [...activeFeeds].sort((a, b) => {
     const aP = HIGH_PRIORITY.includes(a.name) ? 0 : 1;
     const bP = HIGH_PRIORITY.includes(b.name) ? 0 : 1;
     return aP - bP;
   });
 
-  /* Batching: eerste batch van 12 bronnen, daarna rest */
-  const firstBatch = sorted.slice(0, 12);
-  const secondBatch = sorted.slice(12);
+  const firstBatch = sorted.slice(0, 9);
+  const secondBatch = sorted.slice(9);
 
   const collected = [];
   const collectedLinks = new Set();
@@ -1439,7 +1441,6 @@ async function loadFeeds(isAuto = false){
   let totalTry = 0;
   let firstRenderDone = false;
 
-  /* Progress bar setup */
   const totalCount = sorted.length;
   progressBar.classList.remove("hidden");
   progressBar.style.width = "5%";
@@ -1465,7 +1466,7 @@ async function loadFeeds(isAuto = false){
     }
   };
 
-  /* ── FASE 1: eerste batch ── */
+  /* FASE 1: eerste batch */
   await Promise.allSettled(firstBatch.map(processOne));
   if(session !== loadSession) return;
 
@@ -1476,7 +1477,6 @@ async function loadFeeds(isAuto = false){
   statSources.textContent = `${totalOk}/${FEEDS.length}`;
   statWar.textContent = allItems.filter(x => x.cat === "war").length;
 
-  /* Verberg loader — toon eerste resultaten */
   currentPage = 1;
   render();
   renderHero();
@@ -1487,20 +1487,20 @@ async function loadFeeds(isAuto = false){
 
   progressBar.style.width = "30%";
 
-  /* ── FASE 2: rest van de bronnen ── */
+  /* FASE 2: rest */
   const CONCURRENCY = 5;
   let idx = 0;
   async function worker(){
     while(idx < secondBatch.length && session === loadSession){
       const f = secondBatch[idx++];
       await processOne(f);
-      /* Progressief updaten elke 5 bronnen */
-      if(idx % 5 === 0){
+      if(idx % 3 === 0){
         const deduped = dedupe(collected);
         deduped.sort((a, b) => new Date(b.date) - new Date(a.date));
         allItems = deduped;
         updateStatusPartial(totalOk, totalTry, totalCount);
         statSources.textContent = `${totalOk}/${FEEDS.length}`;
+        statWar.textContent = allItems.filter(x => x.cat === "war").length;
         render();
         renderHero();
         renderTicker();
@@ -1513,7 +1513,7 @@ async function loadFeeds(isAuto = false){
 
   if(session !== loadSession) return;
 
-  /* ── FINAL ── */
+  /* FINAL */
   const finalDeduped = dedupe(collected);
   finalDeduped.sort((a, b) => new Date(b.date) - new Date(a.date));
   allItems = finalDeduped;
@@ -1525,11 +1525,9 @@ async function loadFeeds(isAuto = false){
   statSources.textContent = `${totalOk}/${FEEDS.length}`;
   statWar.textContent = allItems.filter(x => x.cat === "war").length;
 
-  /* Breaking detection */
   const breaking = detectBreaking(allItems);
   if(breaking && firstRenderDone){ showBreaking(breaking); }
 
-  /* Notificaties */
   if(!isAuto && notifEnabled && "Notification" in window && Notification.permission === "granted"){
     const trulyNew = allItems.slice(0, 5);
     if(trulyNew.length > 0){
@@ -1542,7 +1540,6 @@ async function loadFeeds(isAuto = false){
     }
   }
 
-  /* Failed UI */
   const disabledNow = [...disabledSources];
   if(failedFeeds.length || disabledNow.length){
     failedCount.textContent = failedFeeds.length + disabledNow.length;
@@ -1610,14 +1607,11 @@ function renderTicker(){
 
 function renderHero(){
   if(window.innerWidth <= 640){ heroSection.style.display = "none"; return; }
-  
   const base = getFilteredBase();
   const withImg = base.filter(it => it.img);
   const picks = withImg.length >= 3 ? withImg.slice(0, 3) : base.slice(0, 3);
-
   if(picks.length < 3){ heroSection.style.display = "none"; return; }
   heroSection.style.display = "grid";
-
   heroMain.innerHTML = heroCardHtml(picks[0]);
   heroMain.onclick = () => window.open(picks[0].link, "_blank");
   heroItem1.innerHTML = heroSideHtml(picks[1]);
@@ -1665,7 +1659,6 @@ function getFilteredBase(){
   const q = searchInput.value.toLowerCase().trim();
   const now = Date.now();
   const timeLimit = activeTime === "all" ? Infinity : parseInt(activeTime, 10) * 60 * 60 * 1000;
-
   return allItems.filter(it => {
     if(favoritesOnly && !favorites.has(it.link)) return false;
     if(activeCat !== "all" && activeCat !== "live" && it.cat !== activeCat) return false;
@@ -1715,7 +1708,6 @@ function render(){
   const hasMore = list.length > toShow.length;
 
   let html = toShow.map((it, i) => cardHtml(it, i)).join("");
-
   if(hasMore){
     html += `
       <div class="load-more">
@@ -1723,15 +1715,11 @@ function render(){
         <span class="progress">${toShow.length} van ${list.length} getoond</span>
       </div>`;
   }
-
   feedEl.innerHTML = html;
 
   const loadMoreBtn = document.getElementById("loadMoreBtn");
   if(loadMoreBtn){
-    loadMoreBtn.addEventListener("click", () => {
-      currentPage++;
-      render();
-    });
+    loadMoreBtn.addEventListener("click", () => { currentPage++; render(); });
   }
 
   if(lazyObserver) lazyObserver.disconnect();
@@ -1772,10 +1760,7 @@ function cardHtml(it, i){
   const sources = it.sources || [it.source];
   const multiSrc = sources.length > 1;
 
-  const classes = [
-    isWar?'war':'', isTg?'tg':'', isRead?'read':''
-  ].filter(Boolean).join(' ');
-
+  const classes = [isWar?'war':'', isTg?'tg':'', isRead?'read':''].filter(Boolean).join(' ');
   const badgeLang = isTg ? 'tg' : it.lang;
   const catLabel = getCatLabel(it.cat);
   const minutes = readTime(dispDesc);
@@ -1935,14 +1920,7 @@ function renderMap(){
       html: `<div style="
         width:20px;height:20px;border-radius:50%;
         background:${color};border:2px solid #fff;
-        box-shadow:0 0 0 0 ${color}88;
-        animation:pinPulse 2s infinite;
-      "></div>
-      <style>@keyframes pinPulse{
-        0%{box-shadow:0 0 0 0 ${color}88}
-        70%{box-shadow:0 0 0 14px ${color}00}
-        100%{box-shadow:0 0 0 0 ${color}00}
-      }</style>`,
+      "></div>`,
       iconSize:[20,20], iconAnchor:[10,10]
     });
 

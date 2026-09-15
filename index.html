@@ -613,9 +613,8 @@
     border:1px solid var(--line); border-radius:var(--radius);
     overflow:hidden;
   }
-  body:not(.light) #map{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(1.05) saturate(.7)}
 
-  /* ─── MARKERS ─── */
+  /* MARKERS */
   .leaflet-marker-icon.custom-marker{
     background:transparent !important;
     border:none !important;
@@ -661,7 +660,7 @@
     font-family:"Inter",sans-serif;
   }
 
-  /* ─── LEGENDA ─── */
+  /* LEGENDA */
   .map-legend{
     position:absolute;
     bottom:20px; left:20px;
@@ -715,6 +714,12 @@
     color:var(--gold); text-decoration:none; font-weight:700;
     font-size:.62rem; letter-spacing:.12em; text-transform:uppercase;
   }
+  .leaflet-control-attribution{
+    background:rgba(10,14,26,.7) !important;
+    color:var(--ink-3) !important;
+    font-size:.55rem !important;
+  }
+  .leaflet-control-attribution a{color:var(--ink-3) !important}
   .loader{
     grid-column:1/-1; display:flex; flex-direction:column;
     align-items:center; gap:1.25rem; padding:6rem 1rem; color:var(--ink-3);
@@ -1002,7 +1007,7 @@ const FRESH_MS    = 20 * 60 * 1000;
 const BREAKING_MS = 10 * 60 * 1000;
 const PAGE_SIZE   = 30;
 const TIMEOUT_MS  = 6000;
-const CACHE_KEY   = "wardesk_cache_v5";
+const CACHE_KEY   = "wardesk_cache_v6";
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
@@ -1163,7 +1168,7 @@ function showToast(msg, icon = "ℹ"){
 })();
 
 /* TRANSLATION */
-const TR_KEY = "wardesk_tr_v15";
+const TR_KEY = "wardesk_tr_v16";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1285,7 +1290,6 @@ function getCachedTr(text){ return trCache[trKeyFor(text)] || ""; }
 function isArabic(t){ return /[\u0600-\u06FF]/.test(t||""); }
 function needsTranslation(lang){ return lang !== "nl"; }
 
-/* DETECT TOPIC */
 function detectTopic(title, desc, fallbackCat){
   const t = (title + " " + desc).toLowerCase();
   if(/\b(football|soccer|match|league|goal|coach|player|team|trophy|cup final|olympics|champions league|fifa|uefa|world cup|tennis|basketball|nba|nfl|formula 1|grand prix|boxing|ufc|wrestling|cricket|rugby|golf|messi|ronaldo|salah|mbappé)\b/.test(t)) return "sport";
@@ -1304,7 +1308,6 @@ function detectTopic(title, desc, fallbackCat){
   return fallbackCat || "algemeen";
 }
 
-/* DETECT LOCATION */
 function detectLocation(title, desc, fallbackLat, fallbackLon){
   const t = (title + " " + desc).toLowerCase();
   const locations = [
@@ -1947,9 +1950,19 @@ function scheduleTranslation(it, idx){
 function initMap(){
   if(map) return;
   map = L.map("map", { center:[30,38], zoom:3, worldCopyJump:true, zoomControl:true });
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom:18, attribution:"© OpenStreetMap"
+  
+  /* CartoDB tiles — donker of licht op basis van thema */
+  const isLight = document.body.classList.contains("light");
+  const tileUrl = isLight
+    ? "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+  
+  L.tileLayer(tileUrl, {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap · © CARTO',
+    subdomains: "abcd"
   }).addTo(map);
+  
   markersLayer = L.layerGroup().addTo(map);
 }
 
@@ -2257,6 +2270,15 @@ viewMapBtn.addEventListener("click", () => switchView("map"));
 document.getElementById("theme").addEventListener("click", () => {
   document.body.classList.toggle("light");
   localStorage.setItem("wardesk_theme", document.body.classList.contains("light") ? "light" : "dark");
+  
+  /* Herlaad kaart met nieuwe tiles */
+  if(map){
+    map.remove();
+    map = null;
+    markersLayer = null;
+    initMap();
+    setTimeout(() => { map.invalidateSize(); renderMap(); }, 200);
+  }
 });
 
 let resizeTimer = null;

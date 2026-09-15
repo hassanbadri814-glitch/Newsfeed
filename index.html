@@ -75,6 +75,33 @@
     border-radius:50%; font-size:.9rem;
     cursor:pointer; flex-shrink:0;
   }
+  .ticker{
+    background:var(--bg-2); color:var(--ink-2);
+    height:32px; display:flex; align-items:center;
+    overflow:hidden; border-bottom:1px solid var(--line);
+    position:relative; z-index:100;
+  }
+  .ticker-label{
+    background:var(--crimson); color:#fff;
+    padding:0 .9rem; height:100%;
+    display:flex; align-items:center; gap:.4rem;
+    font-weight:800; font-size:.6rem;
+    letter-spacing:.18em; flex-shrink:0; z-index:2;
+  }
+  .ticker-label::before{
+    content:""; width:6px; height:6px; border-radius:50%;
+    background:#fff; animation:blink 1.5s infinite;
+  }
+  @keyframes blink{50%{opacity:.3}}
+  .ticker-track{
+    display:flex; gap:2.5rem; white-space:nowrap;
+    padding-left:1.2rem; animation:scroll 180s linear infinite;
+    font-size:.75rem; font-weight:500;
+  }
+  .ticker-track:hover{animation-play-state:paused}
+  .ticker-track span{display:inline-flex; align-items:center; gap:.5rem}
+  .ticker-track span::before{content:"·"; color:var(--gold); font-weight:900}
+  @keyframes scroll{to{transform:translateX(-50%)}}
   header{
     background:var(--bg-2); border-bottom:1px solid var(--line);
     position:sticky; top:0; z-index:99;
@@ -101,18 +128,6 @@
   .brand-text .tag{
     font-size:.55rem; color:var(--ink-3);
     letter-spacing:.22em; font-weight:600; margin-top:2px;
-  }
-  .live-pill{
-    display:inline-flex; align-items:center; gap:.35rem;
-    background:transparent; color:var(--crimson-2);
-    padding:.25rem .6rem;
-    font-size:.6rem; font-weight:800;
-    letter-spacing:.14em; text-transform:uppercase;
-    border:1px solid var(--crimson-2); border-radius:var(--radius-sm);
-  }
-  .live-pill::before{
-    content:""; width:5px; height:5px; background:var(--crimson-2);
-    border-radius:50%; animation:blink 1.5s infinite;
   }
   .stats{margin-left:auto; display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap}
   .stat{display:flex; flex-direction:column; gap:.1rem}
@@ -354,6 +369,51 @@
   article.tg{border-left:2px solid #229ED9}
   article.read{opacity:.6}
   article.read:hover{opacity:1}
+
+  /* SKELETON LOADER */
+  .skeleton-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:1rem;
+    grid-column:1/-1;
+  }
+  .skeleton-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    height:340px;
+    position:relative;
+    overflow:hidden;
+  }
+  .skeleton-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(184,153,104,.1) 50%,
+      transparent 100%
+    );
+    animation:skeletonShine 1.5s infinite;
+  }
+  @keyframes skeletonShine{
+    0%{transform:translateX(-100%)}
+    100%{transform:translateX(100%)}
+  }
+  .skeleton-card::after{
+    content:"";
+    position:absolute;
+    left:.9rem; right:.9rem; top:2rem;
+    height:1rem;
+    background:var(--bg-3);
+    border-radius:4px;
+    box-shadow:
+      0 2rem 0 var(--bg-3),
+      0 4rem 0 var(--bg-3),
+      0 6rem 0 var(--bg-3);
+    opacity:.5;
+  }
   .card-thumb{
     width:100%; aspect-ratio:16/9; background:var(--bg-3);
     background-size:cover; background-position:center;
@@ -380,7 +440,7 @@
   .badge.tg{background:#229ED9; color:#fff; border-color:transparent}
   .badge.multi{background:var(--crimson); color:#fff; border-color:transparent; cursor:pointer}
   .live-tag{
-    position:absolute; top:.55rem; right:2.8rem;
+    position:absolute; top:.55rem; right:.55rem;
     background:var(--crimson); color:#fff;
     padding:.15rem .5rem; font-size:.52rem; font-weight:800;
     letter-spacing:.12em; display:inline-flex; align-items:center;
@@ -390,17 +450,6 @@
     content:""; width:4px; height:4px; background:#fff;
     border-radius:50%; animation:blink 1.2s infinite;
   }
-  .fav-btn{
-    position:absolute; top:.45rem; right:.45rem;
-    width:28px; height:28px; border-radius:50%;
-    background:rgba(10,14,26,.7);
-    border:1px solid rgba(255,255,255,.1);
-    color:rgba(255,255,255,.6); font-size:.85rem;
-    cursor:pointer; display:grid; place-items:center;
-    z-index:3; transition:all .18s;
-  }
-  .fav-btn:hover{background:rgba(10,14,26,.95); color:var(--gold)}
-  .fav-btn.on{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
   .card-body{
     padding:.9rem 1rem 1.05rem;
     display:flex; flex-direction:column; gap:.5rem; flex:1;
@@ -717,6 +766,7 @@
     .stat-value{font-size:.8rem}
     .hero{display:none}
     .grid{grid-template-columns:1fr; gap:.85rem}
+    .skeleton-grid{grid-template-columns:1fr}
     main{padding:1rem .9rem 3rem}
     .filterbar{padding:.5rem .9rem; gap:.4rem}
     .select{max-width:100%; flex:1 1 100%}
@@ -772,7 +822,6 @@
         <span class="tag">LIVE CONFLICT MONITOR</span>
       </div>
     </div>
-    <span class="live-pill">Live</span>
     <div class="stats">
       <div class="stat">
         <span class="stat-label">Klok</span>
@@ -842,7 +891,7 @@
 </header>
 
 <div class="statusbar">
-  <span class="indicator"><span class="dot ok" id="statusDot"></span><span id="statusText">Verbinding maken...</span></span>
+  <span class="indicator"><span class="dot ok" id="statusDot"></span><span id="statusText">Verbinden...</span></span>
   <span class="indicator" id="trStatus" style="display:none">
     <span class="dot warn"></span>Vertalen: <span id="trCount">0/0</span>
   </span>
@@ -867,9 +916,13 @@
       <span class="section-count" id="sectionCount">—</span>
     </div>
     <div class="grid" id="feed">
-      <div class="loader">
-        <div class="ring"></div>
-        <div class="msg">Eerste bronnen ophalen...</div>
+      <div class="skeleton-grid">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
       </div>
     </div>
   </div>
@@ -944,8 +997,9 @@ const REFRESH_MS  = 30 * 1000;
 const FRESH_MS    = 20 * 60 * 1000;
 const BREAKING_MS = 10 * 60 * 1000;
 const PAGE_SIZE   = 30;
-const TIMEOUT_MS  = 6000;
-const CACHE_KEY   = "wardesk_cache_v9";
+const TIMEOUT_MS  = 4000;
+const FIRST_BATCH_SIZE = 4;
+const CACHE_KEY   = "wardesk_cache_v10";
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
@@ -968,9 +1022,6 @@ const LIVE_CHANNELS = {
   "trt":          { label:"TRT World", desc:"TRT World — Turkse staatstelevisie", icon:"🇹🇷", youtube:"https://www.youtube.com/@trtworld/live", tiktok:"https://www.tiktok.com/@trtworld", web:"https://www.trtworld.com/live" }
 };
 
-/* ═══════════════════════════════════════════════════════════
-   FEEDS — Marokko uitgebreid met Bladna.nl en Marokko.nl
-   ═══════════════════════════════════════════════════════════ */
 const FEEDS = [
   { name:"Al Jazeera",          lang:"en", cat:"algemeen", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
   { name:"BBC World",           lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
@@ -987,14 +1038,11 @@ const FEEDS = [
   { name:"SABA Yemen",          lang:"en", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.saba.ye/en/rsscatfeed14.htm" },
   { name:"Mehr News Iran",      lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://en.mehrnews.com/rss" },
   { name:"Radio Dabanga",       lang:"en", cat:"sudan", lat:15.5, lon:32.5, url:"https://www.dabangasudan.org/en/rss" },
-
-  /* ── MAROKKO ── */
   { name:"Yabiladi",            lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.yabiladi.com/rss/articles.xml" },
   { name:"Lakome2",             lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
   { name:"TelQuel",             lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
   { name:"Bladna.nl",           lang:"nl", cat:"maroc", lat:52.37, lon:4.90, url:"https://freenewsapi.ai/v1/rss?host=bladna.nl&size=50" },
   { name:"Marokko.nl",          lang:"nl", cat:"maroc", lat:52.37, lon:4.90, url:"https://news.google.com/rss/search?q=site:marokko.nl&hl=nl&gl=NL&ceid=NL:nl" },
-
   { name:"RT Arabic",           lang:"ar", cat:"mideast", lat:55.75, lon:37.61, url:"https://arabic.rt.com/rss/" },
   { name:"France24 AR",         lang:"ar", cat:"mideast", lat:48.85, lon:2.35,  url:"https://www.france24.com/ar/rss" },
   { name:"CNN Arabic",          lang:"ar", cat:"mideast", lat:25.20, lon:55.27, url:"https://arabic.cnn.com/api/v1/rss/rss.xml" },
@@ -1008,7 +1056,6 @@ const FEEDS = [
   { name:"Nu.nl Algemeen",      lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" }
 ];
 
-/* STATE */
 let allItems = [];
 let seenLinks = new Set();
 let activeCat = "all";
@@ -1038,7 +1085,6 @@ for(const [src, data] of Object.entries(sourceHealth)){
   if(data.fails >= 3) disabledSources.add(src);
 }
 
-/* DOM */
 const feedEl       = document.getElementById("feed");
 const statusEl     = document.getElementById("statusText");
 const statusDot    = document.getElementById("statusDot");
@@ -1101,8 +1147,7 @@ function showToast(msg, icon = "ℹ"){
   if(hour >= 7 && hour < 20){ document.body.classList.add("light"); }
 })();
 
-/* TRANSLATION */
-const TR_KEY = "wardesk_tr_v19";
+const TR_KEY = "wardesk_tr_v20";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1431,16 +1476,19 @@ async function loadFeeds(isAuto = false){
   const session = ++loadSession;
   const activeFeeds = FEEDS.filter(f => !isDisabled(f.name));
 
-  if(isFirstLoad){
-    const cached = loadCache();
-    if(cached.length){
-      allItems = cached;
-      render();
-      renderHero();
-      renderTicker();
-      statusEl.textContent = `${cached.length} gecachte berichten · updates binnenkort...`;
-      statusDot.className = "dot loading";
-    }
+  /* Toon cache altijd direct — niet alleen eerste keer */
+  const cached = loadCache();
+  if(cached.length && !isAuto){
+    allItems = cached;
+    render();
+    renderHero();
+    renderTicker();
+    renderMap();
+    statusEl.textContent = `${cached.length} gecachte berichten · vers ophalen...`;
+    statusDot.className = "dot loading";
+    isFirstLoad = false;
+  } else if(isFirstLoad){
+    statusEl.textContent = "Eerste bronnen ophalen...";
   }
 
   if(!isAuto){ refreshBtn.classList.add("spin"); resetTrCounters(); }
@@ -1451,8 +1499,8 @@ async function loadFeeds(isAuto = false){
     return aP - bP;
   });
 
-  const firstBatch = sorted.slice(0, 9);
-  const secondBatch = sorted.slice(9);
+  const firstBatch = sorted.slice(0, FIRST_BATCH_SIZE);
+  const secondBatch = sorted.slice(FIRST_BATCH_SIZE);
 
   const collected = [];
   const collectedLinks = new Set();
@@ -1486,7 +1534,9 @@ async function loadFeeds(isAuto = false){
 
   const d1 = dedupe(collected);
   d1.sort((a, b) => new Date(b.date) - new Date(a.date));
-  allItems = d1;
+  if(d1.length){
+    allItems = d1;
+  }
   updateStatusPartial(totalOk, totalTry, totalCount);
   statSources.textContent = `${totalOk}/${FEEDS.length}`;
   statWar.textContent = allItems.filter(x => x.cat === "war").length;
@@ -1509,7 +1559,7 @@ async function loadFeeds(isAuto = false){
       if(idx % 3 === 0){
         const dd = dedupe(collected);
         dd.sort((a, b) => new Date(b.date) - new Date(a.date));
-        allItems = dd;
+        if(dd.length) allItems = dd;
         updateStatusPartial(totalOk, totalTry, totalCount);
         statSources.textContent = `${totalOk}/${FEEDS.length}`;
         statWar.textContent = allItems.filter(x => x.cat === "war").length;
@@ -1526,7 +1576,7 @@ async function loadFeeds(isAuto = false){
 
   const finalDeduped = dedupe(collected);
   finalDeduped.sort((a, b) => new Date(b.date) - new Date(a.date));
-  allItems = finalDeduped;
+  if(finalDeduped.length) allItems = finalDeduped;
   failedFeeds = failed;
   saveHealth();
   saveCache();

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="Live nieuwsfeed met Al Jazeera, BBC Arabic, DW Arabic en meer.">
+<title>Wereld Nieuws · Live Feed</title>
+<style>
+  :root{
+    --bg:#0b1220; --card:#151e2e; --card2:#1c2740;
+    --text:#e6edf7; --muted:#8ea3bf; --accent:#38bdf8;
+    --accent2:#22c55e; --border:#243049; --danger:#f87171;
+    --tag:#7c3aed; --ar:#f59e0b;
+  }
+  body.light{
+    --bg:#f4f7fb; --card:#ffffff; --card2:#eef3fa;
+    --text:#0b1220; --muted:#5b6b82; --accent:#0284c7;
+    --border:#dbe3ee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Arabic",sans-serif;
+    background:var(--bg); color:var(--text);
+    transition:background .25s,color .25s; min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* Header */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(11,18,32,.85);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    padding:.9rem 1.2rem;
+  }
+  body.light header{background:rgba(244,247,251,.9)}
+  .topbar{
+    max-width:1400px; margin:0 auto;
+    display:flex; gap:1rem; align-items:center;
+    justify-content:space-between; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:.6rem}
+  .brand .dot{
+    width:12px; height:12px; border-radius:50%;
+    background:var(--accent2);
+    box-shadow:0 0 0 0 rgba(34,197,94,.7);
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(34,197,94,.7)}
+    70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}
+    100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+  }
+  .brand h1{font-size:1.1rem; letter-spacing:-.3px; font-weight:700}
+  .brand h1 span{color:var(--accent)}
+
+  .filters{
+    max-width:1400px; margin:.8rem auto 0;
+    display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;
+  }
+  .chips{display:flex; gap:.4rem; flex-wrap:wrap}
+  .chip{
+    padding:.42rem .85rem; border-radius:99px;
+    border:1px solid var(--border); background:var(--card);
+    color:var(--muted); cursor:pointer; font-size:.82rem;
+    font-weight:600; transition:all .15s; user-select:none;
+    white-space:nowrap;
+  }
+  .chip:hover{color:var(--text); border-color:var(--accent)}
+  .chip.active{
+    background:var(--accent); color:#00121f; border-color:var(--accent);
+  }
+  .chip.ar.active{background:var(--ar); color:#1a1200}
+
+  .tools{
+    display:flex; gap:.5rem; align-items:center;
+    margin-left:auto; flex-wrap:wrap;
+  }
+  input[type="search"]{
+    font:inherit; padding:.5rem .9rem; border-radius:10px;
+    border:1px solid var(--border); background:var(--card);
+    color:var(--text); outline:none; min-width:180px;
+  }
+  input[type="search"]:focus{border-color:var(--accent)}
+  .iconbtn{
+    width:38px; height:38px; border-radius:10px; cursor:pointer;
+    border:1px solid var(--border); background:var(--card);
+    color:var(--text); font-size:1rem;
+    display:grid; place-items:center; transition:all .15s;
+  }
+  .iconbtn:hover{border-color:var(--accent); color:var(--accent)}
+  .iconbtn.spinning{animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Status */
+  #status{
+    max-width:1400px; margin:0 auto;
+    padding:.8rem 1.2rem; color:var(--muted); font-size:.85rem;
+    display:flex; gap:.6rem; align-items:center;
+  }
+  #status .live{
+    display:inline-flex; align-items:center; gap:.35rem;
+    color:var(--accent2); font-weight:700;
+  }
+  #status .live::before{
+    content:""; width:7px; height:7px; border-radius:50%;
+    background:var(--accent2);
+    animation:pulse 2s infinite;
+  }
+
+  /* Grid */
+  .grid{
+    display:grid; gap:1rem; padding:.4rem 1.2rem 3rem;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    max-width:1400px; margin:0 auto;
+  }
+  article{
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; overflow:hidden; display:flex;
+    flex-direction:column; transition:transform .2s,border-color .2s,box-shadow .2s;
+    position:relative;
+  }
+  article:hover{
+    transform:translateY(-4px);
+    border-color:var(--accent);
+    box-shadow:0 12px 30px -12px rgba(56,189,248,.35);
+  }
+  article .thumb{
+    position:relative; width:100%; aspect-ratio:16/9;
+    background:linear-gradient(135deg,var(--card2),var(--bg));
+    overflow:hidden;
+  }
+  article .thumb img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+  article .lang{
+    position:absolute; top:.6rem; left:.6rem;
+    background:rgba(0,0,0,.75); color:#fff;
+    padding:.2rem .55rem; border-radius:6px;
+    font-size:.7rem; font-weight:800; letter-spacing:.5px;
+  }
+  body.light article .lang{background:rgba(255,255,255,.9); color:#0b1220}
+  article .lang.ar{background:var(--ar); color:#1a1200}
+
+  article .body{
+    padding:1rem; display:flex; flex-direction:column;
+    gap:.5rem; flex:1;
+  }
+  article .meta{
+    display:flex; gap:.5rem; flex-wrap:wrap;
+    font-size:.72rem; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.4px;
+    align-items:center;
+  }
+  article .source{
+    background:var(--card2); padding:.15rem .5rem;
+    border-radius:6px; font-weight:700; color:var(--accent);
+  }
+  article h2{
+    font-size:1rem; line-height:1.4; font-weight:700;
+    display:-webkit-box; -webkit-line-clamp:3;
+    -webkit-box-orient:vertical; overflow:hidden;
+  }
+  article[dir="rtl"] h2{
+    font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif;
+    line-height:1.6;
+  }
+  article p{
+    font-size:.86rem; color:var(--muted); line-height:1.55;
+    display:-webkit-box; -webkit-line-clamp:3;
+    -webkit-box-orient:vertical; overflow:hidden; flex:1;
+  }
+  article[dir="rtl"] p{
+    font-family:"Noto Sans Arabic","Segoe UI",Tahoma,sans-serif;
+    line-height:1.75;
+  }
+  article .read{
+    color:var(--accent); text-decoration:none;
+    font-weight:700; font-size:.85rem; margin-top:.3rem;
+    display:inline-flex; align-items:center; gap:.3rem;
+    transition:gap .15s;
+  }
+  article .read:hover{gap:.6rem}
+  article[dir="rtl"] .read{justify-content:flex-end}
+
+  /* Loader */
+  .loader{
+    grid-column:1/-1; display:flex; flex-direction:column;
+    align-items:center; gap:1rem; padding:4rem 1rem;
+    color:var(--muted);
+  }
+  .loader .ring{
+    width:44px; height:44px; border-radius:50%;
+    border:3px solid var(--border);
+    border-top-color:var(--accent);
+    animation:spin .9s linear infinite;
+  }
+  .empty{
+    grid-column:1/-1; text-align:center;
+    padding:3rem 1rem; color:var(--muted);
+  }
+  .empty .big{font-size:2.5rem; margin-bottom:.6rem}
+
+  .error{
+    grid-column:1/-1;
+    background:rgba(248,113,113,.08);
+    border:1px solid rgba(248,113,113,.3);
+    color:var(--danger); padding:1rem 1.2rem;
+    border-radius:12px; font-size:.9rem;
+  }
+
+  footer{
+    text-align:center; padding:2rem 1rem;
+    color:var(--muted); font-size:.78rem;
+    border-top:1px solid var(--border);
+  }
+  footer a{color:var(--accent); text-decoration:none}
+
+  @media(max-width:640px){
+    .brand h1{font-size:1rem}
+    input[type="search"]{min-width:0; flex:1}
+    .tools{width:100%}
+    .grid{grid-template-columns:1fr; padding:.4rem .8rem 2rem}
+    .filters{padding:0 .8rem}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <h1>Wereld <span>Nieuws</span> · Live</h1>
+    </div>
+    <div class="tools">
+      <input id="search" type="search" placeholder="🔎 Zoeken..." aria-label="Zoeken">
+      <button class="iconbtn" id="refresh" title="Verversen">↻</button>
+      <button class="iconbtn" id="theme" title="Thema">🌓</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="chips" id="cats">
+      <div class="chip active" data-cat="all">🌍 Alles</div>
+      <div class="chip" data-cat="top">🔥 Top</div>
+      <div class="chip" data-cat="world">🌐 Wereld</div>
+      <div class="chip" data-cat="mideast">🕌 Midden-Oosten</div>
+      <div class="chip" data-cat="business">💼 Economie</div>
+      <div class="chip" data-cat="tech">💻 Tech</div>
+      <div class="chip" data-cat="sport">⚽ Sport</div>
+    </div>
+    <div class="chips" id="langs" style="margin-left:auto">
+      <div class="chip active" data-lang="all">Alle talen</div>
+      <div class="chip" data-lang="en">EN</div>
+      <div class="chip ar" data-lang="ar">العربية</div>
+    </div>
+  </div>
+</header>
+
+<div id="status">
+  <span class="live">LIVE</span>
+  <span id="statusText">Feeds laden...</span>
+</div>
+
+<main class="grid" id="feed">
+  <div class="loader">
+    <div class="ring"></div>
+    <div>Nieuws ophalen...</div>
+  </div>
+</main>
+
+<footer>
+  Gebouwd met ❤️ · Bronnen: Al Jazeera · BBC · DW · France24 · RT ·
+  <a href="https://github.com" target="_blank" rel="noopener">GitHub Pages</a>
+</footer>
+
+<script>
+/* ==========================================================
+   NIEUWSFEED — configuratie
+   Voeg hier feeds toe of verwijder ze naar wens.
+   cat: top | world | mideast | business | tech | sport
+   lang: en | ar
+   ========================================================== */
+const FEEDS = [
+  // ---- Al Jazeera ----
+  { name:"Al Jazeera",       lang:"en", cat:"top",      url:"https://www.aljazeera.com/xml/rss/all.xml" },
+  { name:"Al Jazeera AR",    lang:"ar", cat:"mideast",  url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
+
+  // ---- BBC ----
+  { name:"BBC World",        lang:"en", cat:"world",    url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
+  { name:"BBC Tech",         lang:"en", cat:"tech",     url:"https://feeds.bbci.co.uk/news/technology/rss.xml" },
+  { name:"BBC Business",     lang:"en", cat:"business", url:"https://feeds.bbci.co.uk/news/business/rss.xml" },
+  { name:"BBC Sport",        lang:"en", cat:"sport",    url:"https://feeds.bbci.co.uk/sport/rss.xml" },
+  { name:"BBC Arabic",       lang:"ar", cat:"world",    url:"https://feeds.bbci.co.uk/arabic/rss.xml" },
+
+  // ---- Duitse omroep (Arabisch) ----
+  { name:"DW Arabic",        lang:"ar", cat:"world",    url:"https://rss.dw.com/rdf/rss-ar-all" },
+
+  // ---- France24 Arabisch ----
+  { name:"France24 AR",      lang:"ar", cat:"world",    url:"https://www.france24.com/ar/rss" },
+
+  // ---- RT Arabisch ----
+  { name:"RT Arabic",        lang:"ar", cat:"mideast",  url:"https://arabic.rt.com/rss/" },
+
+  // ---- Sky News Arabia ----
+  { name:"Sky News Arabia",  lang:"ar", cat:"mideast",  url:"https://www.skynewsarabia.com/web/rss/95.xml" }
+];
+
+/* Gratis RSS -> JSON proxy (geen API key nodig) */
+const PROXY = "https://api.rss2json.com/v1/api.json?rss_url=";
+const REFRESH_MS = 5 * 60 * 1000; // 5 minuten
+
+/* ---------- State ---------- */
+let allItems = [];
+let activeCat = "all";
+let activeLang = "all";
+
+/* ---------- DOM ---------- */
+const feedEl    = document.getElementById("feed");
+const statusEl  = document.getElementById("statusText");
+const searchEl  = document.getElementById("search");
+const catsEl    = document.getElementById("cats");
+const langsEl   = document.getElementById("langs");
+const refreshEl = document.getElementById("refresh");
+
+/* ---------- Hulpfuncties ---------- */
+function stripHtml(s){
+  return (s||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
+}
+function escapeHtml(s){
+  return (s||"").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function timeAgo(dateStr){
+  const d = new Date(dateStr);
+  if(isNaN(d)) return "";
+  const diff = (Date.now() - d.getTime()) / 1000;
+  if(diff < 60) return "net nu";
+  if(diff < 3600) return Math.floor(diff/60) + " min";
+  if(diff < 86400) return Math.floor(diff/3600) + " u";
+  if(diff < 604800) return Math.floor(diff/86400) + " d";
+  return d.toLocaleDateString("nl-NL", { day:"numeric", month:"short" });
+}
+function isProbablyArabic(text){
+  return /[\u0600-\u06FF]/.test(text||"");
+}
+
+/* ---------- Feeds laden ---------- */
+async function loadFeeds(){
+  statusEl.textContent = "Feeds laden...";
+  refreshEl.classList.add("spinning");
+
+  feedEl.innerHTML = `
+    <div class="loader">
+      <div class="ring"></div>
+      <div>Nieuws ophalen van ${FEEDS.length} bronnen...</div>
+    </div>`;
+
+  const results = await Promise.allSettled(
+    FEEDS.map(f =>
+      fetch(PROXY + encodeURIComponent(f.url))
+        .then(r => r.json())
+        .then(data => {
+          if(!data || data.status !== "ok" || !Array.isArray(data.items))
+            throw new Error("feed fail");
+          return data.items.map(it => ({
+            title: it.title || "",
+            link:  it.link  || "#",
+            desc:  it.description || it.content || "",
+            img:   it.thumbnail ||
+                   it.enclosure?.link ||
+                   (it.content||"").match(/<img[^>]+src="([^"]+)"/i)?.[1] ||
+                   "",
+            date:  it.pubDate || "",
+            source: f.name,
+            cat:   f.cat,
+            lang:  f.lang
+          }));
+        })
+    )
+  );
+
+  allItems = [];
+  let okCount = 0;
+  results.forEach(r => {
+    if(r.status === "fulfilled"){
+      allItems.push(...r.value);
+      okCount++;
+    }
+  });
+
+  allItems.sort((a,b) => new Date(b.date) - new Date(a.date));
+  refreshEl.classList.remove("spinning");
+
+  if(!allItems.length){
+    feedEl.innerHTML = `
+      <div class="error">
+        ⚠️ Kon geen artikelen laden. Controleer je internet of probeer het later opnieuw.
+      </div>`;
+    statusEl.textContent = "0 artikelen";
+    return;
+  }
+
+  statusEl.textContent =
+    `${allItems.length} artikelen · ${okCount}/${FEEDS.length} bronnen · bijgewerkt ${new Date().toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"})}`;
+
+  render();
+}
+
+/* ---------- Renderen ---------- */
+function render(){
+  const q = searchEl.value.toLowerCase().trim();
+
+  const list = allItems.filter(it => {
+    if(activeCat !== "all" && it.cat !== activeCat) return false;
+    if(activeLang !== "all" && it.lang !== activeLang) return false;
+    if(q){
+      const hay = (it.title + " " + stripHtml(it.desc)).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if(!list.length){
+    feedEl.innerHTML = `
+      <div class="empty">
+        <div class="big">🔍</div>
+        <div>Geen artikelen gevonden met deze filters.</div>
+      </div>`;
+    return;
+  }
+
+  feedEl.innerHTML = list.map(it => {
+    const rtl = it.lang === "ar" || isProbablyArabic(it.title);
+    const desc = stripHtml(it.desc).slice(0,180);
+    const img = it.img
+      ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy"
+              onerror="this.parentElement.style.display='none'">`
+      : "";
+    const catLabel = {
+      top:"TOP", world:"WERELD", mideast:"MIDDEN-OOSTEN",
+      business:"ECONOMIE", tech:"TECH", sport:"SPORT"
+    }[it.cat] || it.cat;
+
+    return `
+      <article dir="${rtl?'rtl':'ltr'}">
+        <div class="thumb">
+          ${img}
+          <span class="lang ${it.lang==='ar'?'ar':''}">${it.lang.toUpperCase()}</span>
+        </div>
+        <div class="body">
+          <div class="meta">
+            <span class="source">${escapeHtml(it.source)}</span>
+            <span>${catLabel}</span>
+            <span>· ${timeAgo(it.date)}</span>
+          </div>
+          <h2>${escapeHtml(it.title)}</h2>
+          <p>${escapeHtml(desc)}${desc.length>=180?"…":""}</p>
+          <a class="read" href="${escapeHtml(it.link)}"
+             target="_blank" rel="noopener">
+             ${rtl?'اقرأ المزيد':'Lees verder'} →
+          </a>
+        </div>
+      </article>`;
+  }).join("");
+}
+
+/* ---------- Events ---------- */
+searchEl.addEventListener("input", render);
+
+catsEl.addEventListener("click", e => {
+  const chip = e.target.closest(".chip");
+  if(!chip) return;
+  catsEl.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  activeCat = chip.dataset.cat;
+  render();
+});
+
+langsEl.addEventListener("click", e => {
+  const chip = e.target.closest(".chip");
+  if(!chip) return;
+  langsEl.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  activeLang = chip.dataset.lang;
+  render();
+});
+
+refreshEl.addEventListener("click", loadFeeds);
+
+/* Thema */
+document.getElementById("theme").addEventListener("click", () => {
+  document.body.classList.toggle("light");
+  localStorage.setItem("news_theme",
+    document.body.classList.contains("light") ? "light" : "dark");
+});
+if(localStorage.getItem("news_theme") === "light")
+  document.body.classList.add("light");
+
+/* Auto-refresh */
+setInterval(loadFeeds, REFRESH_MS);
+
+/* ---------- Start ---------- */
+loadFeeds();
+</script>
+</body>
+</html>

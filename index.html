@@ -39,8 +39,13 @@
     -webkit-font-smoothing:antialiased; overflow-x:hidden; line-height:1.5;
     font-size:15px;
   }
-
-  /* ─── BREAKING BANNER ─── */
+  .progress-bar{
+    position:fixed; top:0; left:0; height:2px;
+    background:linear-gradient(90deg,var(--gold),var(--crimson));
+    z-index:10000; width:0%;
+    transition:width .3s ease, opacity .3s ease;
+  }
+  .progress-bar.hidden{opacity:0}
   .breaking{
     position:fixed; top:0; left:0; right:0; z-index:9999;
     background:linear-gradient(90deg,var(--crimson) 0%,#7a0918 100%);
@@ -51,38 +56,26 @@
     border-bottom:2px solid #fff;
   }
   .breaking.show{transform:translateY(0)}
-  .breaking-icon{
-    font-size:1.4rem; animation:pulseBreak 1s infinite;
-  }
-  @keyframes pulseBreak{
-    0%,100%{transform:scale(1)}
-    50%{transform:scale(1.15)}
-  }
-  .breaking-text{
-    flex:1; min-width:0;
-  }
+  .breaking-icon{font-size:1.4rem; animation:pulseBreak 1s infinite}
+  @keyframes pulseBreak{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+  .breaking-text{flex:1; min-width:0}
   .breaking-label{
     font-size:.6rem; font-weight:900; letter-spacing:.2em;
     opacity:.85; text-transform:uppercase;
   }
   .breaking-title{
-    font-size:.85rem; font-weight:700; line-height:1.35;
-    margin-top:.15rem;
+    font-size:.85rem; font-weight:700; line-height:1.35; margin-top:.15rem;
     display:-webkit-box; -webkit-line-clamp:2;
     -webkit-box-orient:vertical; overflow:hidden;
   }
   .breaking-title[dir="rtl"]{font-family:"Noto Sans Arabic",sans-serif}
-  .breaking-meta{
-    font-size:.65rem; opacity:.85; margin-top:.2rem; font-weight:600;
-  }
+  .breaking-meta{font-size:.65rem; opacity:.85; margin-top:.2rem; font-weight:600}
   .breaking-close{
     background:transparent; border:1px solid rgba(255,255,255,.4);
     color:#fff; width:28px; height:28px;
     border-radius:50%; font-size:.9rem;
     cursor:pointer; flex-shrink:0;
   }
-
-  /* ─── TICKER ─── */
   .ticker{
     background:var(--bg-2); color:var(--ink-2);
     height:32px; display:flex; align-items:center;
@@ -110,8 +103,6 @@
   .ticker-track span{display:inline-flex; align-items:center; gap:.5rem}
   .ticker-track span::before{content:"·"; color:var(--gold); font-weight:900}
   @keyframes scroll{to{transform:translateX(-50%)}}
-
-  /* ─── HEADER ─── */
   header{
     background:var(--bg-2); border-bottom:1px solid var(--line);
     position:sticky; top:0; z-index:99;
@@ -176,8 +167,6 @@
   .btn.on{color:var(--green); border-color:var(--green)}
   .btn.spin span{animation:spin 1s linear infinite; display:inline-block}
   @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* ─── FILTERBAR ─── */
   .filterbar{
     max-width:1500px; margin:0 auto;
     padding:.55rem 1.25rem;
@@ -232,21 +221,16 @@
   }
   .fav-toggle:hover{color:var(--gold); border-color:var(--gold-3)}
   .fav-toggle.active{color:var(--gold); border-color:var(--gold-3); background:rgba(184,153,104,.08)}
-  .fav-toggle .count{
-    color:var(--ink-3);
-    font-size:.68rem; font-weight:700;
-  }
+  .fav-toggle .count{color:var(--ink-3); font-size:.68rem; font-weight:700}
   .fav-toggle.active .count{color:var(--gold)}
   .icon-sm{
-    width:32px; height:32px;
-    padding:0; display:grid; place-items:center;
+    width:32px; height:32px; padding:0;
+    display:grid; place-items:center;
     background:transparent; border:1px solid var(--line);
     color:var(--ink-3); border-radius:var(--radius-sm);
     cursor:pointer; font-size:.85rem;
   }
   .icon-sm:hover{border-color:var(--gold-3); color:var(--gold)}
-
-  /* ─── NAV ─── */
   .nav{
     background:var(--bg); border-bottom:1px solid var(--line);
     overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
@@ -277,8 +261,6 @@
     width:5px; height:5px; border-radius:50%;
     background:var(--crimson-2); animation:blink 1.5s infinite;
   }
-
-  /* ─── STATUSBAR ─── */
   .statusbar{
     background:var(--bg-2); border-bottom:1px solid var(--line);
     padding:.5rem 1.25rem; font-size:.68rem; color:var(--ink-3);
@@ -289,6 +271,7 @@
   .statusbar .dot{width:6px; height:6px; border-radius:50%}
   .statusbar .dot.ok{background:var(--green)}
   .statusbar .dot.warn{background:var(--gold)}
+  .statusbar .dot.loading{background:var(--gold); animation:blink 1s infinite}
   .statusbar .failed-toggle{
     background:transparent; border:1px solid var(--crimson);
     color:var(--crimson-2); font-family:inherit;
@@ -311,11 +294,7 @@
     border-radius:var(--radius-sm); cursor:pointer;
     font-family:inherit;
   }
-
-  /* ─── MAIN ─── */
   main{max-width:1500px; margin:0 auto; padding:1.5rem 1.25rem 4rem}
-
-  /* ─── HERO ─── */
   .hero{
     display:grid; grid-template-columns:1.6fr 1fr;
     gap:1px; background:var(--line);
@@ -384,8 +363,6 @@
     font-size:.6rem; color:var(--ink-3); font-weight:500;
     letter-spacing:.06em; text-transform:uppercase;
   }
-
-  /* ─── SECTION HEAD ─── */
   .section-head{
     display:flex; align-items:center; gap:.7rem;
     padding-bottom:.7rem; border-bottom:1px solid var(--line);
@@ -403,8 +380,6 @@
     margin-left:auto; font-size:.65rem; color:var(--ink-3);
     font-weight:500; letter-spacing:.08em; text-transform:uppercase;
   }
-
-  /* ─── GRID ─── */
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
@@ -415,6 +390,11 @@
     border-radius:var(--radius); overflow:hidden;
     display:flex; flex-direction:column; cursor:pointer;
     transition:all .25s ease; position:relative;
+    animation:cardIn .35s ease;
+  }
+  @keyframes cardIn{
+    from{opacity:0; transform:translateY(10px)}
+    to{opacity:1; transform:translateY(0)}
   }
   article:hover{
     border-color:var(--line-2); transform:translateY(-2px);
@@ -424,7 +404,6 @@
   article.tg{border-left:2px solid #229ED9}
   article.read{opacity:.6}
   article.read:hover{opacity:1}
-
   .card-thumb{
     width:100%; aspect-ratio:16/9; background:var(--bg-3);
     background-size:cover; background-position:center;
@@ -449,10 +428,7 @@
   .badge.ar{background:var(--gold); color:#0a0e1a; border-color:transparent}
   .badge.he{background:#4f52ba; color:#fff; border-color:transparent}
   .badge.tg{background:#229ED9; color:#fff; border-color:transparent}
-  .badge.multi{
-    background:var(--crimson); color:#fff; border-color:transparent;
-    cursor:pointer;
-  }
+  .badge.multi{background:var(--crimson); color:#fff; border-color:transparent; cursor:pointer}
   .live-tag{
     position:absolute; top:.55rem; right:2.8rem;
     background:var(--crimson); color:#fff;
@@ -475,7 +451,6 @@
   }
   .fav-btn:hover{background:rgba(10,14,26,.95); color:var(--gold)}
   .fav-btn.on{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
-
   .card-body{
     padding:.9rem 1rem 1.05rem;
     display:flex; flex-direction:column; gap:.5rem; flex:1;
@@ -532,8 +507,6 @@
   }
   .card-link:hover{gap:.6rem; color:var(--gold-2)}
   article[dir="rtl"] .card-link{flex-direction:row-reverse}
-
-  /* ─── SOURCE POPUP ─── */
   .src-popup{
     position:fixed; inset:0; z-index:9000;
     background:rgba(0,0,0,.7);
@@ -565,8 +538,6 @@
     font-size:.72rem; letter-spacing:.1em; text-transform:uppercase;
     border-radius:var(--radius-sm); cursor:pointer;
   }
-
-  /* ─── LOAD MORE ─── */
   .load-more{
     grid-column:1/-1; text-align:center; padding:1.75rem 1rem .5rem;
   }
@@ -585,8 +556,6 @@
     font-size:.62rem; color:var(--ink-3);
     letter-spacing:.1em;
   }
-
-  /* ─── LIVE TV ─── */
   #liveView{display:none}
   .live-chips{display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:1.25rem}
   .live-chip{
@@ -637,8 +606,6 @@
     font-size:.72rem; color:var(--ink-3); line-height:1.6;
     border-radius:var(--radius-sm);
   }
-
-  /* ─── MAP ─── */
   #mapView{display:none}
   #mapView.active{display:block}
   #map{
@@ -664,8 +631,6 @@
     color:var(--gold); text-decoration:none; font-weight:700;
     font-size:.62rem; letter-spacing:.12em; text-transform:uppercase;
   }
-
-  /* ─── LOADER / EMPTY ─── */
   .loader{
     grid-column:1/-1; display:flex; flex-direction:column;
     align-items:center; gap:1.25rem; padding:6rem 1rem; color:var(--ink-3);
@@ -688,16 +653,12 @@
     font-size:.75rem; font-weight:600;
     letter-spacing:.1em; text-transform:uppercase;
   }
-
-  /* ─── FOOTER ─── */
   footer{
     padding:2rem 1.25rem; text-align:center;
     color:var(--ink-3); font-size:.65rem; letter-spacing:.06em;
     border-top:1px solid var(--line); background:var(--bg-2); line-height:1.7;
   }
   footer a{color:var(--gold); text-decoration:none; font-weight:600}
-
-  /* ─── TOAST ─── */
   .toast{
     position:fixed; bottom:18px; left:50%;
     transform:translateX(-50%) translateY(150%);
@@ -711,8 +672,6 @@
   }
   .toast.show{transform:translateX(-50%) translateY(0)}
   .toast .ic{color:var(--gold); font-size:.9rem}
-
-  /* ─── MOBIEL ─── */
   @media(max-width:640px){
     body{font-size:14px}
     .header-inner{padding:.7rem .9rem; gap:.7rem}
@@ -721,7 +680,7 @@
     .stats{gap:.85rem; width:100%; margin-left:0; margin-top:.3rem}
     .stat:nth-child(4){display:none}
     .stat-value{font-size:.8rem}
-    .hero{display:none} /* ← HERO VERBERGEN OP MOBIEL */
+    .hero{display:none}
     .grid{grid-template-columns:1fr; gap:.85rem}
     main{padding:1rem .9rem 3rem}
     .filterbar{padding:.5rem .9rem; gap:.4rem}
@@ -742,7 +701,8 @@
 </head>
 <body>
 
-<!-- BREAKING BANNER -->
+<div class="progress-bar" id="progressBar"></div>
+
 <div class="breaking" id="breakingBanner">
   <div class="breaking-icon">🚨</div>
   <div class="breaking-text">
@@ -841,7 +801,7 @@
 </header>
 
 <div class="statusbar">
-  <span class="indicator"><span class="dot ok"></span><span id="statusText">Verbinding maken...</span></span>
+  <span class="indicator"><span class="dot ok" id="statusDot"></span><span id="statusText">Verbinding maken...</span></span>
   <span class="indicator" id="trStatus" style="display:none">
     <span class="dot warn"></span>Vertalen: <span id="trCount">0/0</span>
   </span>
@@ -868,7 +828,7 @@
     <div class="grid" id="feed">
       <div class="loader">
         <div class="ring"></div>
-        <div class="msg">Conflict feeds ophalen...</div>
+        <div class="msg">Eerste bronnen ophalen...</div>
       </div>
     </div>
   </div>
@@ -899,7 +859,6 @@
     </div>
     <div class="live-note">
       <strong>Let op:</strong> Live streams openen in YouTube, TikTok of op de website van de zender.
-      Directe insluiting wordt geblokkeerd door YouTube en TikTok voor de meeste nieuwszenders.
     </div>
   </div>
 
@@ -917,7 +876,6 @@
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
 </footer>
 
-<!-- Source popup -->
 <div class="src-popup" id="srcPopup">
   <div class="src-box">
     <h3 id="srcTitle">Bronnen</h3>
@@ -932,17 +890,30 @@
 </div>
 
 <script>
-const PROXY      = "https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
-const PER_FEED   = 5;
-const REFRESH_MS = 30 * 1000;
-const FRESH_MS   = 20 * 60 * 1000;
+/* ==========================================================
+   CONFIG
+   ========================================================== */
+const PROXY       = "https://nieuwsproxy.hassanbadri814.vercel.app"; // fallback for safety
+const PROXY_URL   = "https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
+const PER_FEED    = 5;
+const REFRESH_MS  = 30 * 1000;
+const FRESH_MS    = 20 * 60 * 1000;
 const BREAKING_MS = 10 * 60 * 1000;
-const PAGE_SIZE  = 30;
+const PAGE_SIZE   = 30;
+const TIMEOUT_MS  = 6000;
+const CACHE_KEY   = "wardesk_cache_v1";
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
   "https://rsshub.app",
   "https://rsshub.rssforever.com"
+];
+
+/* Prioriteit: 1 = eerst laden, 2 = daarna, 3 = als laatste */
+const HIGH_PRIORITY = [
+  "Al Jazeera", "Reuters", "AP News", "BBC World", "BBC Arabic",
+  "Al Jazeera AR", "Al Arabiya", "Sky News Arabia", "TRT World",
+  "Times of Israel", "Jerusalem Post", "Iran International"
 ];
 
 const LIVE_CHANNELS = {
@@ -957,16 +928,23 @@ const LIVE_CHANNELS = {
 
 const FEEDS = [
   { name:"Al Jazeera",          lang:"en", cat:"war", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
+  { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://www.reutersagency.com/feed/?best-regions=world&post_type=best" },
+  { name:"AP News",             lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://apnews.com/hub/ap-top-news?format=rss" },
+  { name:"BBC World",           lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
+  { name:"BBC Arabic",          lang:"ar", cat:"mideast", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/arabic/rss.xml" },
+  { name:"Al Jazeera AR",       lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
+  { name:"Al Arabiya",          lang:"ar", cat:"mideast", lat:24.71, lon:46.67, url:"https://www.alarabiya.net/feed/rss2/ar.xml" },
+  { name:"Sky News Arabia",     lang:"ar", cat:"mideast", lat:24.45, lon:54.37, url:"https://www.skynewsarabia.com/web/rss/95.xml" },
+  { name:"TRT World",           lang:"en", cat:"war", lat:39.93, lon:32.86, url:"https://www.trtworld.com/feed/rss.xml" },
+  { name:"Times of Israel",     lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
+  { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
+  { name:"Iran International",  lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
+
   { name:"Middle East Eye",     lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.middleeasteye.net/rss" },
   { name:"The New Arab",        lang:"en", cat:"war", lat:51.5,  lon:-0.12, url:"https://www.newarab.com/rss" },
   { name:"Al Monitor",          lang:"en", cat:"war", lat:38.9,  lon:-77.04, url:"https://www.al-monitor.com/rss" },
   { name:"Al Mayadeen",         lang:"en", cat:"war", lat:33.89, lon:35.50, url:"https://english.almayadeen.net/feed.rss" },
-  { name:"AP News",             lang:"en", cat:"war", lat:40.71, lon:-74.00, url:"https://apnews.com/hub/ap-top-news?format=rss" },
-  { name:"Reuters",             lang:"en", cat:"war", lat:51.50, lon:-0.12, url:"https://www.reutersagency.com/feed/?best-regions=world&post_type=best" },
-  { name:"TRT World",           lang:"en", cat:"war", lat:39.93, lon:32.86, url:"https://www.trtworld.com/feed/rss.xml" },
   { name:"RT News",             lang:"en", cat:"war", lat:55.75, lon:37.61, url:"https://www.rt.com/rss/" },
-  { name:"Times of Israel",     lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.timesofisrael.com/feed/" },
-  { name:"Jerusalem Post",      lang:"en", cat:"gaza", lat:31.78, lon:35.22, url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx" },
   { name:"Haaretz",             lang:"he", cat:"gaza", lat:32.07, lon:34.78, url:"https://www.haaretz.com/cmlink/1.628765" },
   { name:"Palestine Today",     lang:"en", cat:"gaza", lat:31.5,  lon:34.47, url:"https://www.palestinetoday.net/feed" },
   { name:"WAFA Palestine",      lang:"en", cat:"gaza", lat:31.9,  lon:35.2,  url:"http://english.wafa.ps/rss" },
@@ -976,7 +954,6 @@ const FEEDS = [
   { name:"Rudaw English",       lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.rudaw.net/rss/english" },
   { name:"Kurdistan24",         lang:"en", cat:"syria", lat:36.19, lon:44.01, url:"https://www.kurdistan24.net/en/rss" },
   { name:"SABA Yemen",          lang:"en", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.saba.ye/en/rsscatfeed14.htm" },
-  { name:"Iran International",  lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://www.iranintl.com/en/rss" },
   { name:"Mehr News Iran",      lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://en.mehrnews.com/rss" },
   { name:"Kyiv Independent",    lang:"en", cat:"ukraine", lat:50.45, lon:30.52, url:"https://kyivindependent.com/feed/" },
   { name:"Ukrinform",           lang:"en", cat:"ukraine", lat:50.45, lon:30.52, url:"https://www.ukrinform.net/rss" },
@@ -989,31 +966,28 @@ const FEEDS = [
   { name:"Lakome2",             lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
   { name:"TelQuel",             lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
   { name:"Morocco World News",  lang:"en", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.moroccoworldnews.com/feed/" },
-  { name:"Al Jazeera AR",     lang:"ar", cat:"mideast", lat:25.28, lon:51.53, url:"https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9" },
-  { name:"Al Arabiya",        lang:"ar", cat:"mideast", lat:24.71, lon:46.67, url:"https://www.alarabiya.net/feed/rss2/ar.xml" },
-  { name:"Sky News Arabia",   lang:"ar", cat:"mideast", lat:24.45, lon:54.37, url:"https://www.skynewsarabia.com/web/rss/95.xml" },
-  { name:"RT Arabic",         lang:"ar", cat:"mideast", lat:55.75, lon:37.61, url:"https://arabic.rt.com/rss/" },
-  { name:"BBC Arabic",        lang:"ar", cat:"mideast", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/arabic/rss.xml" },
-  { name:"DW Arabic",         lang:"ar", cat:"mideast", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-ar-all" },
-  { name:"France24 AR",       lang:"ar", cat:"mideast", lat:48.85, lon:2.35,  url:"https://www.france24.com/ar/rss" },
-  { name:"CNN Arabic",        lang:"ar", cat:"mideast", lat:25.20, lon:55.27, url:"https://arabic.cnn.com/api/v1/rss/rss.xml" },
-  { name:"Al Quds Al Arabi",  lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://www.alquds.co.uk/feed" },
-  { name:"Anadolu AR",        lang:"ar", cat:"mideast", lat:39.93, lon:32.86, url:"https://www.aa.com.tr/ar/rss/default?cat=guncel" },
-  { name:"Asharq Al-Awsat",   lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://aawsat.com/feed" },
-  { name:"Al Masry Al Youm",  lang:"ar", cat:"mideast", lat:30.04, lon:31.24, url:"https://www.almasryalyoum.com/rss" },
-  { name:"BBC World",     lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
-  { name:"The Guardian",  lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://www.theguardian.com/world/rss" },
-  { name:"NYT World",     lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
-  { name:"France24 EN",   lang:"en", cat:"world", lat:48.85, lon:2.35,  url:"https://www.france24.com/en/rss" },
-  { name:"DW English",    lang:"en", cat:"world", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-en-all" },
-  { name:"CNN World",     lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"http://rss.cnn.com/rss/edition_world.rss" },
-  { name:"NOS",            lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
-  { name:"Nu.nl Algemeen", lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
-  { name:"📡 Al Jazeera AR", lang:"ar", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/aljazeera" },
-  { name:"📡 Al Arabiya",    lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" }
+  { name:"RT Arabic",           lang:"ar", cat:"mideast", lat:55.75, lon:37.61, url:"https://arabic.rt.com/rss/" },
+  { name:"DW Arabic",           lang:"ar", cat:"mideast", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-ar-all" },
+  { name:"France24 AR",         lang:"ar", cat:"mideast", lat:48.85, lon:2.35,  url:"https://www.france24.com/ar/rss" },
+  { name:"CNN Arabic",          lang:"ar", cat:"mideast", lat:25.20, lon:55.27, url:"https://arabic.cnn.com/api/v1/rss/rss.xml" },
+  { name:"Al Quds Al Arabi",    lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://www.alquds.co.uk/feed" },
+  { name:"Anadolu AR",          lang:"ar", cat:"mideast", lat:39.93, lon:32.86, url:"https://www.aa.com.tr/ar/rss/default?cat=guncel" },
+  { name:"Asharq Al-Awsat",     lang:"ar", cat:"mideast", lat:51.5, lon:-0.12, url:"https://aawsat.com/feed" },
+  { name:"Al Masry Al Youm",    lang:"ar", cat:"mideast", lat:30.04, lon:31.24, url:"https://www.almasryalyoum.com/rss" },
+  { name:"The Guardian",        lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://www.theguardian.com/world/rss" },
+  { name:"NYT World",           lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml" },
+  { name:"France24 EN",         lang:"en", cat:"world", lat:48.85, lon:2.35,  url:"https://www.france24.com/en/rss" },
+  { name:"DW English",          lang:"en", cat:"world", lat:52.52, lon:13.40, url:"https://rss.dw.com/rdf/rss-en-all" },
+  { name:"CNN World",           lang:"en", cat:"world", lat:40.71, lon:-74.00, url:"http://rss.cnn.com/rss/edition_world.rss" },
+  { name:"NOS",                 lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://feeds.nos.nl/nosnieuwsalgemeen" },
+  { name:"Nu.nl Algemeen",      lang:"nl", cat:"nl", lat:52.37, lon:4.90, url:"https://www.nu.nl/rss/Algemeen" },
+  { name:"📡 Al Jazeera AR",    lang:"ar", cat:"tg", lat:25.28, lon:51.53, url:"rsshub://telegram/channel/aljazeera" },
+  { name:"📡 Al Arabiya",       lang:"ar", cat:"tg", lat:24.71, lon:46.67, url:"rsshub://telegram/channel/AlArabiya" }
 ];
 
-/* ─── STATE ─── */
+/* ==========================================================
+   STATE
+   ========================================================== */
 let allItems = [];
 let seenLinks = new Set();
 let activeCat = "all";
@@ -1040,7 +1014,6 @@ try { readArticles = new Set(JSON.parse(localStorage.getItem(READ_KEY)) || []); 
 const NOTIF_KEY = "wardesk_notif";
 let notifEnabled = localStorage.getItem(NOTIF_KEY) === "1";
 
-/* Source health tracking */
 const HEALTH_KEY = "wardesk_health_v1";
 let sourceHealth = {};
 try { sourceHealth = JSON.parse(localStorage.getItem(HEALTH_KEY)) || {}; } catch(e){}
@@ -1052,6 +1025,7 @@ for(const [src, data] of Object.entries(sourceHealth)){
 /* DOM */
 const feedEl       = document.getElementById("feed");
 const statusEl     = document.getElementById("statusText");
+const statusDot    = document.getElementById("statusDot");
 const trStatusEl   = document.getElementById("trStatus");
 const trCountEl    = document.getElementById("trCount");
 const statSources  = document.getElementById("statSources");
@@ -1097,6 +1071,7 @@ const breakingTitle  = document.getElementById("breakingTitle");
 const breakingMeta   = document.getElementById("breakingMeta");
 const breakingCount  = document.getElementById("breakingCount");
 const breakingClose  = document.getElementById("breakingClose");
+const progressBar  = document.getElementById("progressBar");
 
 let toastTimer = null;
 function showToast(msg, icon = "ℹ"){
@@ -1115,7 +1090,9 @@ function showToast(msg, icon = "ℹ"){
   if(hour >= 7 && hour < 20){ document.body.classList.add("light"); }
 })();
 
-/* ─── TRANSLATION (Google → MyMemory fallback) ─── */
+/* ==========================================================
+   TRANSLATION
+   ========================================================== */
 const TR_KEY = "wardesk_tr_v10";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
@@ -1165,7 +1142,6 @@ async function gTranslate(text, target){
   const key = target + ":" + hash(t);
   if(trCache[key]) return trCache[key];
 
-  /* Probeer Google eerst */
   try{
     const out = await googleTranslate(t, target);
     trCache[key] = out;
@@ -1173,7 +1149,6 @@ async function gTranslate(text, target){
     return out;
   }catch(e){}
 
-  /* Fallback: MyMemory */
   try{
     const out = await myMemoryTranslate(t, target);
     trCache[key] = out;
@@ -1213,6 +1188,9 @@ function updateTrStatus(){
 }
 function resetTrCounters(){ trTotal = 0; trDone = 0; trStatusEl.style.display = "none"; }
 
+/* ==========================================================
+   HELPERS
+   ========================================================== */
 function stripHtml(s){ return (s||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim(); }
 function escapeHtml(s){
   return (s||"").replace(/[&<>"']/g, c => ({
@@ -1255,7 +1233,17 @@ function detectTopic(title, desc, fallbackCat){
   return fallbackCat;
 }
 
-async function fetchFeedData(url){
+/* ==========================================================
+   FETCH WITH TIMEOUT + PROGRESSIVE LOADING
+   ========================================================== */
+function fetchWithTimeout(promise, ms){
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))
+  ]);
+}
+
+async function fetchFeedData(url, timeoutMs = TIMEOUT_MS){
   let attempts = [];
   if(url.startsWith("rsshub://")){
     const path = url.slice(9);
@@ -1265,7 +1253,10 @@ async function fetchFeedData(url){
   }
   for(const u of attempts){
     try{
-      const r = await fetch(PROXY + encodeURIComponent(u));
+      const r = await fetchWithTimeout(
+        fetch(PROXY_URL + encodeURIComponent(u)),
+        timeoutMs
+      );
       const data = await r.json();
       if(data && Array.isArray(data.items) && data.items.length){
         return data;
@@ -1275,7 +1266,30 @@ async function fetchFeedData(url){
   throw new Error("failed");
 }
 
-/* ─── DEDUPE ─── */
+function processFeedResult(f, data){
+  return data.items.slice(0, PER_FEED).map(it => {
+    const rawDesc = it.description || it.content || "";
+    const img = it.thumbnail ||
+      it.enclosure?.link ||
+      (rawDesc.match(/<img[^>]+src="([^"]+)"/i)?.[1]) ||
+      (it.content||"").match(/<img[^>]+src="([^"]+)"/i)?.[1] ||
+      "";
+    const titleClean = stripHtml(it.title || "");
+    const descClean  = stripHtml(rawDesc).slice(0, 400);
+    return {
+      title: titleClean,
+      link:  it.link  || "#",
+      desc:  descClean,
+      img, date: it.pubDate || "",
+      source: f.name,
+      cat: detectTopic(titleClean, descClean, f.cat),
+      lang: f.lang,
+      lat: f.lat, lon: f.lon
+    };
+  });
+}
+
+/* Dedupe over alle items */
 function titleKey(title){
   return (title||"").toLowerCase()
     .replace(/[^a-z0-9 ]/g, "")
@@ -1297,7 +1311,9 @@ function dedupe(items){
   return Array.from(map.values());
 }
 
-/* ─── SOURCE HEALTH ─── */
+/* ==========================================================
+   SOURCE HEALTH
+   ========================================================== */
 function recordHealth(name, ok){
   if(!sourceHealth[name]) sourceHealth[name] = { fails: 0, last: 0 };
   if(ok){
@@ -1312,7 +1328,9 @@ function saveHealth(){
 }
 function isDisabled(name){ return disabledSources.has(name); }
 
-/* ─── BREAKING DETECTION ─── */
+/* ==========================================================
+   BREAKING DETECTION
+   ========================================================== */
 function detectBreaking(items){
   const groups = new Map();
   const now = Date.now();
@@ -1347,93 +1365,176 @@ function showBreaking(info){
 }
 breakingClose.addEventListener("click", () => breakingBanner.classList.remove("show"));
 
-/* ─── LOAD FEEDS ─── */
+/* ==========================================================
+   CACHE — vorige resultaten bewaren
+   ========================================================== */
+function saveCache(){
+  try{
+    const slim = allItems.slice(0, 200).map(it => ({
+      title: it.title, link: it.link, desc: it.desc, img: it.img,
+      date: it.date, source: it.source, cat: it.cat, lang: it.lang,
+      lat: it.lat, lon: it.lon, sources: it.sources
+    }));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      time: Date.now(),
+      items: slim
+    }));
+  }catch(e){}
+}
+function loadCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return [];
+    const data = JSON.parse(raw);
+    if(!data.items || !Array.isArray(data.items)) return [];
+    /* Max 2 uur oud */
+    if(Date.now() - data.time > 2 * 60 * 60 * 1000) return [];
+    return data.items;
+  }catch(e){ return []; }
+}
+
+/* ==========================================================
+   PROGRESSIVE LOADING
+   ========================================================== */
+let loadSession = 0;
+
 async function loadFeeds(isAuto = false){
-  if(!isAuto){
-    statusEl.textContent = "Feeds ophalen...";
-    refreshBtn.classList.add("spin");
-    if(isFirstLoad){
-      feedEl.innerHTML = `
-        <div class="loader">
-          <div class="ring"></div>
-          <div class="msg">${FEEDS.length} bronnen ophalen...</div>
-        </div>`;
+  const session = ++loadSession;
+  const activeFeeds = FEEDS.filter(f => !isDisabled(f.name));
+
+  /* Toon eerst cache (indien aanwezig) */
+  if(isFirstLoad){
+    const cached = loadCache();
+    if(cached.length){
+      allItems = cached;
+      render();
+      renderHero();
+      renderTicker();
+      const t = new Date(loadCache()[0]?.date || Date.now());
+      statusEl.textContent = `${cached.length} gecachte berichten · updates binnenkort...`;
+      statusDot.className = "dot loading";
     }
+  }
+
+  if(!isAuto){
+    refreshBtn.classList.add("spin");
     resetTrCounters();
   }
 
-  /* Filter uitgeschakelde bronnen */
-  const activeFeeds = FEEDS.filter(f => !isDisabled(f.name));
-
-  const results = await Promise.allSettled(
-    activeFeeds.map(f =>
-      fetchFeedData(f.url).then(data => {
-        recordHealth(f.name, true);
-        return data.items.slice(0, PER_FEED).map(it => {
-          const rawDesc = it.description || it.content || "";
-          const img = it.thumbnail ||
-            it.enclosure?.link ||
-            (rawDesc.match(/<img[^>]+src="([^"]+)"/i)?.[1]) ||
-            (it.content||"").match(/<img[^>]+src="([^"]+)"/i)?.[1] ||
-            "";
-          const titleClean = stripHtml(it.title || "");
-          const descClean  = stripHtml(rawDesc).slice(0, 400);
-          return {
-            title: titleClean,
-            link:  it.link  || "#",
-            desc:  descClean,
-            img, date: it.pubDate || "",
-            source: f.name,
-            cat: detectTopic(titleClean, descClean, f.cat),
-            lang: f.lang,
-            lat: f.lat, lon: f.lon
-          };
-        });
-      })
-      .then(d => ({ ok:true, name:f.name, data:d }))
-      .catch(e => {
-        recordHealth(f.name, false);
-        return ({ ok:false, name:f.name });
-      })
-    )
-  );
-  saveHealth();
-
-  const newItems = [];
-  let okCount = 0;
-  const freshLinks = new Set();
-  failedFeeds = [];
-
-  results.forEach(r => {
-    if(r.status === "fulfilled"){
-      const res = r.value;
-      if(res.ok){
-        okCount++;
-        res.data.forEach(it => {
-          const key = (it.link || it.title).toLowerCase().trim();
-          if(!freshLinks.has(key)){
-            freshLinks.add(key);
-            newItems.push(it);
-          }
-        });
-      } else {
-        failedFeeds.push(res.name);
-      }
-    }
+  /* Sorteer: hoge prioriteit eerst */
+  const sorted = [...activeFeeds].sort((a, b) => {
+    const aP = HIGH_PRIORITY.includes(a.name) ? 0 : 1;
+    const bP = HIGH_PRIORITY.includes(b.name) ? 0 : 1;
+    return aP - bP;
   });
 
-  const deduped = dedupe(newItems);
-  deduped.sort((a,b) => new Date(b.date) - new Date(a.date));
+  /* Batching: eerste batch van 12 bronnen, daarna rest */
+  const firstBatch = sorted.slice(0, 12);
+  const secondBatch = sorted.slice(12);
 
-  /* Notificatie */
-  if(!isFirstLoad && notifEnabled && "Notification" in window && Notification.permission === "granted"){
-    const trulyNew = deduped.filter(it => {
-      const key = (it.link || it.title).toLowerCase().trim();
-      return !seenLinks.has(key);
-    });
+  const collected = [];
+  const collectedLinks = new Set();
+  const failed = [];
+  let totalOk = 0;
+  let totalTry = 0;
+  let firstRenderDone = false;
+
+  /* Progress bar setup */
+  const totalCount = sorted.length;
+  progressBar.classList.remove("hidden");
+  progressBar.style.width = "5%";
+
+  const processOne = async (f) => {
+    if(session !== loadSession) return;
+    totalTry++;
+    try{
+      const data = await fetchFeedData(f.url);
+      recordHealth(f.name, true);
+      const items = processFeedResult(f, data);
+      items.forEach(it => {
+        const key = (it.link || it.title).toLowerCase().trim();
+        if(!collectedLinks.has(key)){
+          collectedLinks.add(key);
+          collected.push(it);
+        }
+      });
+      totalOk++;
+    }catch(e){
+      recordHealth(f.name, false);
+      failed.push(f.name);
+    }
+  };
+
+  /* ── FASE 1: eerste batch ── */
+  await Promise.allSettled(firstBatch.map(processOne));
+  if(session !== loadSession) return;
+
+  const deduped1 = dedupe(collected);
+  deduped1.sort((a, b) => new Date(b.date) - new Date(a.date));
+  allItems = deduped1;
+  updateStatusPartial(totalOk, totalTry, totalCount);
+  statSources.textContent = `${totalOk}/${FEEDS.length}`;
+  statWar.textContent = allItems.filter(x => x.cat === "war").length;
+
+  /* Verberg loader — toon eerste resultaten */
+  currentPage = 1;
+  render();
+  renderHero();
+  renderTicker();
+  renderMap();
+  isFirstLoad = false;
+  firstRenderDone = true;
+
+  progressBar.style.width = "30%";
+
+  /* ── FASE 2: rest van de bronnen ── */
+  const CONCURRENCY = 5;
+  let idx = 0;
+  async function worker(){
+    while(idx < secondBatch.length && session === loadSession){
+      const f = secondBatch[idx++];
+      await processOne(f);
+      /* Progressief updaten elke 5 bronnen */
+      if(idx % 5 === 0){
+        const deduped = dedupe(collected);
+        deduped.sort((a, b) => new Date(b.date) - new Date(a.date));
+        allItems = deduped;
+        updateStatusPartial(totalOk, totalTry, totalCount);
+        statSources.textContent = `${totalOk}/${FEEDS.length}`;
+        render();
+        renderHero();
+        renderTicker();
+        const pct = 30 + Math.round((idx / secondBatch.length) * 65);
+        progressBar.style.width = pct + "%";
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+
+  if(session !== loadSession) return;
+
+  /* ── FINAL ── */
+  const finalDeduped = dedupe(collected);
+  finalDeduped.sort((a, b) => new Date(b.date) - new Date(a.date));
+  allItems = finalDeduped;
+
+  failedFeeds = failed;
+  saveHealth();
+  saveCache();
+
+  statSources.textContent = `${totalOk}/${FEEDS.length}`;
+  statWar.textContent = allItems.filter(x => x.cat === "war").length;
+
+  /* Breaking detection */
+  const breaking = detectBreaking(allItems);
+  if(breaking && firstRenderDone){ showBreaking(breaking); }
+
+  /* Notificaties */
+  if(!isAuto && notifEnabled && "Notification" in window && Notification.permission === "granted"){
+    const trulyNew = allItems.slice(0, 5);
     if(trulyNew.length > 0){
       try {
-        new Notification("WAR DESK · " + trulyNew.length + " nieuw", {
+        new Notification("WAR DESK · Update", {
           body: trulyNew[0].title.slice(0, 120),
           tag: "wardesk"
         });
@@ -1441,17 +1542,7 @@ async function loadFeeds(isAuto = false){
     }
   }
 
-  allItems = deduped;
-  seenLinks = freshLinks;
-
-  /* Breaking detectie */
-  const breaking = detectBreaking(allItems);
-  if(breaking && !isFirstLoad){ showBreaking(breaking); }
-
-  statSources.textContent = `${okCount}/${FEEDS.length}`;
-  statWar.textContent = allItems.filter(x => x.cat === "war").length;
-
-  /* Failed feeds UI */
+  /* Failed UI */
   const disabledNow = [...disabledSources];
   if(failedFeeds.length || disabledNow.length){
     failedCount.textContent = failedFeeds.length + disabledNow.length;
@@ -1480,16 +1571,8 @@ async function loadFeeds(isAuto = false){
   }
 
   refreshBtn.classList.remove("spin");
-
-  if(!allItems.length){
-    if(isFirstLoad){
-      feedEl.innerHTML = `<div class="empty"><div class="big">⚠</div><div class="msg">Geen feeds geladen</div></div>`;
-    }
-    statusEl.textContent = "0 berichten";
-    return;
-  }
-
-  statusEl.textContent = `${allItems.length} berichten · bijgewerkt ${new Date().toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`;
+  progressBar.style.width = "100%";
+  setTimeout(() => progressBar.classList.add("hidden"), 500);
 
   populateSources();
   currentPage = 1;
@@ -1497,8 +1580,12 @@ async function loadFeeds(isAuto = false){
   renderHero();
   renderTicker();
   renderMap();
-  isFirstLoad = false;
   nextRefreshSeconds = REFRESH_MS / 1000;
+}
+
+function updateStatusPartial(ok, tried, total){
+  statusEl.textContent = `${allItems.length} berichten · ${ok}/${total} bronnen · bijgewerkt ${new Date().toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"})}`;
+  statusDot.className = tried < total ? "dot loading" : "dot ok";
 }
 
 function populateSources(){
@@ -1522,7 +1609,6 @@ function renderTicker(){
 }
 
 function renderHero(){
-  /* Verberg hero op mobiel */
   if(window.innerWidth <= 640){ heroSection.style.display = "none"; return; }
   
   const base = getFilteredBase();
@@ -1725,9 +1811,7 @@ function cardHtml(it, i){
     </article>`;
 }
 
-/* Klik handlers op feed */
 feedEl.addEventListener("click", e => {
-  /* Favorieten */
   const favBtn = e.target.closest(".fav-btn");
   if(favBtn){
     e.stopPropagation();
@@ -1750,7 +1834,6 @@ feedEl.addEventListener("click", e => {
     return;
   }
 
-  /* Multi-source badge */
   const multiBadge = e.target.closest(".badge.multi");
   if(multiBadge){
     e.stopPropagation();
@@ -1761,7 +1844,6 @@ feedEl.addEventListener("click", e => {
     return;
   }
 
-  /* Mark as read */
   const card = e.target.closest("article");
   if(card){
     const link = card.dataset.link;
@@ -2008,7 +2090,6 @@ function updateFavCount(){
 }
 updateFavCount();
 
-/* ─── EXPORT / IMPORT ─── */
 exportBtn.addEventListener("click", () => {
   const data = {
     version: 1,
@@ -2109,7 +2190,6 @@ document.getElementById("theme").addEventListener("click", () => {
     document.body.classList.contains("light") ? "light" : "dark");
 });
 
-/* Herbereken hero bij resize */
 let resizeTimer = null;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
@@ -2140,7 +2220,6 @@ document.querySelectorAll(".live-chip").forEach(c => {
 switchView(savedView);
 loadFeeds(false);
 
-/* ─── PWA Service Worker ─── */
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("service-worker.js")

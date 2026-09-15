@@ -39,78 +39,13 @@
     -webkit-font-smoothing:antialiased; overflow-x:hidden; line-height:1.5;
     font-size:15px;
   }
-
-  /* ═══ LIVE TICKER ═══ */
-  .live-ticker{
-    background:var(--crimson);
-    color:#fff;
-    height:42px;
-    display:flex;
-    align-items:center;
-    overflow:hidden;
-    border-bottom:2px solid #000;
-    position:relative;
-    z-index:110;
-    box-shadow:0 2px 12px rgba(176,14,42,.5);
+  .progress-bar{
+    position:fixed; top:0; left:0; height:2px;
+    background:linear-gradient(90deg,var(--gold),var(--crimson));
+    z-index:10000; width:0%;
+    transition:width .3s ease, opacity .3s ease;
   }
-  .live-ticker .live-label{
-    background:#000;
-    color:var(--gold);
-    padding:0 1.1rem;
-    height:100%;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
-    font-weight:900;
-    font-size:.68rem;
-    letter-spacing:.22em;
-    flex-shrink:0;
-    z-index:2;
-  }
-  .live-ticker .live-label::before{
-    content:"";
-    width:8px; height:8px;
-    border-radius:50%;
-    background:var(--crimson-2);
-    box-shadow:0 0 8px var(--crimson-2);
-    animation:livePulse 1s infinite;
-  }
-  @keyframes livePulse{
-    0%,100%{opacity:1;transform:scale(1)}
-    50%{opacity:.4;transform:scale(1.3)}
-  }
-  .live-ticker .live-track{
-    display:flex;
-    gap:3rem;
-    white-space:nowrap;
-    padding-left:1.5rem;
-    animation:liveScroll 200s linear infinite;
-    font-size:.85rem;
-    font-weight:600;
-    letter-spacing:.01em;
-  }
-  .live-ticker .live-track:hover{animation-play-state:paused}
-  .live-ticker .live-track a{
-    color:#fff;
-    text-decoration:none;
-    display:inline-flex;
-    align-items:center;
-    gap:.6rem;
-    padding:.3rem 0;
-    transition:color .2s;
-  }
-  .live-ticker .live-track a:hover{color:var(--gold-2);text-decoration:underline}
-  .live-ticker .live-track a::before{
-    content:"●";
-    color:var(--gold);
-    font-size:.5rem;
-  }
-  .live-ticker .live-track a.fresh::before{
-    color:#fff;
-    animation:livePulse 1.2s infinite;
-  }
-  @keyframes liveScroll{to{transform:translateX(-50%)}}
-
+  .progress-bar.hidden{opacity:0}
   .breaking{
     position:fixed; top:0; left:0; right:0; z-index:9999;
     background:linear-gradient(90deg,var(--crimson) 0%,#7a0918 100%);
@@ -166,6 +101,18 @@
   .brand-text .tag{
     font-size:.55rem; color:var(--ink-3);
     letter-spacing:.22em; font-weight:600; margin-top:2px;
+  }
+  .live-pill{
+    display:inline-flex; align-items:center; gap:.35rem;
+    background:transparent; color:var(--crimson-2);
+    padding:.25rem .6rem;
+    font-size:.6rem; font-weight:800;
+    letter-spacing:.14em; text-transform:uppercase;
+    border:1px solid var(--crimson-2); border-radius:var(--radius-sm);
+  }
+  .live-pill::before{
+    content:""; width:5px; height:5px; background:var(--crimson-2);
+    border-radius:50%; animation:blink 1.5s infinite;
   }
   .stats{margin-left:auto; display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap}
   .stat{display:flex; flex-direction:column; gap:.1rem}
@@ -264,7 +211,6 @@
     width:5px; height:5px; border-radius:50%;
     background:var(--crimson-2); animation:blink 1.5s infinite;
   }
-  @keyframes blink{50%{opacity:.3}}
   .statusbar{
     background:var(--bg-2); border-bottom:1px solid var(--line);
     padding:.5rem 1.25rem; font-size:.68rem; color:var(--ink-3);
@@ -434,7 +380,7 @@
   .badge.tg{background:#229ED9; color:#fff; border-color:transparent}
   .badge.multi{background:var(--crimson); color:#fff; border-color:transparent; cursor:pointer}
   .live-tag{
-    position:absolute; top:.55rem; right:.55rem;
+    position:absolute; top:.55rem; right:2.8rem;
     background:var(--crimson); color:#fff;
     padding:.15rem .5rem; font-size:.52rem; font-weight:800;
     letter-spacing:.12em; display:inline-flex; align-items:center;
@@ -444,6 +390,17 @@
     content:""; width:4px; height:4px; background:#fff;
     border-radius:50%; animation:blink 1.2s infinite;
   }
+  .fav-btn{
+    position:absolute; top:.45rem; right:.45rem;
+    width:28px; height:28px; border-radius:50%;
+    background:rgba(10,14,26,.7);
+    border:1px solid rgba(255,255,255,.1);
+    color:rgba(255,255,255,.6); font-size:.85rem;
+    cursor:pointer; display:grid; place-items:center;
+    z-index:3; transition:all .18s;
+  }
+  .fav-btn:hover{background:rgba(10,14,26,.95); color:var(--gold)}
+  .fav-btn.on{background:var(--gold); color:#0a0e1a; border-color:var(--gold)}
   .card-body{
     padding:.9rem 1rem 1.05rem;
     display:flex; flex-direction:column; gap:.5rem; flex:1;
@@ -766,9 +723,7 @@
     .nav-inner{padding:0 .9rem; height:42px}
     .nav-tab{padding:0 .7rem; font-size:.62rem}
     #map{height:60vh}
-    .live-ticker{height:36px}
-    .live-ticker .live-track{font-size:.78rem; gap:2rem}
-    .live-ticker .live-label{padding:0 .8rem; font-size:.6rem}
+    .ticker{height:28px; font-size:.65rem}
     .section-head h2{font-size:.9rem}
     .live-panel h3{font-size:1.1rem}
     .live-panel .icon{font-size:2.5rem}
@@ -789,13 +744,7 @@
 </head>
 <body>
 
-<!-- LIVE TICKER -->
-<div class="live-ticker">
-  <div class="live-label">LIVE</div>
-  <div class="live-track" id="liveTrack">
-    <a>Nieuwsfeed wordt geladen...</a>
-  </div>
-</div>
+<div class="progress-bar" id="progressBar"></div>
 
 <div class="breaking" id="breakingBanner">
   <div class="breaking-icon">🚨</div>
@@ -807,6 +756,13 @@
   <button class="breaking-close" id="breakingClose" aria-label="Sluiten">✕</button>
 </div>
 
+<div class="ticker">
+  <div class="ticker-label">BREAKING</div>
+  <div class="ticker-track" id="tickerTrack">
+    <span>Live conflict monitor — feeds worden geladen...</span>
+  </div>
+</div>
+
 <header>
   <div class="header-inner">
     <div class="brand">
@@ -816,6 +772,7 @@
         <span class="tag">LIVE CONFLICT MONITOR</span>
       </div>
     </div>
+    <span class="live-pill">Live</span>
     <div class="stats">
       <div class="stat">
         <span class="stat-label">Klok</span>
@@ -988,7 +945,7 @@ const FRESH_MS    = 20 * 60 * 1000;
 const BREAKING_MS = 10 * 60 * 1000;
 const PAGE_SIZE   = 30;
 const TIMEOUT_MS  = 6000;
-const CACHE_KEY   = "wardesk_cache_v8";
+const CACHE_KEY   = "wardesk_cache_v9";
 
 const RSSHUB_MIRRORS = [
   "https://rss-hub-red-nine.vercel.app",
@@ -1011,6 +968,9 @@ const LIVE_CHANNELS = {
   "trt":          { label:"TRT World", desc:"TRT World — Turkse staatstelevisie", icon:"🇹🇷", youtube:"https://www.youtube.com/@trtworld/live", tiktok:"https://www.tiktok.com/@trtworld", web:"https://www.trtworld.com/live" }
 };
 
+/* ═══════════════════════════════════════════════════════════
+   FEEDS — Marokko uitgebreid met Bladna.nl en Marokko.nl
+   ═══════════════════════════════════════════════════════════ */
 const FEEDS = [
   { name:"Al Jazeera",          lang:"en", cat:"algemeen", lat:25.28, lon:51.53, url:"https://www.aljazeera.com/xml/rss/all.xml" },
   { name:"BBC World",           lang:"en", cat:"world", lat:51.50, lon:-0.12, url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
@@ -1027,9 +987,14 @@ const FEEDS = [
   { name:"SABA Yemen",          lang:"en", cat:"yemen", lat:15.37, lon:44.19, url:"https://www.saba.ye/en/rsscatfeed14.htm" },
   { name:"Mehr News Iran",      lang:"en", cat:"iran", lat:35.69, lon:51.39, url:"https://en.mehrnews.com/rss" },
   { name:"Radio Dabanga",       lang:"en", cat:"sudan", lat:15.5, lon:32.5, url:"https://www.dabangasudan.org/en/rss" },
+
+  /* ── MAROKKO ── */
   { name:"Yabiladi",            lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://www.yabiladi.com/rss/articles.xml" },
   { name:"Lakome2",             lang:"ar", cat:"maroc", lat:33.57, lon:-7.58, url:"https://lakome2.com/feed" },
   { name:"TelQuel",             lang:"fr", cat:"maroc", lat:33.57, lon:-7.58, url:"https://telquel.ma/feed" },
+  { name:"Bladna.nl",           lang:"nl", cat:"maroc", lat:52.37, lon:4.90, url:"https://freenewsapi.ai/v1/rss?host=bladna.nl&size=50" },
+  { name:"Marokko.nl",          lang:"nl", cat:"maroc", lat:52.37, lon:4.90, url:"https://news.google.com/rss/search?q=site:marokko.nl&hl=nl&gl=NL&ceid=NL:nl" },
+
   { name:"RT Arabic",           lang:"ar", cat:"mideast", lat:55.75, lon:37.61, url:"https://arabic.rt.com/rss/" },
   { name:"France24 AR",         lang:"ar", cat:"mideast", lat:48.85, lon:2.35,  url:"https://www.france24.com/ar/rss" },
   { name:"CNN Arabic",          lang:"ar", cat:"mideast", lat:25.20, lon:55.27, url:"https://arabic.cnn.com/api/v1/rss/rss.xml" },
@@ -1075,7 +1040,6 @@ for(const [src, data] of Object.entries(sourceHealth)){
 
 /* DOM */
 const feedEl       = document.getElementById("feed");
-const liveTrack    = document.getElementById("liveTrack");
 const statusEl     = document.getElementById("statusText");
 const statusDot    = document.getElementById("statusDot");
 const trStatusEl   = document.getElementById("trStatus");
@@ -1096,6 +1060,7 @@ const heroItem1    = document.getElementById("heroItem1");
 const heroItem2    = document.getElementById("heroItem2");
 const sectionTitle = document.getElementById("sectionTitle");
 const sectionCount = document.getElementById("sectionCount");
+const tickerTrack  = document.getElementById("tickerTrack");
 const refreshBtn   = document.getElementById("refresh");
 const searchInput  = document.getElementById("searchInput");
 const searchClear  = document.getElementById("searchClear");
@@ -1137,7 +1102,7 @@ function showToast(msg, icon = "ℹ"){
 })();
 
 /* TRANSLATION */
-const TR_KEY = "wardesk_tr_v18";
+const TR_KEY = "wardesk_tr_v19";
 let trCache = {};
 try { trCache = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch { trCache = {}; }
 
@@ -1460,21 +1425,6 @@ function loadCache(){
   }catch(e){ return []; }
 }
 
-/* LIVE TICKER RENDERING */
-function renderLiveTicker(){
-  const top = allItems.slice(0, 20);
-  if(!top.length){
-    liveTrack.innerHTML = '<a>Geen nieuws beschikbaar</a>';
-    return;
-  }
-  const items = top.map(it => {
-    const tr = getCachedTr(it.title) || it.title;
-    const fresh = isFresh(it.date);
-    return `<a href="${escapeHtml(it.link)}" target="_blank" rel="noopener" class="${fresh?'fresh':''}">${escapeHtml(tr.slice(0, 140))}</a>`;
-  }).join("");
-  liveTrack.innerHTML = items + items;
-}
-
 let loadSession = 0;
 
 async function loadFeeds(isAuto = false){
@@ -1487,7 +1437,7 @@ async function loadFeeds(isAuto = false){
       allItems = cached;
       render();
       renderHero();
-      renderLiveTicker();
+      renderTicker();
       statusEl.textContent = `${cached.length} gecachte berichten · updates binnenkort...`;
       statusDot.className = "dot loading";
     }
@@ -1544,7 +1494,7 @@ async function loadFeeds(isAuto = false){
   currentPage = 1;
   render();
   renderHero();
-  renderLiveTicker();
+  renderTicker();
   renderMap();
   isFirstLoad = false;
   firstRenderDone = true;
@@ -1565,7 +1515,7 @@ async function loadFeeds(isAuto = false){
         statWar.textContent = allItems.filter(x => x.cat === "war").length;
         render();
         renderHero();
-        renderLiveTicker();
+        renderTicker();
         const pct = 30 + Math.round((idx / secondBatch.length) * 65);
         progressBar.style.width = pct + "%";
       }
@@ -1627,7 +1577,7 @@ async function loadFeeds(isAuto = false){
   currentPage = 1;
   render();
   renderHero();
-  renderLiveTicker();
+  renderTicker();
   renderMap();
   nextRefreshSeconds = REFRESH_MS / 1000;
 }
@@ -1643,6 +1593,16 @@ function populateSources(){
   sourceSelect.innerHTML = '<option value="all">Alle bronnen</option>' +
     sources.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
   if(sources.includes(current) || current === "all") sourceSelect.value = current;
+}
+
+function renderTicker(){
+  const top = allItems.slice(0, 15);
+  if(!top.length) return;
+  const html = top.map(it => {
+    const tr = getCachedTr(it.title) || it.title;
+    return `<span>${escapeHtml(tr.slice(0, 120))}</span>`;
+  }).join("");
+  tickerTrack.innerHTML = html + html;
 }
 
 function renderHero(){

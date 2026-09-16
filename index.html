@@ -2531,6 +2531,33 @@ window.xtFetch = async function(url){
   throw new Error("Alle routes faalden: " + errors.slice(0,2).join(", "));
 };
 console.log("[WAR DESK] Xtream patch actief — Worker eerst");
+<script>
+/* Patch: wachtwoord verbergen + toggle */
+(function(){
+  function ready(fn){
+    if(document.readyState !== "loading") setTimeout(fn, 500);
+    else document.addEventListener("DOMContentLoaded", ()=>setTimeout(fn, 500));
+  }
+  ready(function(){
+    const pass = document.getElementById("xtPass");
+    if(!pass) return;
+    pass.setAttribute("type", "password");
+    pass.setAttribute("autocomplete", "current-password");
+
+    // Voeg een 👁 toggle knop toe naast het veld
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "iptv-btn";
+    btn.style.padding = ".7rem .9rem";
+    btn.textContent = "👁";
+    btn.setAttribute("aria-label", "Toon/verberg wachtwoord");
+    btn.onclick = () => {
+      if(pass.type === "password"){ pass.type = "text"; btn.textContent = "🙈"; }
+      else { pass.type = "password"; btn.textContent = "👁"; }
+    };
+    pass.parentElement.appendChild(btn);
+  });
+})();
 </script>
 <!-- ====== EINDE PATCH ====== -->
 

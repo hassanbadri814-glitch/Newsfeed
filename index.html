@@ -2495,5 +2495,44 @@ if("serviceWorker" in navigator){
   });
 }
 </script>
+</script>
+
+<!-- ====== v17.11 PATCH: Xtream via eigen Worker ====== -->
+<script>
+window.xtFetch = async function(url){
+  const errors = [];
+  try{
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 30000);
+    const r = await fetch(PROXY_URL + encodeURIComponent(url), {signal: ctrl.signal});
+    clearTimeout(timer);
+    if(r.ok){
+      const text = await r.text();
+      try{ return JSON.parse(text); }catch(e){ errors.push("worker: geen JSON"); }
+    } else errors.push("worker: HTTP "+r.status);
+  }catch(e){ errors.push("worker: "+(e.name==="AbortError"?"timeout":(e.message||"fout"))); }
+  const enc = encodeURIComponent(url);
+  const fallbacks = [
+    "https://api.codetabs.com/v1/proxy?quest="+enc,
+    "https://api.allorigins.win/raw?url="+enc,
+    "https://corsproxy.io/?"+enc
+  ];
+  for(const ep of fallbacks){
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=>ctrl.abort(), 20000);
+      const r = await fetch(ep, {signal: ctrl.signal});
+      clearTimeout(timer);
+      if(!r.ok){ errors.push("HTTP "+r.status); continue; }
+      const text = await r.text();
+      try{ return JSON.parse(text); }catch(e){ errors.push("geen JSON"); continue; }
+    }catch(e){ errors.push(e.name==="AbortError"?"timeout":(e.message||"fout")); }
+  }
+  throw new Error("Alle routes faalden: " + errors.slice(0,2).join(", "));
+};
+console.log("[WAR DESK] Xtream patch actief — Worker eerst");
+</script>
+<!-- ====== EINDE PATCH ====== -->
+
 </body>
 </html>

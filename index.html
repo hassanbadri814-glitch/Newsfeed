@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
 <title>WAR DESK</title>
 
-<!-- Thema laden vóór CSS om flikkering te voorkomen -->
 <script>
 try{
   var t = localStorage.getItem("wardesk_theme");
@@ -26,7 +25,18 @@ try{
 </head>
 <body>
 
-<!-- Voortgangsbalk bovenaan -->
+<!-- ===== BREAKING BANNER ===== -->
+<div class="breaking" id="breakingBanner" role="button" tabindex="0">
+  <div class="breaking-icon">🚨</div>
+  <div class="breaking-text">
+    <div class="breaking-label">Breaking · <span id="breakingCount">0</span> bronnen</div>
+    <div class="breaking-title" id="breakingTitle">—</div>
+    <div class="breaking-meta" id="breakingMeta">—</div>
+  </div>
+  <button class="breaking-close" id="breakingClose" aria-label="Sluiten">✕</button>
+</div>
+
+<!-- ===== PROGRESS BAR ===== -->
 <div class="progress-bar" id="progressBar"></div>
 
 <!-- ===== HEADER ===== -->
@@ -49,22 +59,10 @@ try{
     </div>
 
     <div class="header-stats">
-      <div class="hstat">
-        <span class="hstat-label">Klok</span>
-        <span class="hstat-value" id="clock">--:--:--</span>
-      </div>
-      <div class="hstat amber">
-        <span class="hstat-label">Bronnen</span>
-        <span class="hstat-value" id="statSources">0/0</span>
-      </div>
-      <div class="hstat coral">
-        <span class="hstat-label">Oorlog</span>
-        <span class="hstat-value" id="statWar">0</span>
-      </div>
-      <div class="hstat green">
-        <span class="hstat-label">Items</span>
-        <span class="hstat-value" id="statItems">0</span>
-      </div>
+      <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
+      <div class="hstat amber"><span class="hstat-label">Bronnen</span><span class="hstat-value" id="statSources">0/0</span></div>
+      <div class="hstat coral"><span class="hstat-label">Oorlog</span><span class="hstat-value" id="statWar">0</span></div>
+      <div class="hstat green"><span class="hstat-label">Items</span><span class="hstat-value" id="statItems">0</span></div>
     </div>
 
     <div class="header-actions">
@@ -74,10 +72,9 @@ try{
   </div>
 </header>
 
-<!-- ===== MAIN CONTENT ===== -->
+<!-- ===== MAIN ===== -->
 <main class="main">
 
-  <!-- VIEW: NIEUWS -->
   <section class="view" id="viewNews">
     <div class="section-head">
       <h2 id="newsTitle">Laatste berichten</h2>
@@ -86,13 +83,12 @@ try{
     <div class="feed-grid" id="feedGrid">
       <div class="empty-state">
         <div class="empty-icon">◌</div>
-        <div class="empty-msg">Nieuws wordt geladen in fase 2</div>
-        <div class="empty-hint">Deze fase bevat alleen structuur en uiterlijk</div>
+        <div class="empty-msg">Nieuws wordt geladen...</div>
+        <div class="empty-hint">Eerste keer kan 20-30 seconden duren</div>
       </div>
     </div>
   </section>
 
-  <!-- VIEW: IPTV -->
   <section class="view" id="viewIptv" hidden>
     <div class="section-head">
       <h2>📡 IPTV</h2>
@@ -105,7 +101,6 @@ try{
     </div>
   </section>
 
-  <!-- VIEW: KAART -->
   <section class="view" id="viewMap" hidden>
     <div class="section-head">
       <h2>Conflictkaart</h2>
@@ -114,7 +109,6 @@ try{
     <div class="empty-state">
       <div class="empty-icon">◉</div>
       <div class="empty-msg">Kaart komt in fase 4</div>
-      <div class="empty-hint">Leaflet + clustering</div>
     </div>
   </section>
 
@@ -145,10 +139,16 @@ try{
     <button class="sheet-close" id="sheetClose" aria-label="Sluiten">✕</button>
   </div>
   <div class="sheet-content">
+
     <div class="sheet-section">
-      <div class="sheet-title">Filters</div>
+      <div class="sheet-title">Zoeken</div>
+      <input class="sheet-search" type="search" id="searchInput" placeholder="Zoek in artikelen..." autocomplete="off">
+    </div>
+
+    <div class="sheet-section">
+      <div class="sheet-title">Categorieën</div>
       <div class="sheet-grid">
-        <button class="sheet-item" data-cat="all">🌐 Alles</button>
+        <button class="sheet-item active" data-cat="all">🌐 Alles</button>
         <button class="sheet-item" data-cat="war">⚔️ Oorlog</button>
         <button class="sheet-item" data-cat="mideast">🌍 Midden-Oosten</button>
         <button class="sheet-item" data-cat="europe">🇪🇺 Europa</button>
@@ -156,6 +156,15 @@ try{
         <button class="sheet-item" data-cat="sport">⚽ Sport</button>
       </div>
     </div>
+
+    <div class="sheet-section">
+      <div class="sheet-title">Sortering</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" id="sortImportance">🔥 Belangrijkheid</button>
+        <button class="sheet-item" id="sortNewest">🕒 Nieuwste eerst</button>
+      </div>
+    </div>
+
     <div class="sheet-section">
       <div class="sheet-title">Weergave</div>
       <div class="sheet-grid">
@@ -163,142 +172,24 @@ try{
         <button class="sheet-item" id="viewList">☰ Lijst</button>
       </div>
     </div>
+
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
       <div class="sheet-about">
-        WAR DESK <span class="version">v19.0</span><br>
+        WAR DESK <span class="version">v19.0 · Fase 2</span><br>
         Live nieuws + IPTV monitor
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- ===== TOAST ===== -->
 <div class="toast" id="toast">Klaar</div>
 
-<!-- ===== FASE 1 SCRIPT (minimaal, wordt uitgebreid in fase 2) ===== -->
-<script>
-(function(){
-  "use strict";
-
-  var $ = function(id){ return document.getElementById(id); };
-
-  /* === THEMA WISSELEN === */
-  $("btnTheme").addEventListener("click", function(){
-    var isLight = document.documentElement.classList.toggle("light");
-    document.body.classList.toggle("light", isLight);
-    try{ localStorage.setItem("wardesk_theme", isLight ? "light" : "dark"); }catch(e){}
-  });
-  if(document.documentElement.classList.contains("light")){
-    document.body.classList.add("light");
-  }
-
-  /* === KLok === */
-  function tick(){
-    $("clock").textContent = new Date().toLocaleTimeString("nl-NL", {
-      hour: "2-digit", minute: "2-digit", second: "2-digit"
-    });
-  }
-  tick(); setInterval(tick, 1000);
-
-  /* === VIEW SWITCHEN (via bottom tabs) === */
-  var tabs = document.querySelectorAll(".bottom-tabs .tab");
-  var views = {
-    news: $("viewNews"),
-    iptv: $("viewIptv"),
-    map:  $("viewMap")
-  };
-
-  function showView(name){
-    Object.keys(views).forEach(function(k){
-      if(views[k]) views[k].hidden = (k !== name);
-    });
-    tabs.forEach(function(t){
-      t.classList.toggle("active", t.dataset.view === name);
-    });
-    window.scrollTo({top: 0, behavior: "smooth"});
-  }
-
-  tabs.forEach(function(tab){
-    tab.addEventListener("click", function(){
-      showView(tab.dataset.view);
-    });
-  });
-
-  /* === BOTTOM SHEET === */
-  var sheet = $("sheet");
-  var overlay = $("sheetOverlay");
-
-  function openSheet(){
-    sheet.classList.add("open");
-    overlay.classList.add("open");
-    document.body.style.overflow = "hidden";
-  }
-  function closeSheet(){
-    sheet.classList.remove("open");
-    overlay.classList.remove("open");
-    document.body.style.overflow = "";
-  }
-
-  $("btnMenu").addEventListener("click", openSheet);
-  $("sheetClose").addEventListener("click", closeSheet);
-  overlay.addEventListener("click", closeSheet);
-
-  /* Sluit bij klik op een sheet-item */
-  document.querySelectorAll(".sheet-item").forEach(function(item){
-    item.addEventListener("click", function(){
-      if(item.id === "viewCards" || item.id === "viewList") return;
-      closeSheet();
-    });
-  });
-
-  /* === KAART/SLIJST toggle (visueel) === */
-  $("viewCards").addEventListener("click", function(){
-    $("feedGrid").classList.remove("list-mode");
-    showToast("Kaart-weergave");
-  });
-  $("viewList").addEventListener("click", function(){
-    $("feedGrid").classList.add("list-mode");
-    showToast("Lijst-weergave");
-  });
-
-  /* === TOAST === */
-  var toastTimer;
-  window.showToast = function(msg){
-    var t = $("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
-  };
-
-  /* === SWIPE om sheet te sluiten === */
-  var startY = 0, currentY = 0, dragging = false;
-  sheet.addEventListener("touchstart", function(e){
-    startY = e.touches[0].clientY;
-    dragging = true;
-  }, {passive: true});
-  sheet.addEventListener("touchmove", function(e){
-    if(!dragging) return;
-    currentY = e.touches[0].clientY;
-    var delta = currentY - startY;
-    if(delta > 0){
-      sheet.style.transform = "translateY(" + delta + "px)";
-    }
-  }, {passive: true});
-  sheet.addEventListener("touchend", function(){
-    dragging = false;
-    var delta = currentY - startY;
-    if(delta > 100){
-      closeSheet();
-    }
-    sheet.style.transform = "";
-    startY = currentY = 0;
-  });
-
-  console.log("[WAR DESK] Fase 1 actief — structuur geladen");
-})();
-</script>
+<!-- ===== SCRIPTS (volgorde is belangrijk!) ===== -->
+<script src="config.js"></script>
+<script src="news.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>

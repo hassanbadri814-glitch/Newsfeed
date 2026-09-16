@@ -5,20 +5,24 @@
 (function(){
   "use strict";
 
-  var $ = function(id){ return document.getElementById(id); };
+  function $(id){ return document.getElementById(id); }
 
-  /* ===== INIT ===== */
-  window.addEventListener("DOMContentLoaded", function(){
+  function ready(fn){
+    if(document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+
+  ready(function(){
 
     /* Thema init */
-    if (document.documentElement.classList.contains("light")) {
+    if(document.documentElement.classList.contains("light")){
       document.body.classList.add("light");
     }
 
     /* Klok */
     function tick(){
       var el = $("clock");
-      if (el) el.textContent = new Date().toLocaleTimeString("nl-NL", {
+      if(el) el.textContent = new Date().toLocaleTimeString("nl-NL", {
         hour: "2-digit", minute: "2-digit", second: "2-digit"
       });
     }
@@ -29,34 +33,31 @@
     $("btnTheme").addEventListener("click", function(){
       var isLight = document.documentElement.classList.toggle("light");
       document.body.classList.toggle("light", isLight);
-      try { localStorage.setItem("wardesk_theme", isLight ? "light" : "dark"); } catch(e){}
+      try{ localStorage.setItem("wardesk_theme", isLight ? "light" : "dark"); }catch(e){}
     });
 
     /* ===== VIEWS ===== */
-    var tabs = document.querySelectorAll(".bottom-tabs .tab");
     var views = {
       news: $("viewNews"),
       iptv: $("viewIptv"),
-      map:  $("viewMap")
+      map: $("viewMap")
     };
 
     function showView(name){
       Object.keys(views).forEach(function(k){
-        if (views[k]) views[k].hidden = (k !== name);
+        if(views[k]) views[k].hidden = (k !== name);
       });
-      tabs.forEach(function(t){
+      Array.prototype.forEach.call(document.querySelectorAll(".bottom-tabs .tab"), function(t){
         t.classList.toggle("active", t.dataset.view === name);
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    tabs.forEach(function(tab){
-      tab.addEventListener("click", function(){
-        showView(tab.dataset.view);
-      });
+    Array.prototype.forEach.call(document.querySelectorAll(".bottom-tabs .tab"), function(tab){
+      tab.addEventListener("click", function(){ showView(tab.dataset.view); });
     });
 
-    /* ===== MENU (bottom sheet) ===== */
+    /* ===== BOTTOM SHEET ===== */
     var sheet = $("sheet");
     var overlay = $("sheetOverlay");
 
@@ -75,106 +76,113 @@
     $("sheetClose").addEventListener("click", closeSheet);
     overlay.addEventListener("click", closeSheet);
 
-    /* Categorie knoppen */
-    document.querySelectorAll(".sheet-item[data-cat]").forEach(function(btn){
-      btn.addEventListener("click", function(){
-        document.querySelectorAll(".sheet-item[data-cat]").forEach(function(b){
+    /* Categorie — SLUIT EERST, dan filteren */
+    Array.prototype.forEach.call(document.querySelectorAll(".sheet-item[data-cat]"), function(btn){
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        closeSheet();
+        Array.prototype.forEach.call(document.querySelectorAll(".sheet-item[data-cat]"), function(b){
           b.classList.remove("active");
         });
         btn.classList.add("active");
-        NewsAPI.setCat(btn.dataset.cat);
-        closeSheet();
+        try{
+          if(window.NewsAPI) NewsAPI.setCat(btn.dataset.cat);
+        }catch(err){ console.error("[WAR DESK] setCat fout:", err); }
       });
     });
 
-    /* Weergave knoppen */
-    $("viewCards").addEventListener("click", function(){
-      NewsAPI.setView("cards");
-      $("viewCards").classList.add("active");
-      $("viewList").classList.remove("active");
-      closeSheet();
-    });
-    $("viewList").addEventListener("click", function(){
-      NewsAPI.setView("list");
-      $("viewList").classList.add("active");
-      $("viewCards").classList.remove("active");
-      closeSheet();
-    });
-    $("viewCards").classList.add("active");
+    /* Sortering */
+    function bindSort(id, sortValue){
+      var btn = $(id);
+      if(!btn) return;
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        closeSheet();
+        $("sortImportance").classList.remove("active");
+        $("sortNewest").classList.remove("active");
+        btn.classList.add("active");
+        try{ if(window.NewsAPI) NewsAPI.setSort(sortValue); }catch(err){}
+      });
+    }
+    bindSort("sortImportance", "importance");
+    bindSort("sortNewest", "newest");
 
-    /* Sortering knoppen */
-    var sortImp = $("sortImportance");
-    var sortNew = $("sortNewest");
-    if (sortImp) {
-      sortImp.addEventListener("click", function(){
-        NewsAPI.setSort("importance");
-        sortImp.classList.add("active");
-        sortNew.classList.remove("active");
+    /* Weergave */
+    function bindView(id, viewValue){
+      var btn = $(id);
+      if(!btn) return;
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
         closeSheet();
+        $("viewCards").classList.remove("active");
+        $("viewList").classList.remove("active");
+        btn.classList.add("active");
+        try{ if(window.NewsAPI) NewsAPI.setView(viewValue); }catch(err){}
       });
     }
-    if (sortNew) {
-      sortNew.addEventListener("click", function(){
-        NewsAPI.setSort("newest");
-        sortNew.classList.add("active");
-        sortImp.classList.remove("active");
-        closeSheet();
-      });
-    }
-    if (sortImp) sortImp.classList.add("active");
+    bindView("viewCards", "cards");
+    bindView("viewList", "list");
 
     /* Zoeken */
     var searchInput = $("searchInput");
-    if (searchInput) {
+    if(searchInput){
       var searchTimer;
       searchInput.addEventListener("input", function(){
         clearTimeout(searchTimer);
         searchTimer = setTimeout(function(){
-          NewsAPI.setSearch(searchInput.value);
+          try{ if(window.NewsAPI) NewsAPI.setSearch(searchInput.value); }catch(err){}
         }, 250);
       });
     }
 
-    /* ===== SWIPE om sheet te sluiten ===== */
+    /* Swipe sluiten */
     var startY = 0, currentY = 0, dragging = false;
     sheet.addEventListener("touchstart", function(e){
       startY = e.touches[0].clientY;
       dragging = true;
     }, {passive: true});
     sheet.addEventListener("touchmove", function(e){
-      if (!dragging) return;
+      if(!dragging) return;
       currentY = e.touches[0].clientY;
       var delta = currentY - startY;
-      if (delta > 0) sheet.style.transform = "translateY(" + delta + "px)";
+      if(delta > 0) sheet.style.transform = "translateY(" + delta + "px)";
     }, {passive: true});
     sheet.addEventListener("touchend", function(){
       dragging = false;
-      if (currentY - startY > 100) closeSheet();
+      if(currentY - startY > 100) closeSheet();
       sheet.style.transform = "";
       startY = currentY = 0;
     });
 
-    /* ===== Breaking banner close ===== */
+    /* Escape */
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape") closeSheet();
+    });
+
+    /* Breaking banner */
     var bb = $("breakingClose");
-    if (bb) {
+    if(bb){
       bb.addEventListener("click", function(e){
         e.stopPropagation();
         $("breakingBanner").classList.remove("show");
       });
     }
     var banner = $("breakingBanner");
-    if (banner) {
+    if(banner){
       banner.addEventListener("click", function(e){
-        if (e.target.closest(".breaking-close")) return;
-        var item = NewsAPI.state.lastBreakingItem;
-        if (item && item.link) {
+        if(e.target.closest(".breaking-close")) return;
+        var item = window.State && window.State.lastBreakingItem;
+        if(item && item.link){
           window.open(item.link, "_blank", "noopener");
           banner.classList.remove("show");
         }
       });
     }
 
-    /* ===== TOAST ===== */
+    /* Toast */
     var toastTimer;
     window.showToast = function(msg){
       var t = $("toast");
@@ -184,15 +192,15 @@
       toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
     };
 
-    /* ===== News init ===== */
-    if (window.NewsAPI) {
+    /* Init nieuws */
+    if(window.NewsAPI){
       NewsAPI.init().then(function(){
-        console.log("[WAR DESK] Nieuws geladen:", NewsAPI.state.items.length, "artikelen");
+        console.log("[WAR DESK] Nieuws geladen:", window.State.items.length, "artikelen");
       }).catch(function(err){
         console.error("[WAR DESK] Nieuws init fout:", err);
       });
     }
 
-    console.log("[WAR DESK] App init voltooid");
+    console.log("[WAR DESK] app.js geladen");
   });
 })();

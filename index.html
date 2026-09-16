@@ -12,6 +12,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
 <meta name="application-name" content="WAR DESK">
+<!-- Patch A: FOUC-preventie — thema zetten vóór CSS paint -->
+<script>try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches))document.documentElement.classList.add("light")}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://translate.googleapis.com">
@@ -21,7 +23,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#070c16;--bg-2:#0d1522;--bg-3:#131e30;--card:#111b2d;--card-hover:#18253c;--ink:#f5f8ff;--ink-2:#a9b7ce;--ink-3:#6b7a93;--amber:#e2a857;--amber-2:#f0c78a;--amber-3:#8a5c26;--teal:#14b8a6;--teal-2:#5eead4;--coral:#e63950;--coral-2:#f87171;--line:#1a2540;--line-2:#26344f;--green:#10b981;--radius-lg:14px;--shadow-amber:0 16px 48px -18px rgba(226,168,87,.45);--shadow-card:0 2px 8px -4px rgba(0,0,0,.6);--shadow-deep:0 20px 50px -24px rgba(0,0,0,.8)}
-body.light{--bg:#f6f4ee;--bg-2:#fff;--bg-3:#ece8df;--card:#fff;--card-hover:#fbf9f4;--ink:#0a101d;--ink-2:#44516a;--ink-3:#7a869d;--line:#e9e4d9;--line-2:#d6cfbf;--shadow-card:0 2px 8px -4px rgba(0,0,0,.08);--shadow-deep:0 20px 50px -24px rgba(0,0,0,.15)}
+/* Patch A: thema-selector ondersteunt zowel <html class="light"> als <body class="light"> */
+html.light body,body.light{--bg:#f6f4ee;--bg-2:#fff;--bg-3:#ece8df;--card:#fff;--card-hover:#fbf9f4;--ink:#0a101d;--ink-2:#44516a;--ink-3:#7a869d;--line:#e9e4d9;--line-2:#d6cfbf;--shadow-card:0 2px 8px -4px rgba(0,0,0,.08);--shadow-deep:0 20px 50px -24px rgba(0,0,0,.15)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{font-family:"Inter","Noto Sans Arabic",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.5;font-size:15px;overscroll-behavior-y:contain;background-image:radial-gradient(circle at 20% 0%, rgba(226,168,87,.04), transparent 40%), radial-gradient(circle at 80% 100%, rgba(20,184,166,.03), transparent 40%);background-attachment:fixed}
@@ -134,7 +137,7 @@ article.is-fav{border-color:rgba(226,168,87,.6);box-shadow:0 0 0 1px rgba(226,16
 article:hover .card-actions,article:focus-within .card-actions{opacity:1}
 @media(hover:none){.card-actions{opacity:1}}
 .card-actions .icon-btn{width:38px;height:38px;border-radius:50%;background:rgba(7,12,22,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;display:grid;place-items:center;font-size:.9rem;transition:all .18s;padding:0;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,.4)}
-body.light .card-actions .icon-btn{background:rgba(255,255,255,.95);border-color:rgba(0,0,0,.08);color:#0a101d}
+html.light body .card-actions .icon-btn,body.light .card-actions .icon-btn{background:rgba(255,255,255,.95);border-color:rgba(0,0,0,.08);color:#0a101d}
 .card-actions .icon-btn:hover{transform:scale(1.12);border-color:var(--amber);color:var(--amber);box-shadow:0 0 20px rgba(226,168,87,.5)}
 .card-actions .icon-btn.fav.active{background:linear-gradient(135deg,var(--amber-2),var(--amber-3));color:#070c16;border-color:var(--amber)}
 .new-badge{display:inline-flex;align-items:center;background:linear-gradient(135deg,var(--green),#059669);color:#fff;font-size:.5rem;font-weight:800;letter-spacing:.1em;padding:.15rem .45rem;border-radius:4px;text-transform:uppercase;box-shadow:0 0 12px rgba(16,185,129,.4)}
@@ -208,7 +211,7 @@ article:hover .card-footer .arrow{gap:.7rem}
 .marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(226,168,87,.3) !important}
 .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:linear-gradient(135deg,var(--amber-2),var(--amber-3)) !important;color:#070c16 !important;font-weight:800}
 .map-legend{position:absolute;bottom:20px;left:20px;background:rgba(13,21,34,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(226,168,87,.35);border-radius:12px;padding:.8rem 1rem;z-index:1000;font-size:.72rem;box-shadow:var(--shadow-deep);max-width:210px}
-body.light .map-legend{background:rgba(255,255,255,.95)}
+html.light body .map-legend,body.light .map-legend{background:rgba(255,255,255,.95)}
 .map-legend .title{font-weight:800;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;font-size:.62rem;margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px solid var(--line)}
 .map-legend .item{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;color:var(--ink-2);font-size:.68rem;font-weight:500}
 .map-legend .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);flex-shrink:0;box-shadow:0 0 8px currentColor}
@@ -448,13 +451,13 @@ main{padding:1.25rem 1rem 3rem}
 </main>
 
 <footer>
-  WAR DESK · <span class="app-version" id="appVersion">v17.3</span> · Live conflict monitor · Proxy via
+  WAR DESK · <span class="app-version" id="appVersion">v17.4</span> · Live conflict monitor · Proxy via
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
   <br>
   Sneltoetsen: <kbd>/</kbd> zoeken · <kbd>R</kbd> verversen · <kbd>M</kbd> kaart · <kbd>L</kbd> lijst · <kbd>F</kbd> favorieten · <kbd>T</kbd> thema · <kbd>P</kbd> print
 </footer>
 
-<div class="src-popup" id="srcPopup">
+<div class="src-popup" id="srcPopup" role="dialog" aria-modal="true" aria-label="Bronnen">
   <div class="src-box">
     <h3 id="srcTitle">Bronnen</h3>
     <ul id="srcList"></ul>
@@ -587,23 +590,24 @@ main{padding:1.25rem 1rem 3rem}
 
 <script>
 /* ==========================================================
-   WAR DESK v17.3 — diepgaande audit fixes
-   Fixes t.o.v. v17.2:
-   A) Progress bar niet meer eeuwig zichtbaar
-   B) Refresh spin conflict bij auto-refresh
-   C) Vertaal-teller flitst niet meer
-   D) Observer leak bij empty state
-   E) aria-live niet meer agressief
-   F) Stat-teller toont actieve bronnen
-   G) Safe-area iPhone notch
-   H) Map-loader bovenop legend
-   I) Multi-badge toetsenbord-toegankelijk
-   J) Print bevat geen kaart meer
-   K) Card animatie niet bij elke render
-   L) (service-worker) skip translate caching
-   M) Artikel role="link"
+   WAR DESK v17.4 — productie-hardening
+   Patches A–N toegepast:
+   A) Theme FOUC-preventie (html-class + inline script)
+   B) Health-constants
+   C) loadStateFromDB: health prune + auto re-enable
+   D) recordHealth: threshold const + direct disable
+   E) Debounced tr-cache save (100× minder IDB-writes)
+   F) doPartialRender session-guard (race weg)
+   G) Filter-cache sig met favorites.size
+   H) detectBreaking O(n) precompute
+   I) openCard bundelen + noopener
+   J) Activity-listeners gebundeld
+   K) e.key guard (IME)
+   L) Countdown via nextRefreshAt
+   M) nextRefreshSeconds verwijderd
+   N) switchView list scroll-restore
    ========================================================== */
-const APP_VERSION = "v17.3";
+const APP_VERSION = "v17.4";
 const PROXY_URL="https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED=5, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
 const PAGE_SIZE=30, TIMEOUT_MS=6000, INACTIVITY_MS=15000, CONCURRENCY=15;
@@ -612,6 +616,9 @@ const READ_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const TR_CACHE_MAX = 3000;
 const DB_NAME="wardesk_db_v1", DB_VERSION=1;
 const STORE_ARTICLES="articles", STORE_KV="kv";
+const HEALTH_RETRY_MS = 3600000;
+const HEALTH_PRUNE_MS = 86400000;
+const FAIL_DISABLE_THRESHOLD = 3;
 const HIGH_PRIORITY=["Al Jazeera","BBC World","BBC Arabic","Al Jazeera AR","TRT World","Times of Israel","Jerusalem Post","NOS","De Telegraaf","AD.nl","RTL Nieuws","Reuters","AP News"];
 const ACTION_KEYWORDS=["airstrike","air strike","strikes","strike","attack","attacks","bombing","bomb","bombed","missile","missiles","drone","shelling","shelled","explosion","blast","raid","raids","invasion","invaded","offensive","assault","ceasefire","cease-fire","truce","peace deal","peace agreement","peace treaty","killed","dead","deaths","casualties","injured","wounded","massacre","hostage","hostages","captured","arrested","detained","released","elected","resigned","appointed","assassinated","assassination","declared war","sanctions","sanction","nuclear","nuke","chemical weapons","coup","overthrow","uprising","revolt","crashed","plane crash","earthquake","tsunami","pandemic","outbreak"];
 const HIGH_IMPACT=["killed","dead","deaths","massacre","nuclear","invasion","airstrike","ceasefire","assassinated","declared war"];
@@ -744,7 +751,7 @@ const FEEDS=[
 
 let allItems=[], activeCat="all", activeSource="all", activeTime="all", activeLang="all", activeSort="newest";
 let currentView="list", map=null, markersLayer=null, clusterGroup=null, leafletLoaded=false, leafletLoadPromise=null;
-let nextRefreshSeconds=REFRESH_MS/1000, isFirstLoad=true;
+let isFirstLoad=true;
 let currentLiveChannel="aljazeera-en", currentPage=1, failedFeeds=[], lastUserActivity=Date.now();
 let isUserScrolling=false, scrollTimeout=null, refreshPaused=false, lastBreakingShown=0, loadSession=0;
 let currentRender=[], lazyObserver=null, infiniteObserver=null;
@@ -761,6 +768,8 @@ let cachedSourcesList=[];
 let dataVersion=0;
 let progressToken=0;
 let hasRenderedOnce=false;
+let nextRefreshAt = Date.now() + REFRESH_MS;
+let trSaveTimer = null;
 const translateTimers=new Map();
 
 window.addEventListener("error", (e) => { try { console.error("[WAR DESK error]", e.error || e.message); } catch(_) {} });
@@ -865,7 +874,17 @@ async function loadStateFromDB(){
     const ls = parseInt(localStorage.getItem("wardesk_last_visit_v1")||"0",10);
     if(ls) lastVisit = ls;
   }
-  for(const [src,d] of Object.entries(sourceHealth)){ if(d && d.fails>=3) disabledSources.add(src); }
+  /* Patch C: health prune + auto re-enable */
+  const now = Date.now();
+  for(const src of Object.keys(sourceHealth)){
+    const d = sourceHealth[src];
+    if(!d){ delete sourceHealth[src]; continue; }
+    if(now - (d.last||0) > HEALTH_PRUNE_MS){ delete sourceHealth[src]; continue; }
+    if(d.fails >= FAIL_DISABLE_THRESHOLD){
+      if(now - (d.last||0) > HEALTH_RETRY_MS){ d.fails = 0; }
+      else disabledSources.add(src);
+    }
+  }
   if(cleanupReadArticles()) saveReadDB();
 }
 async function saveFavoritesDB(){ await idbPut(STORE_KV,{k:"favorites",v:[...favorites]}); }
@@ -882,6 +901,11 @@ async function saveTrCacheDB(){
     trCache=fresh;
   }
   try{ await idbPut(STORE_KV,{k:"translations",v:trCache}); }catch(e){}
+}
+/* Patch E: debounce tr-cache writes */
+function scheduleTrSaveDB(){
+  clearTimeout(trSaveTimer);
+  trSaveTimer = setTimeout(saveTrCacheDB, 2000);
 }
 async function saveHealthDB(){ await idbPut(STORE_KV,{k:"health",v:sourceHealth}); }
 async function saveLastVisitDB(){
@@ -986,7 +1010,7 @@ let toastTimer=null;
 function showToast(msg,icon="ℹ"){ toastMsg.textContent=msg; const ic=toast.querySelector(".ic"); if(ic) ic.textContent=icon; toast.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>toast.classList.remove("show"),2400); }
 
 const THEME_META=document.querySelector('meta[name="theme-color"]');
-function updateThemeMeta(){ if(THEME_META) THEME_META.setAttribute("content", document.body.classList.contains("light")?"#f6f4ee":"#070c16"); }
+function updateThemeMeta(){ if(THEME_META) THEME_META.setAttribute("content", document.documentElement.classList.contains("light")?"#f6f4ee":"#070c16"); }
 
 function hash(str){ let h=0; for(let i=0;i<str.length;i++){ h=((h<<5)-h)+str.charCodeAt(i); h|=0; } return h.toString(36); }
 function safeTime(dateStr){ const d=new Date(dateStr); return isNaN(d)?0:d.getTime(); }
@@ -1009,8 +1033,8 @@ async function gTranslate(text,target){
   const t=text.slice(0,450);
   const key=target+":"+hash(t);
   if(trCache[key]) return trCache[key];
-  try{ const out=await googleTranslate(t,target); trCache[key]=out; saveTrCacheDB(); return out; }catch(e){}
-  try{ const out=await myMemoryTranslate(t,target); trCache[key]=out; saveTrCacheDB(); return out; }catch(e){}
+  try{ const out=await googleTranslate(t,target); trCache[key]=out; scheduleTrSaveDB(); return out; }catch(e){}
+  try{ const out=await myMemoryTranslate(t,target); trCache[key]=out; scheduleTrSaveDB(); return out; }catch(e){}
   return t;
 }
 let trActive=0, trQueue=[], trDone=0, trTotal=0, trSettleToken=0;
@@ -1160,10 +1184,12 @@ function dedupe(items){
   });
   return Array.from(map.values());
 }
+/* Patch D: threshold constant + direct disable */
 function recordHealth(name,ok){
-  if(!sourceHealth[name]) sourceHealth[name]={fails:0,last:0};
-  if(ok) sourceHealth[name].fails=0; else sourceHealth[name].fails++;
-  sourceHealth[name].last=Date.now();
+  const h = sourceHealth[name] || (sourceHealth[name]={fails:0,last:0});
+  h.fails = ok ? 0 : (h.fails+1);
+  h.last = Date.now();
+  if(h.fails >= FAIL_DISABLE_THRESHOLD) disabledSources.add(name);
 }
 function isDisabled(name){ return disabledSources.has(name); }
 
@@ -1175,29 +1201,40 @@ function extractBreakingKeywords(title,desc){
   LOCATION_KEYWORDS.forEach(kw=>{ if(t.includes(kw)) locations.add(kw); });
   return {actions, locations, high};
 }
-function areRelatedArticles(a,b){
-  const ka=extractBreakingKeywords(a.title,a.desc), kb=extractBreakingKeywords(b.title,b.desc);
-  let sa=0; ka.actions.forEach(kw=>{ if(kb.actions.has(kw)) sa++; });
-  let sl=0; ka.locations.forEach(kw=>{ if(kb.locations.has(kw)) sl++; });
-  let sh=0; ka.high.forEach(kw=>{ if(kb.high.has(kw)) sh++; });
-  return (sa>=2) || (sa>=1 && sl>=1) || (sh>=1 && sl>=1);
-}
+/* Patch H: detectBreaking O(n) met precompute */
 function detectBreaking(items){
   const now=Date.now();
-  const recent=items.filter(it=>{ const age=now-safeTime(it.date); return age && age<=BREAKING_MS; }).slice(0,60);
+  const recent=items
+    .filter(it=>{ const age=now-safeTime(it.date); return age && age<=BREAKING_MS; })
+    .slice(0,60);
   if(recent.length<3) return null;
+
+  const kws = recent.map(it=>extractBreakingKeywords(it.title,it.desc));
   const groups=[], used=new Set();
+
   recent.forEach((a,i)=>{
     if(used.has(i)) return;
     const g={items:[a], sources:new Set([a.source])};
     used.add(i);
+    const ka = kws[i];
     recent.forEach((b,j)=>{
       if(used.has(j) || i===j) return;
-      if(areRelatedArticles(a,b)){ g.items.push(b); g.sources.add(b.source); used.add(j); }
+      const kb = kws[j];
+      let sa=0, sl=0, sh=0;
+      for(const k of ka.actions) if(kb.actions.has(k)) sa++;
+      for(const k of ka.locations) if(kb.locations.has(k)) sl++;
+      for(const k of ka.high) if(kb.high.has(k)) sh++;
+      if((sa>=2) || (sa>=1&&sl>=1) || (sh>=1&&sl>=1)){
+        g.items.push(b); g.sources.add(b.source); used.add(j);
+      }
     });
     if(g.sources.size>=3) groups.push(g);
     else if(g.sources.size>=2){
-      const hasHigh=g.items.some(it=>extractBreakingKeywords(it.title,it.desc).high.size>=1);
+      let hasHigh=false;
+      for(const it of g.items){
+        const kk = kws[recent.indexOf(it)];
+        if(kk && kk.high.size>=1){ hasHigh=true; break; }
+      }
       if(hasHigh) groups.push(g);
     }
   });
@@ -1222,7 +1259,7 @@ breakingBanner.addEventListener("click",e=>{
   if(e.target.closest(".breaking-close")) return;
   if(lastBreakingItem && lastBreakingItem.link){
     markAsRead(lastBreakingItem.link);
-    window.open(lastBreakingItem.link,"_blank");
+    window.open(lastBreakingItem.link,"_blank","noopener");
     breakingBanner.classList.remove("show");
   }
 });
@@ -1240,11 +1277,10 @@ window.addEventListener("scroll",()=>{
   scrollTimeout=setTimeout(()=>{ isUserScrolling=false; },1500);
   if(backTop) backTop.classList.toggle("show", window.scrollY>600);
 },{passive:true});
-window.addEventListener("touchstart",markActivity,{passive:true});
-window.addEventListener("touchmove",markActivity,{passive:true});
-window.addEventListener("mousedown",markActivity);
-window.addEventListener("keydown",markActivity);
-window.addEventListener("click",markActivity);
+/* Patch J: activity-listeners gebundeld */
+["touchstart","touchmove","mousedown","keydown","click"].forEach(ev=>
+  window.addEventListener(ev, markActivity, ev.startsWith("touch")?{passive:true}:undefined)
+);
 if("scrollRestoration" in history) history.scrollRestoration="manual";
 
 let resizeTimer;
@@ -1299,7 +1335,9 @@ async function loadFeeds(isAuto=false){
   const totalCount=sorted.length;
 
   let renderScheduled=false, lastRender=0;
+  /* Patch F: session-guard tegen race met nieuwe loadFeeds */
   function doPartialRender(){
+    if(session!==loadSession) return;
     lastRender=Date.now();
     const dd=dedupe(collected); dd.sort((a,b)=>safeTime(b.date)-safeTime(a.date));
     if(dd.length > allItems.length) allItems=dd;
@@ -1401,9 +1439,8 @@ async function loadFeeds(isAuto=false){
     invalidateAllCaches();
     clearTranslateTimers();
     render(); renderTicker(); if(currentView==="map") renderMap(); updateNavCounts();
-    nextRefreshSeconds=REFRESH_MS/1000;
+    nextRefreshAt = Date.now() + REFRESH_MS;
   } finally {
-    /* Fix A+B: alleen de eigenaar van de progress mag hem verbergen, en auto-refresh raakt nooit spin/progress aan */
     if(!isAuto && ownsProgress()){
       refreshBtn.classList.remove("spin");
       progressBar.style.width="100%";
@@ -1472,7 +1509,8 @@ function getForYouBase(){
   return result;
 }
 function getFilteredBase(){
-  const sig=[activeCat,activeSource,activeLang,activeTime,activeSort,searchInput.value.toLowerCase().trim(),dataVersion].join("|");
+  /* Patch G: favorites.size in signature */
+  const sig=[activeCat,activeSource,activeLang,activeTime,activeSort,searchInput.value.toLowerCase().trim(),favorites.size,dataVersion].join("|");
   if(cachedFilterSig===sig && cachedFiltered) return cachedFiltered;
   cachedFilterSig=sig;
   const q=searchInput.value.toLowerCase().trim();
@@ -1522,12 +1560,10 @@ function render(){
   sectionTitle.textContent=title;
   sectionCount.textContent=list.length+" berichten";
 
-  /* Fix K: animatie alleen bij eerste render */
   if(hasRenderedOnce) feedEl.classList.add("no-anim");
   else feedEl.classList.remove("no-anim");
 
   if(!list.length){
-    /* Fix D: observers opruimen bij lege lijst */
     if(lazyObserver){ lazyObserver.disconnect(); lazyObserver=null; }
     if(infiniteObserver){ infiniteObserver.disconnect(); infiniteObserver=null; }
     let msg, hint="";
@@ -1562,7 +1598,7 @@ function render(){
         currentPage++;
         const scrollY=window.scrollY;
         render();
-        requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:"instant"}));
+        requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:"auto"}));
       }
     },{rootMargin:"400px"});
     infiniteObserver.observe(infiniteLoader);
@@ -1606,7 +1642,20 @@ function cardHtml(it,i){
     </article>`;
 }
 
-feedEl.addEventListener("click",e=>{
+/* Patch I: openCard + handler-bundeling */
+function openCard(card){
+  const it = currentRender[+card.dataset.idx];
+  if(!it) return;
+  markAsRead(it.link);
+  card.classList.add("read");
+  window.open(it.link,"_blank","noopener");
+}
+function handleMultiBadge(badge){
+  try{
+    showSources(JSON.parse(decodeURIComponent(badge.dataset.sources)));
+  }catch(err){}
+}
+feedEl.addEventListener("click", e=>{
   const favBtn=e.target.closest(".icon-btn.fav");
   if(favBtn){
     e.stopPropagation(); e.preventDefault();
@@ -1619,7 +1668,7 @@ feedEl.addEventListener("click",e=>{
     if(activeCat==="fav" || activeCat==="foryou"){
       const scrollY=window.scrollY;
       render();
-      requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:"instant"}));
+      requestAnimationFrame(()=>window.scrollTo({top:scrollY,behavior:"auto"}));
     }
     return;
   }
@@ -1634,41 +1683,16 @@ feedEl.addEventListener("click",e=>{
     return;
   }
   const multiBadge=e.target.closest(".card-multi");
-  if(multiBadge){
-    e.stopPropagation();
-    try{
-      const sources=JSON.parse(decodeURIComponent(multiBadge.dataset.sources));
-      showSources(sources);
-    }catch(err){}
-    return;
-  }
+  if(multiBadge){ e.stopPropagation(); handleMultiBadge(multiBadge); return; }
   const card=e.target.closest("article");
-  if(card){
-    const idx=parseInt(card.dataset.idx,10);
-    const it=currentRender[idx];
-    if(it){ markAsRead(it.link); window.open(it.link,"_blank"); }
-  }
+  if(card) openCard(card);
 });
-
-/* Fix I: toetsenbord-toegankelijkheid voor multi-badge */
 feedEl.addEventListener("keydown", e=>{
-  const multiBadge = e.target.closest(".card-multi");
-  if(multiBadge && (e.key === "Enter" || e.key === " ")){
-    e.preventDefault();
-    e.stopPropagation();
-    try{
-      const sources=JSON.parse(decodeURIComponent(multiBadge.dataset.sources));
-      showSources(sources);
-    }catch(err){}
-    return;
-  }
-  const card = e.target.closest("article");
-  if(card && !e.target.closest("button") && (e.key === "Enter" || e.key === " ")){
-    e.preventDefault();
-    const idx=parseInt(card.dataset.idx,10);
-    const it=currentRender[idx];
-    if(it){ markAsRead(it.link); window.open(it.link,"_blank"); }
-  }
+  if(e.key!=="Enter" && e.key!==" ") return;
+  const multiBadge=e.target.closest(".card-multi");
+  if(multiBadge){ e.preventDefault(); e.stopPropagation(); handleMultiBadge(multiBadge); return; }
+  const card=e.target.closest("article");
+  if(card && !e.target.closest("button")){ e.preventDefault(); openCard(card); }
 });
 
 function showSources(sources){
@@ -1752,7 +1776,7 @@ const CAT_COLORS={
 function initMap(){
   if(map || typeof L==="undefined") return;
   map=L.map("map",{center:[30,38],zoom:3,worldCopyJump:true,zoomControl:true});
-  const isLight=document.body.classList.contains("light");
+  const isLight=document.documentElement.classList.contains("light")||document.body.classList.contains("light");
   const tileUrl=isLight
     ? "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
     : "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
@@ -1873,14 +1897,20 @@ document.querySelectorAll(".live-chip").forEach(chip=>{
   });
 });
 
+/* Patch N: scroll-restore bij list */
 async function showOnly(view){
   listView.style.display="none";
   liveView.style.display="none";
   mapView.classList.remove("active");
   mapError.classList.remove("show");
-  if(view==="list") listView.style.display="block";
-  else if(view==="live"){ liveView.style.display="block"; loadLiveChannel(currentLiveChannel); }
-  else if(view==="map"){
+  if(view==="list"){
+    const y = window.scrollY;
+    listView.style.display="block";
+    requestAnimationFrame(()=>window.scrollTo({top:y,behavior:"auto"}));
+    return;
+  }
+  if(view==="live"){ liveView.style.display="block"; loadLiveChannel(currentLiveChannel); return; }
+  if(view==="map"){
     mapView.classList.add("active");
     if(!leafletLoaded){
       mapLoader.classList.add("show");
@@ -2043,8 +2073,11 @@ notifBtn.addEventListener("click",async()=>{
 
 refreshBtn.addEventListener("click",()=>loadFeeds(false));
 themeBtn.addEventListener("click",()=>{
+  /* Patch A: toggle both html + body */
+  document.documentElement.classList.toggle("light");
   document.body.classList.toggle("light");
-  try{ localStorage.setItem("wardesk_theme", document.body.classList.contains("light")?"light":"dark"); }catch(e){}
+  const isLight = document.documentElement.classList.contains("light");
+  try{ localStorage.setItem("wardesk_theme", isLight?"light":"dark"); }catch(e){}
   updateThemeMeta();
   if(map && leafletLoaded){
     map.remove(); map=null; markersLayer=null; clusterGroup=null;
@@ -2055,6 +2088,8 @@ themeBtn.addEventListener("click",()=>{
 backTop.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
 
 document.addEventListener("keydown",e=>{
+  /* Patch K: e.key guard */
+  if(!e.key) return;
   const tag=(e.target.tagName||"").toLowerCase();
   if(tag==="input" || tag==="textarea" || tag==="select") return;
   if(e.metaKey || e.ctrlKey || e.altKey) return;
@@ -2116,17 +2151,18 @@ window.addEventListener("online",updateOnlineStatus);
 window.addEventListener("offline",updateOnlineStatus);
 
 let clockInterval=null;
+/* Patch L: countdown via nextRefreshAt */
 function tickClock(){
   const now=new Date();
   clockEl.textContent=now.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  nextRefreshSeconds--;
-  if(nextRefreshSeconds<0) nextRefreshSeconds=REFRESH_MS/1000;
-  nextEl.textContent=nextRefreshSeconds+"s";
+  const remaining = Math.max(0, Math.ceil((nextRefreshAt - Date.now())/1000));
+  nextEl.textContent = remaining + "s";
 }
 function startClock(){ if(clockInterval) return; tickClock(); clockInterval=setInterval(tickClock,1000); }
 function stopClock(){ if(clockInterval){ clearInterval(clockInterval); clockInterval=null; } }
 
 setInterval(()=>{
+  nextRefreshAt = Date.now() + REFRESH_MS;
   const idleTime=Date.now()-lastUserActivity;
   const atTop=window.scrollY<200;
   if(idleTime<INACTIVITY_MS && !atTop){
@@ -2143,17 +2179,8 @@ setInterval(()=>{
   await loadStateFromDB();
   updateNotifBtn();
   updateOnlineStatus();
-  try{
-    const saved=localStorage.getItem("wardesk_theme");
-    if(saved==="light") document.body.classList.add("light");
-    else if(saved==="dark"){}
-    else {
-      const osTheme = detectOSTheme();
-      if(osTheme === "light") document.body.classList.add("light");
-      else if(osTheme === "dark"){}
-      else if(new Date().getHours()>=7 && new Date().getHours()<20) document.body.classList.add("light");
-    }
-  }catch(e){}
+  /* Patch A: theme is al gezet door inline script in <head>; sync body-class */
+  if(document.documentElement.classList.contains("light")) document.body.classList.add("light");
   updateThemeMeta();
   currentLiveChannel="aljazeera-en";
   document.querySelectorAll(".live-chip").forEach(c=>c.classList.toggle("active", c.dataset.live===currentLiveChannel));

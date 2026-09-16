@@ -12,7 +12,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
 <meta name="application-name" content="WAR DESK">
-<!-- Patch A: FOUC-preventie — thema zetten vóór CSS paint -->
 <script>try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches))document.documentElement.classList.add("light")}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +22,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#070c16;--bg-2:#0d1522;--bg-3:#131e30;--card:#111b2d;--card-hover:#18253c;--ink:#f5f8ff;--ink-2:#a9b7ce;--ink-3:#6b7a93;--amber:#e2a857;--amber-2:#f0c78a;--amber-3:#8a5c26;--teal:#14b8a6;--teal-2:#5eead4;--coral:#e63950;--coral-2:#f87171;--line:#1a2540;--line-2:#26344f;--green:#10b981;--radius-lg:14px;--shadow-amber:0 16px 48px -18px rgba(226,168,87,.45);--shadow-card:0 2px 8px -4px rgba(0,0,0,.6);--shadow-deep:0 20px 50px -24px rgba(0,0,0,.8)}
-/* Patch A: thema-selector ondersteunt zowel <html class="light"> als <body class="light"> */
 html.light body,body.light{--bg:#f6f4ee;--bg-2:#fff;--bg-3:#ece8df;--card:#fff;--card-hover:#fbf9f4;--ink:#0a101d;--ink-2:#44516a;--ink-3:#7a869d;--line:#e9e4d9;--line-2:#d6cfbf;--shadow-card:0 2px 8px -4px rgba(0,0,0,.08);--shadow-deep:0 20px 50px -24px rgba(0,0,0,.15)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -451,7 +449,7 @@ main{padding:1.25rem 1rem 3rem}
 </main>
 
 <footer>
-  WAR DESK · <span class="app-version" id="appVersion">v17.4</span> · Live conflict monitor · Proxy via
+  WAR DESK · <span class="app-version" id="appVersion">v17.5</span> · Live conflict monitor · Proxy via
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
   <br>
   Sneltoetsen: <kbd>/</kbd> zoeken · <kbd>R</kbd> verversen · <kbd>M</kbd> kaart · <kbd>L</kbd> lijst · <kbd>F</kbd> favorieten · <kbd>T</kbd> thema · <kbd>P</kbd> print
@@ -590,24 +588,15 @@ main{padding:1.25rem 1rem 3rem}
 
 <script>
 /* ==========================================================
-   WAR DESK v17.4 — productie-hardening
-   Patches A–N toegepast:
-   A) Theme FOUC-preventie (html-class + inline script)
-   B) Health-constants
-   C) loadStateFromDB: health prune + auto re-enable
-   D) recordHealth: threshold const + direct disable
-   E) Debounced tr-cache save (100× minder IDB-writes)
-   F) doPartialRender session-guard (race weg)
-   G) Filter-cache sig met favorites.size
-   H) detectBreaking O(n) precompute
-   I) openCard bundelen + noopener
-   J) Activity-listeners gebundeld
-   K) e.key guard (IME)
-   L) Countdown via nextRefreshAt
-   M) nextRefreshSeconds verwijderd
-   N) switchView list scroll-restore
+   WAR DESK v17.5 — 6 runtime-bugs gefixt
+   1) Kaart-crash: map → $("map")
+   2) Breaking-banner timer reset
+   3) Source-select behoud bij tijdelijke offline bron
+   4) markAsRead debounced write
+   5) renderMap debounced bij slider
+   6) saveHealthDB dedupe (skip ongewijzigd)
    ========================================================== */
-const APP_VERSION = "v17.4";
+const APP_VERSION = "v17.5";
 const PROXY_URL="https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED=5, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
 const PAGE_SIZE=30, TIMEOUT_MS=6000, INACTIVITY_MS=15000, CONCURRENCY=15;
@@ -770,6 +759,10 @@ let progressToken=0;
 let hasRenderedOnce=false;
 let nextRefreshAt = Date.now() + REFRESH_MS;
 let trSaveTimer = null;
+let breakingTimer = null;          /* Fix 2 */
+let readSaveTimer = null;          /* Fix 4 */
+let mapRenderTimer = null;         /* Fix 5 */
+let lastHealthHash = "";           /* Fix 6 */
 const translateTimers=new Map();
 
 window.addEventListener("error", (e) => { try { console.error("[WAR DESK error]", e.error || e.message); } catch(_) {} });
@@ -874,7 +867,6 @@ async function loadStateFromDB(){
     const ls = parseInt(localStorage.getItem("wardesk_last_visit_v1")||"0",10);
     if(ls) lastVisit = ls;
   }
-  /* Patch C: health prune + auto re-enable */
   const now = Date.now();
   for(const src of Object.keys(sourceHealth)){
     const d = sourceHealth[src];
@@ -892,6 +884,11 @@ async function saveReadDB(){
   try{ await idbPut(STORE_KV,{k:"read",v:readArticles}); }catch(e){}
   try{ localStorage.setItem("wardesk_read_v1", JSON.stringify(readArticles)); }catch(e){}
 }
+/* Fix 4: debounced read-save */
+function scheduleReadSave(){
+  clearTimeout(readSaveTimer);
+  readSaveTimer = setTimeout(saveReadDB, 1500);
+}
 async function saveTrCacheDB(){
   const keys=Object.keys(trCache);
   if(keys.length>TR_CACHE_MAX+2000){
@@ -902,12 +899,25 @@ async function saveTrCacheDB(){
   }
   try{ await idbPut(STORE_KV,{k:"translations",v:trCache}); }catch(e){}
 }
-/* Patch E: debounce tr-cache writes */
 function scheduleTrSaveDB(){
   clearTimeout(trSaveTimer);
   trSaveTimer = setTimeout(saveTrCacheDB, 2000);
 }
+/* Fix 6: health-hash om onnodige writes te skippen */
+function healthHash(){
+  let s="";
+  for(const k of Object.keys(sourceHealth).sort()){
+    s += k+":"+sourceHealth[k].fails+"|";
+  }
+  return s;
+}
 async function saveHealthDB(){ await idbPut(STORE_KV,{k:"health",v:sourceHealth}); }
+async function saveHealthDBIfChanged(){
+  const h = healthHash();
+  if(h === lastHealthHash) return;
+  lastHealthHash = h;
+  await idbPut(STORE_KV,{k:"health",v:sourceHealth});
+}
 async function saveLastVisitDB(){
   const now = Date.now();
   lastVisit = now;
@@ -1184,7 +1194,6 @@ function dedupe(items){
   });
   return Array.from(map.values());
 }
-/* Patch D: threshold constant + direct disable */
 function recordHealth(name,ok){
   const h = sourceHealth[name] || (sourceHealth[name]={fails:0,last:0});
   h.fails = ok ? 0 : (h.fails+1);
@@ -1201,7 +1210,6 @@ function extractBreakingKeywords(title,desc){
   LOCATION_KEYWORDS.forEach(kw=>{ if(t.includes(kw)) locations.add(kw); });
   return {actions, locations, high};
 }
-/* Patch H: detectBreaking O(n) met precompute */
 function detectBreaking(items){
   const now=Date.now();
   const recent=items
@@ -1242,6 +1250,7 @@ function detectBreaking(items){
   groups.sort((a,b)=>b.sources.size-a.sources.size);
   return {item:groups[0].items[0], sources:[...groups[0].sources]};
 }
+/* Fix 2: timer reset */
 function showBreaking(info){
   if(Date.now()-lastBreakingShown<BREAKING_COOLDOWN) return;
   lastBreakingShown=Date.now();
@@ -1253,7 +1262,8 @@ function showBreaking(info){
   breakingMeta.textContent=info.sources.join(" · ");
   breakingBanner.setAttribute("aria-label","Open: "+info.item.title.slice(0,60));
   breakingBanner.classList.add("show");
-  setTimeout(()=>breakingBanner.classList.remove("show"),30000);
+  clearTimeout(breakingTimer);
+  breakingTimer = setTimeout(()=>breakingBanner.classList.remove("show"),30000);
 }
 breakingBanner.addEventListener("click",e=>{
   if(e.target.closest(".breaking-close")) return;
@@ -1277,7 +1287,6 @@ window.addEventListener("scroll",()=>{
   scrollTimeout=setTimeout(()=>{ isUserScrolling=false; },1500);
   if(backTop) backTop.classList.toggle("show", window.scrollY>600);
 },{passive:true});
-/* Patch J: activity-listeners gebundeld */
 ["touchstart","touchmove","mousedown","keydown","click"].forEach(ev=>
   window.addEventListener(ev, markActivity, ev.startsWith("touch")?{passive:true}:undefined)
 );
@@ -1292,13 +1301,14 @@ window.addEventListener("resize",()=>{
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden){
     saveLastVisitDB();
+    saveReadDB();      /* Fix 4: flush pending read-writes */
     refreshPaused=true; pausedIndicator.classList.add("show"); stopClock();
   } else {
     markActivity(); startClock();
   }
 });
-window.addEventListener("pagehide", ()=>{ saveLastVisitDB(); });
-window.addEventListener("beforeunload", ()=>{ saveLastVisitDB(); });
+window.addEventListener("pagehide", ()=>{ saveLastVisitDB(); saveReadDB(); });
+window.addEventListener("beforeunload", ()=>{ saveLastVisitDB(); saveReadDB(); });
 
 async function loadFeeds(isAuto=false){
   const session=++loadSession;
@@ -1335,7 +1345,6 @@ async function loadFeeds(isAuto=false){
   const totalCount=sorted.length;
 
   let renderScheduled=false, lastRender=0;
-  /* Patch F: session-guard tegen race met nieuwe loadFeeds */
   function doPartialRender(){
     if(session!==loadSession) return;
     lastRender=Date.now();
@@ -1394,7 +1403,7 @@ async function loadFeeds(isAuto=false){
     if(finalDeduped.length) allItems=finalDeduped;
     failedFeeds=failed;
 
-    await saveHealthDB();
+    await saveHealthDBIfChanged();   /* Fix 6 */
     await cacheArticlesDB(allItems);
 
     statSources.textContent=`${totalOk}/${activeFeedCount}`;
@@ -1424,7 +1433,7 @@ async function loadFeeds(isAuto=false){
       failedList.innerHTML=msg;
       const resetBtn=document.getElementById("resetHealth");
       if(resetBtn) resetBtn.addEventListener("click",()=>{
-        sourceHealth={}; disabledSources=new Set(); saveHealthDB();
+        sourceHealth={}; disabledSources=new Set(); lastHealthHash=""; saveHealthDBIfChanged();
         showToast("Bronnen gereset","↺");
         loadFeeds(false);
       });
@@ -1451,13 +1460,20 @@ async function loadFeeds(isAuto=false){
   }
 }
 
+/* Fix 3: behoud selectie bij tijdelijke offline bron */
 function populateSources(){
   const sources=[...new Set(allItems.map(it=>it.source))].sort();
   if(sources.length===cachedSourcesList.length && sources.every((s,i)=>s===cachedSourcesList[i])) return;
   cachedSourcesList=sources;
   const current=sourceSelect.value;
   sourceSelect.innerHTML='<option value="all">Alle bronnen</option>'+sources.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
-  if(sources.includes(current) || current==="all") sourceSelect.value=current;
+  if(sources.includes(current)) sourceSelect.value=current;
+  else if(current && current!=="all"){
+    const opt=document.createElement("option");
+    opt.value=current; opt.textContent=current+" (tijdelijk offline)";
+    sourceSelect.appendChild(opt);
+    sourceSelect.value=current;
+  } else sourceSelect.value="all";
 }
 function renderTicker(){
   const top=allItems.slice(0,15);
@@ -1509,7 +1525,6 @@ function getForYouBase(){
   return result;
 }
 function getFilteredBase(){
-  /* Patch G: favorites.size in signature */
   const sig=[activeCat,activeSource,activeLang,activeTime,activeSort,searchInput.value.toLowerCase().trim(),favorites.size,dataVersion].join("|");
   if(cachedFilterSig===sig && cachedFiltered) return cachedFiltered;
   cachedFilterSig=sig;
@@ -1642,7 +1657,6 @@ function cardHtml(it,i){
     </article>`;
 }
 
-/* Patch I: openCard + handler-bundeling */
 function openCard(card){
   const it = currentRender[+card.dataset.idx];
   if(!it) return;
@@ -1702,11 +1716,12 @@ function showSources(sources){
 }
 srcClose.addEventListener("click",()=>srcPopup.classList.remove("show"));
 srcPopup.addEventListener("click",e=>{ if(e.target===srcPopup) srcPopup.classList.remove("show"); });
+/* Fix 4: debounced write */
 function markAsRead(link){
   if(!readArticles[link]){
     readArticles[link] = Date.now();
     cleanupReadArticles();
-    saveReadDB();
+    scheduleReadSave();
   }
 }
 
@@ -1868,13 +1883,15 @@ function renderMap(){
   if(clusterGroup) clusterGroup.addLayers(allMarkers);
   else if(markersLayer) allMarkers.forEach(m=>markersLayer.addLayer(m));
 }
+/* Fix 5: debounce slider */
 if(timeRangeInput){
   timeRangeInput.addEventListener("input",()=>{
     timeRangeHours=parseInt(timeRangeInput.value,10);
     if(timeRangeHours>=168) timeRangeValue.textContent="Alle";
     else if(timeRangeHours>=24) timeRangeValue.textContent=Math.round(timeRangeHours/24)+"d";
     else timeRangeValue.textContent=timeRangeHours+"u";
-    renderMap();
+    clearTimeout(mapRenderTimer);
+    mapRenderTimer = setTimeout(renderMap, 120);
   });
 }
 
@@ -1897,7 +1914,7 @@ document.querySelectorAll(".live-chip").forEach(chip=>{
   });
 });
 
-/* Patch N: scroll-restore bij list */
+/* Fix 1: gebruik $("map") — de DOM-node — niet de Leaflet-instantie `map` */
 async function showOnly(view){
   listView.style.display="none";
   liveView.style.display="none";
@@ -1912,18 +1929,19 @@ async function showOnly(view){
   if(view==="live"){ liveView.style.display="block"; loadLiveChannel(currentLiveChannel); return; }
   if(view==="map"){
     mapView.classList.add("active");
+    const mapEl = $("map");
     if(!leafletLoaded){
       mapLoader.classList.add("show");
       mapLoaderMsg.textContent = "Kaart laden...";
-      map.style.display="none";
+      if(mapEl) mapEl.style.display="none";
       const ok=await loadLeaflet();
       mapLoader.classList.remove("show");
       if(!ok){
         mapError.classList.add("show");
-        map.style.display="block";
+        if(mapEl) mapEl.style.display="block";
         return;
       }
-      map.style.display="block";
+      if(mapEl) mapEl.style.display="block";
     }
     setTimeout(()=>{
       if(!map) initMap();
@@ -2073,7 +2091,6 @@ notifBtn.addEventListener("click",async()=>{
 
 refreshBtn.addEventListener("click",()=>loadFeeds(false));
 themeBtn.addEventListener("click",()=>{
-  /* Patch A: toggle both html + body */
   document.documentElement.classList.toggle("light");
   document.body.classList.toggle("light");
   const isLight = document.documentElement.classList.contains("light");
@@ -2088,7 +2105,6 @@ themeBtn.addEventListener("click",()=>{
 backTop.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
 
 document.addEventListener("keydown",e=>{
-  /* Patch K: e.key guard */
   if(!e.key) return;
   const tag=(e.target.tagName||"").toLowerCase();
   if(tag==="input" || tag==="textarea" || tag==="select") return;
@@ -2151,7 +2167,6 @@ window.addEventListener("online",updateOnlineStatus);
 window.addEventListener("offline",updateOnlineStatus);
 
 let clockInterval=null;
-/* Patch L: countdown via nextRefreshAt */
 function tickClock(){
   const now=new Date();
   clockEl.textContent=now.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
@@ -2179,7 +2194,6 @@ setInterval(()=>{
   await loadStateFromDB();
   updateNotifBtn();
   updateOnlineStatus();
-  /* Patch A: theme is al gezet door inline script in <head>; sync body-class */
   if(document.documentElement.classList.contains("light")) document.body.classList.add("light");
   updateThemeMeta();
   currentLiveChannel="aljazeera-en";

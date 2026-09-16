@@ -812,4 +812,11 @@ body.light .bottom-tabs{
   }
   .card-body{ padding:.9rem 1rem 1rem; }
   .card-title{ font-size:1rem; }
+}/* Update indicator (header) */
+.hstat.teal .hstat-value{
+  color:#5eead4;
+  text-shadow:0 0 12px rgba(94,234,212,.4);
+}
+@media(max-width:640px){
+  .hstat.teal{ display:none; }
 }

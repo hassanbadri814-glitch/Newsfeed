@@ -218,6 +218,7 @@ body.light .map-legend{background:rgba(255,255,255,.95)}
 footer{padding:2rem 1.25rem;text-align:center;color:var(--ink-3);font-size:.68rem;letter-spacing:.05em;border-top:1px solid var(--line);background:linear-gradient(180deg,var(--bg-2),var(--bg));line-height:1.7}
 footer a{color:var(--amber);text-decoration:none;font-weight:600}
 footer kbd{background:var(--bg-3);color:var(--ink-2);padding:.1rem .4rem;border-radius:5px;font-family:monospace;font-size:.62rem;border:1px solid var(--line-2)}
+footer .app-version{color:var(--amber);font-weight:700;letter-spacing:.08em}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(150%);background:linear-gradient(135deg,var(--card),var(--card-hover));color:var(--ink);border:1px solid rgba(226,168,87,.4);padding:.8rem 1.3rem;border-radius:12px;font-size:.8rem;font-weight:500;z-index:10000;max-width:90vw;transition:transform .32s cubic-bezier(.2,.9,.3,1);display:flex;align-items:center;gap:.55rem;box-shadow:var(--shadow-deep)}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast .ic{color:var(--amber);font-size:1rem}
@@ -303,6 +304,13 @@ main{padding:1.25rem 1rem 3rem}
 .cat-menu-item{padding:.6rem .75rem;font-size:.74rem}
 .cat-menu-filters{grid-template-columns:1fr;gap:.4rem}
 }
+@media print{
+  header,.breaking,.ticker,.statusbar,.cat-menu,.back-top,.card-actions,.footer kbd,.src-popup,.toast{display:none !important}
+  body{background:#fff;color:#000}
+  article{break-inside:avoid;border:1px solid #ddd;box-shadow:none;page-break-inside:avoid}
+  .card-title{color:#000}
+  footer{background:#fff;border:none;color:#666}
+}
 </style>
 </head>
 <body>
@@ -363,7 +371,7 @@ main{padding:1.25rem 1rem 3rem}
 
 <div class="offline-banner" id="offlineBanner">⚠ Je bent offline — je ziet gecachte artikelen</div>
 
-<div class="statusbar">
+<div class="statusbar" role="status" aria-live="polite">
   <span class="indicator"><span class="dot ok" id="statusDot"></span><span id="statusText">Verbinden...</span></span>
   <span class="indicator" id="trStatus" style="display:none"><span class="dot warn"></span>Vertalen: <span id="trCount">0/0</span></span>
   <span class="paused" id="pausedIndicator">⏸ Auto-refresh gepauzeerd</span>
@@ -422,7 +430,7 @@ main{padding:1.25rem 1rem 3rem}
 </main>
 
 <footer>
-  WAR DESK · Live conflict monitor · Proxy via
+  WAR DESK · <span class="app-version" id="appVersion">v17.1</span> · Live conflict monitor · Proxy via
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
   <br>
   Sneltoetsen: <kbd>/</kbd> zoeken · <kbd>R</kbd> verversen · <kbd>M</kbd> kaart · <kbd>L</kbd> lijst · <kbd>F</kbd> favorieten · <kbd>T</kbd> thema
@@ -557,10 +565,11 @@ main{padding:1.25rem 1rem 3rem}
 
 <script>
 /* ==========================================================
-   WAR DESK v17
-   Fixes: lastVisit correct opgeslagen, readArticles-check in isNewArticle,
-   localStorage backup, pagehide opslaan, init zonder setTimeout
+   WAR DESK v17.1
+   Nieuw: versie-display, global error handler, SW update-melding,
+   focus-trap menu, aria-live, print-stylesheet, OS-thema fallback
    ========================================================== */
+const APP_VERSION = "v17.1";
 const PROXY_URL="https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED=5, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
 const PAGE_SIZE=30, TIMEOUT_MS=6000, INACTIVITY_MS=15000, CONCURRENCY=15;
@@ -707,7 +716,6 @@ let timeRangeHours=168, lastBreakingItem=null;
 const targetLang="nl";
 let favorites=new Set(), readArticles=new Set(), trCache={}, sourceHealth={}, disabledSources=new Set();
 let lastVisit=0, notifEnabled=false, db=null;
-
 let cachedFiltered=null, cachedFilterSig="";
 let cachedNavCounts=null, cachedNavSig="";
 let cachedForYouBase=null, cachedForYouSig="";
@@ -715,6 +723,18 @@ let cachedTickerHtml="";
 let cachedSourcesList=[];
 let dataVersion=0;
 const translateTimers=new Map();
+
+/* Global error handler — voorkomt wit scherm */
+window.addEventListener("error", (e) => {
+  try {
+    console.error("[WAR DESK error]", e.error || e.message);
+  } catch(_) {}
+});
+window.addEventListener("unhandledrejection", (e) => {
+  try {
+    console.warn("[WAR DESK promise]", e.reason);
+  } catch(_) {}
+});
 
 function bumpDataVersion(){ dataVersion++; }
 function invalidateFilterCaches(){ cachedFiltered=null; cachedFilterSig=""; cachedForYouBase=null; cachedForYouSig=""; }
@@ -724,6 +744,21 @@ function isCardStillValid(idx, link){
   const el=document.getElementById("wcard-"+idx);
   if(!el) return false;
   return el.dataset.link === link;
+}
+
+/* Toon versie in footer */
+document.addEventListener("DOMContentLoaded", ()=>{
+  const el = document.getElementById("appVersion");
+  if(el) el.textContent = APP_VERSION;
+});
+
+/* OS dark/light voorkeur als geen keuze gemaakt */
+function detectOSTheme(){
+  try{
+    if(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) return "light";
+    if(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  }catch(e){}
+  return null;
 }
 
 function openDB(){
@@ -771,8 +806,6 @@ async function loadStateFromDB(){
   if(!favorites.size){ try{ favorites=new Set(JSON.parse(localStorage.getItem("wardesk_favs_v1")||"[]")); }catch(e){} }
   if(!readArticles.size){ try{ readArticles=new Set(JSON.parse(localStorage.getItem("wardesk_read_v1")||"[]")); }catch(e){} }
   if(!Object.keys(trCache).length){ try{ trCache=JSON.parse(localStorage.getItem("wardesk_tr_v31")||"{}"); }catch(e){} }
-  // lastVisit: eerst IndexedDB, dan localStorage fallback
-  if(!lastVisit){ lastVisit=parseInt(localStorage.getItem("wardesk_last_visit_v1")||"0",10); }
   if(!lastVisit){
     const ls = parseInt(localStorage.getItem("wardesk_last_visit_v1")||"0",10);
     if(ls) lastVisit = ls;
@@ -1145,7 +1178,6 @@ window.addEventListener("resize",()=>{
   resizeTimer=setTimeout(()=>{ if(map) map.invalidateSize(); },250);
 });
 
-/* ============ LASTVISIT: save bij verlaten ============ */
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden){
     saveLastVisitDB();
@@ -1154,7 +1186,6 @@ document.addEventListener("visibilitychange",()=>{
     markActivity(); startClock();
   }
 });
-
 window.addEventListener("pagehide", ()=>{ saveLastVisitDB(); });
 window.addEventListener("beforeunload", ()=>{ saveLastVisitDB(); });
 
@@ -1754,8 +1785,11 @@ viewMapBtn.addEventListener("click",()=>{ switchView(currentView==="map"?"list":
 
 const catMenu=$("catMenu");
 const catMenuClose=$("catMenuClose");
+let lastFocusedElement=null;
+
 viewListBtn.addEventListener("click",(e)=>{
   e.stopPropagation();
+  lastFocusedElement=document.activeElement;
   catMenu.classList.toggle("show");
   if(catMenu.classList.contains("show")){
     updateCatMenuActive();
@@ -1765,10 +1799,24 @@ viewListBtn.addEventListener("click",(e)=>{
         (item.dataset.action==="map" && currentView==="map")
       );
     });
+    setTimeout(()=>{ catMenuClose.focus(); }, 100);
   }
 });
-catMenuClose.addEventListener("click",()=>catMenu.classList.remove("show"));
-catMenu.addEventListener("click",(e)=>{ if(e.target===catMenu) catMenu.classList.remove("show"); });
+catMenuClose.addEventListener("click",()=>{ catMenu.classList.remove("show"); if(lastFocusedElement && lastFocusedElement.focus) lastFocusedElement.focus(); });
+catMenu.addEventListener("click",(e)=>{ if(e.target===catMenu){ catMenu.classList.remove("show"); if(lastFocusedElement && lastFocusedElement.focus) lastFocusedElement.focus(); } });
+
+/* Focus-trap in menu */
+catMenu.addEventListener("keydown", (e) => {
+  if(!catMenu.classList.contains("show")) return;
+  if(e.key === "Escape"){ catMenu.classList.remove("show"); if(lastFocusedElement && lastFocusedElement.focus) lastFocusedElement.focus(); return; }
+  if(e.key !== "Tab") return;
+  const focusables = catMenu.querySelectorAll('button, [href], input, select, [tabindex]:not([tabindex="-1"])');
+  if(!focusables.length) return;
+  const first = focusables[0], last = focusables[focusables.length-1];
+  if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+});
+
 document.querySelectorAll(".cat-menu-item").forEach(item=>{
   if(item.id === "notifBtn") return;
   item.addEventListener("click",()=>{
@@ -1956,7 +2004,12 @@ setInterval(()=>{
     const saved=localStorage.getItem("wardesk_theme");
     if(saved==="light") document.body.classList.add("light");
     else if(saved==="dark"){}
-    else if(new Date().getHours()>=7 && new Date().getHours()<20) document.body.classList.add("light");
+    else {
+      const osTheme = detectOSTheme();
+      if(osTheme === "light") document.body.classList.add("light");
+      else if(osTheme === "dark"){}
+      else if(new Date().getHours()>=7 && new Date().getHours()<20) document.body.classList.add("light");
+    }
   }catch(e){}
   updateThemeMeta();
   currentLiveChannel="aljazeera-en";
@@ -1968,9 +2021,20 @@ setInterval(()=>{
   saveLastVisitDB();
 })();
 
+/* Service worker registratie + update-melding */
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("service-worker.js").catch(err=>console.log("SW:",err));
+    navigator.serviceWorker.register("service-worker.js").then((reg)=>{
+      reg.addEventListener("updatefound", ()=>{
+        const newWorker = reg.installing;
+        if(!newWorker) return;
+        newWorker.addEventListener("statechange", ()=>{
+          if(newWorker.state === "installed" && navigator.serviceWorker.controller){
+            showToast("Nieuwe versie beschikbaar — herlaad de app","🔄");
+          }
+        });
+      });
+    }).catch(err=>console.log("SW:",err));
   });
 }
 </script>

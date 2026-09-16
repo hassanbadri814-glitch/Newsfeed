@@ -449,7 +449,7 @@ main{padding:1.25rem 1rem 3rem}
 </main>
 
 <footer>
-  WAR DESK · <span class="app-version" id="appVersion">v17.7</span> · Live conflict monitor · Proxy via
+  WAR DESK · <span class="app-version" id="appVersion">v17.8</span> · Live conflict monitor · Proxy via
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
   <br>
   Sneltoetsen: <kbd>/</kbd> zoeken · <kbd>R</kbd> verversen · <kbd>M</kbd> kaart · <kbd>L</kbd> lijst · <kbd>F</kbd> favorieten · <kbd>T</kbd> thema · <kbd>P</kbd> print
@@ -513,6 +513,7 @@ main{padding:1.25rem 1rem 3rem}
         <option value="tr">Turks</option>
       </select>
       <select class="select" id="sortSelect" aria-label="Sorteren">
+        <option value="importance">Belangrijkheid</option>
         <option value="newest">Nieuwste eerst</option>
         <option value="oldest">Oudste eerst</option>
         <option value="source">Bron A-Z</option>
@@ -538,35 +539,19 @@ main{padding:1.25rem 1rem 3rem}
       <button class="cat-menu-item" data-cat="foryou"><span class="emoji">◆</span>Voor jou</button>
       <button class="cat-menu-item" data-cat="fav"><span class="emoji">★</span>Favorieten</button>
     </div>
-    <div class="cat-menu-title">Conflicten</div>
+    <div class="cat-menu-title">Conflict</div>
     <div class="cat-menu-grid">
       <button class="cat-menu-item" data-cat="war"><span class="emoji">⚔️</span>Oorlog</button>
       <button class="cat-menu-item" data-cat="gaza"><span class="emoji">🔥</span>Gaza</button>
-      <button class="cat-menu-item" data-cat="lebanon"><span class="emoji">🇱🇧</span>Libanon</button>
-      <button class="cat-menu-item" data-cat="syria"><span class="emoji">🇸🇾</span>Syrië</button>
-      <button class="cat-menu-item" data-cat="yemen"><span class="emoji">🇾🇪</span>Jemen</button>
-      <button class="cat-menu-item" data-cat="iran"><span class="emoji">🇮🇷</span>Iran</button>
       <button class="cat-menu-item" data-cat="ukraine"><span class="emoji">🇺🇦</span>Oekraïne</button>
       <button class="cat-menu-item" data-cat="sudan"><span class="emoji">🇸🇩</span>Soedan</button>
     </div>
     <div class="cat-menu-title">Regio's</div>
     <div class="cat-menu-grid">
       <button class="cat-menu-item" data-cat="nl"><span class="emoji">🇳🇱</span>Nederland</button>
-      <button class="cat-menu-item" data-cat="be"><span class="emoji">🇧🇪</span>België</button>
-      <button class="cat-menu-item" data-cat="de"><span class="emoji">🇩🇪</span>Duitsland</button>
-      <button class="cat-menu-item" data-cat="fr"><span class="emoji">🇫🇷</span>Frankrijk</button>
-      <button class="cat-menu-item" data-cat="es"><span class="emoji">🇪🇸</span>Spanje</button>
-      <button class="cat-menu-item" data-cat="it"><span class="emoji">🇮🇹</span>Italië</button>
-      <button class="cat-menu-item" data-cat="uk"><span class="emoji">🇬🇧</span>VK</button>
-      <button class="cat-menu-item" data-cat="us"><span class="emoji">🇺🇸</span>VS</button>
-      <button class="cat-menu-item" data-cat="tr"><span class="emoji">🇹🇷</span>Turkije</button>
-      <button class="cat-menu-item" data-cat="maroc"><span class="emoji">🇲🇦</span>Marokko</button>
-      <button class="cat-menu-item" data-cat="eg"><span class="emoji">🇪🇬</span>Egypte</button>
-      <button class="cat-menu-item" data-cat="sa"><span class="emoji">🇸🇦</span>Saoedi-Arabië</button>
-      <button class="cat-menu-item" data-cat="ae"><span class="emoji">🇦🇪</span>VAE</button>
-      <button class="cat-menu-item" data-cat="qa"><span class="emoji">🇶🇦</span>Qatar</button>
-      <button class="cat-menu-item" data-cat="il"><span class="emoji">🇮🇱</span>Israël</button>
       <button class="cat-menu-item" data-cat="mideast"><span class="emoji">🌍</span>Midden-Oosten</button>
+      <button class="cat-menu-item" data-cat="europe"><span class="emoji">🇪🇺</span>Europa</button>
+      <button class="cat-menu-item" data-cat="us"><span class="emoji">🇺🇸</span>VS</button>
       <button class="cat-menu-item" data-cat="world"><span class="emoji">🌐</span>Wereld</button>
     </div>
     <div class="cat-menu-title">Categorieën</div>
@@ -588,14 +573,15 @@ main{padding:1.25rem 1rem 3rem}
 
 <script>
 /* ==========================================================
-   WAR DESK v17.7
-   - PER_FEED=10 (was 5)
-   - Bron-dropdown toont aantallen
-   - 6 nieuwe sport-feeds (NOS Sport, NOS Voetbal, ESPN NL,
-     Voetbalnieuws, Ziggo Sport, Glory Kickboxing)
-   - v17.5 runtime-fixes behouden
+   WAR DESK v17.8
+   - Sortering "Belangrijkheid" (gewogen score)
+   - Menu geconsolideerd naar 17 opties
+   - Midden-Oosten groep (alle Midden-Oosten landen)
+   - Europa groep (BE/DE/FR/ES/IT/UK)
+   - Nederland apart
+   - Alle v17.7 features behouden
    ========================================================== */
-const APP_VERSION = "v17.7";
+const APP_VERSION = "v17.8";
 const PROXY_URL="https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED=10, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
 const PAGE_SIZE=30, TIMEOUT_MS=6000, INACTIVITY_MS=15000, CONCURRENCY=15;
@@ -607,7 +593,13 @@ const STORE_ARTICLES="articles", STORE_KV="kv";
 const HEALTH_RETRY_MS = 3600000;
 const HEALTH_PRUNE_MS = 86400000;
 const FAIL_DISABLE_THRESHOLD = 3;
+/* Groepen voor menu — specifieke cats worden samengevoegd */
+const CAT_GROUPS = {
+  mideast: ["mideast","il","gaza","lebanon","syria","yemen","iran","tr","eg","sa","ae","qa"],
+  europe: ["be","de","fr","es","it","uk"]
+};
 const HIGH_PRIORITY=["Al Jazeera","BBC World","BBC Arabic","Al Jazeera AR","TRT World","Times of Israel","Jerusalem Post","NOS","NOS Sport","De Telegraaf","AD.nl","RTL Nieuws","Reuters","AP News"];
+const IMPORTANCE_KEYWORDS=["killed","dead","deaths","massacre","nuclear","invasion","airstrike","ceasefire","assassinated","declared war","explosion","missile","bombing","hostage","shooting","crash","collapse"];
 const ACTION_KEYWORDS=["airstrike","air strike","strikes","strike","attack","attacks","bombing","bomb","bombed","missile","missiles","drone","shelling","shelled","explosion","blast","raid","raids","invasion","invaded","offensive","assault","ceasefire","cease-fire","truce","peace deal","peace agreement","peace treaty","killed","dead","deaths","casualties","injured","wounded","massacre","hostage","hostages","captured","arrested","detained","released","elected","resigned","appointed","assassinated","assassination","declared war","sanctions","sanction","nuclear","nuke","chemical weapons","coup","overthrow","uprising","revolt","crashed","plane crash","earthquake","tsunami","pandemic","outbreak"];
 const HIGH_IMPACT=["killed","dead","deaths","massacre","nuclear","invasion","airstrike","ceasefire","assassinated","declared war"];
 const LOCATION_KEYWORDS=["gaza","rafah","khan younis","west bank","israel","israeli","palestin","hamas","hezbollah","lebanon","beirut","syria","damascus","iran","tehran","iraq","baghdad","yemen","houthi","sanaa","aden","ukraine","kyiv","kiev","russia","moscow","putin","zelensky","netanyahu","khamenei","sudan","khartoum","darfur","morocco","rabat","casablanca","egypt","cairo","saudi","riyadh","qatar","doha","uae","dubai","turkey","ankara","istanbul","trump","biden","usa","america","washington","china","beijing","north korea","jerusalem","tel aviv"];
@@ -744,7 +736,7 @@ const FEEDS=[
 {name:"Mondoweiss",lang:"en",cat:"gaza",lat:40.71,lon:-74.00,url:"https://mondoweiss.net/feed/"}
 ];
 
-let allItems=[], activeCat="all", activeSource="all", activeTime="all", activeLang="all", activeSort="newest";
+let allItems=[], activeCat="all", activeSource="all", activeTime="all", activeLang="all", activeSort="importance";
 let currentView="list", map=null, markersLayer=null, clusterGroup=null, leafletLoaded=false, leafletLoadPromise=null;
 let isFirstLoad=true;
 let currentLiveChannel="aljazeera-en", currentPage=1, failedFeeds=[], lastUserActivity=Date.now();
@@ -1093,6 +1085,18 @@ function isNewArticle(it){
   if(!lastVisit) return false;
   const t = new Date(it.date).getTime();
   return !isNaN(t) && t > lastVisit;
+}
+/* Belangrijkheid-score: bronnen × keywords × prioriteit × recentheid */
+function scoreArticle(it){
+  const sources = (it.sources||[it.source]).length;
+  const t = ((it.title||"") + " " + (it.desc||"")).toLowerCase();
+  let kwScore = 0;
+  for(const kw of IMPORTANCE_KEYWORDS){ if(t.includes(kw)) kwScore += 3; }
+  for(const kw of HIGH_IMPACT){ if(t.includes(kw)) kwScore += 2; }
+  const priority = HIGH_PRIORITY.includes(it.source) ? 20 : 0;
+  const ageMin = Math.max(0, (Date.now() - safeTime(it.date)) / 60000);
+  const ageScore = Math.max(0, 40 - ageMin/1.5);
+  return sources * 12 + kwScore * 4 + priority + ageScore;
 }
 
 function detectTopic(title,desc,fallbackCat){
@@ -1497,6 +1501,10 @@ function updateNavCounts(){
   if(!cachedNavCounts || cachedNavSig!==sig){
     const counts={all:allItems.length, fav:favorites.size};
     allItems.forEach(it=>{ counts[it.cat]=(counts[it.cat]||0)+1; });
+    /* Groep-tellingen toevoegen */
+    for(const [group, cats] of Object.entries(CAT_GROUPS)){
+      counts[group] = cats.reduce((sum, c) => sum + (counts[c] || 0), 0);
+    }
     cachedNavCounts=counts;
     cachedNavSig=sig;
   }
@@ -1512,7 +1520,7 @@ function updateNavCounts(){
   updateCatMenuActive();
 }
 function getCatLabel(cat){
-  const map={war:"Oorlog",gaza:"Gaza",lebanon:"Libanon",syria:"Syrië",yemen:"Jemen",iran:"Iran",ukraine:"Oekraïne",sudan:"Soedan",maroc:"Marokko",mideast:"Midden-Oosten",world:"Wereld",nl:"Nederland",be:"België",de:"Duitsland",fr:"Frankrijk",es:"Spanje",it:"Italië",uk:"Verenigd Koninkrijk",us:"Verenigde Staten",tr:"Turkije",eg:"Egypte",sa:"Saoedi-Arabië",ae:"VAE",qa:"Qatar",il:"Israël",sport:"Sport",business:"Economie",tech:"Tech",health:"Gezondheid",algemeen:"Algemeen",fav:"Favorieten",foryou:"Voor jou"};
+  const map={war:"Oorlog",gaza:"Gaza",lebanon:"Libanon",syria:"Syrië",yemen:"Jemen",iran:"Iran",ukraine:"Oekraïne",sudan:"Soedan",maroc:"Marokko",mideast:"Midden-Oosten",europe:"Europa",world:"Wereld",nl:"Nederland",be:"België",de:"Duitsland",fr:"Frankrijk",es:"Spanje",it:"Italië",uk:"Verenigd Koninkrijk",us:"Verenigde Staten",tr:"Turkije",eg:"Egypte",sa:"Saoedi-Arabië",ae:"VAE",qa:"Qatar",il:"Israël",sport:"Sport",business:"Economie",tech:"Tech",health:"Gezondheid",algemeen:"Algemeen",fav:"Favorieten",foryou:"Voor jou"};
   return map[cat]||cat;
 }
 function getForYouBase(){
@@ -1540,6 +1548,10 @@ function getFilteredBase(){
   if(activeCat==="foryou") base=getForYouBase().slice();
   else if(activeCat==="fav") base=allItems.filter(it=>favorites.has(it.link)).slice();
   else if(activeCat==="all" || activeCat==="live") base=allItems.slice();
+  else if(CAT_GROUPS[activeCat]){
+    const cats = CAT_GROUPS[activeCat];
+    base = allItems.filter(it=>cats.includes(it.cat)).slice();
+  }
   else base=allItems.filter(it=>it.cat===activeCat).slice();
   base=base.filter(it=>{
     if(activeSource!=="all" && it.source!==activeSource) return false;
@@ -1562,6 +1574,9 @@ function getFilteredBase(){
       if(sb!==sa) return sb-sa;
       return safeTime(b.date)-safeTime(a.date);
     });
+  } else if(activeSort==="importance"){
+    base.forEach(it => { if(it._score === undefined) it._score = scoreArticle(it); });
+    base.sort((a,b) => b._score - a._score);
   } else base.sort((a,b)=>safeTime(b.date)-safeTime(a.date));
   cachedFiltered=base;
   return base;
@@ -1570,13 +1585,14 @@ function getFilteredBase(){
 function render(){
   const list=getFilteredBase();
   currentRender=list;
-  const titleMap={all:"Laatste berichten", live:"Laatste berichten", fav:"Favorieten", foryou:"Voor jou", war:"Oorlog & conflict", gaza:"Gazastrook", lebanon:"Libanon", syria:"Syrië", yemen:"Jemen", iran:"Iran", ukraine:"Oekraïne", sudan:"Soedan", maroc:"Marokko", mideast:"Midden-Oosten", world:"Wereld", nl:"Nederland", be:"België", de:"Duitsland", fr:"Frankrijk", es:"Spanje", it:"Italië", uk:"Verenigd Koninkrijk", us:"Verenigde Staten", tr:"Turkije", eg:"Egypte", sa:"Saoedi-Arabië", ae:"VAE", qa:"Qatar", il:"Israël", sport:"Sport", business:"Economie", tech:"Tech", health:"Gezondheid", algemeen:"Algemeen"};
+  const titleMap={all:"Laatste berichten", live:"Laatste berichten", fav:"Favorieten", foryou:"Voor jou", war:"Oorlog & conflict", gaza:"Gazastrook", ukraine:"Oekraïne", sudan:"Soedan", maroc:"Marokko", mideast:"Midden-Oosten", europe:"Europa", world:"Wereld", nl:"Nederland", us:"Verenigde Staten", sport:"Sport", business:"Economie", tech:"Tech", health:"Gezondheid", algemeen:"Algemeen"};
   let title=titleMap[activeCat]||"Laatste berichten";
   if(activeSource!=="all") title="Bron · "+activeSource;
   if(activeTime!=="all"){
     const labels={"1":"Laatste uur","6":"Laatste 6 uur","24":"Laatste 24 uur","168":"Laatste week"};
     title+=" · "+(labels[activeTime]||"");
   }
+  if(activeSort==="importance") title+=" · Belangrijkheid";
   sectionTitle.textContent=title;
   sectionCount.textContent=list.length+" berichten";
 
@@ -2027,7 +2043,7 @@ resetFiltersBtn.addEventListener("click", ()=>{
   sourceSelect.value = "all"; activeSource = "all";
   timeSelect.value = "all"; activeTime = "all";
   langSelect.value = "all"; activeLang = "all";
-  sortSelect.value = "newest"; activeSort = "newest";
+  sortSelect.value = "importance"; activeSort = "importance";
   currentPage = 1;
   clearTranslateTimers();
   invalidateFilterCaches();

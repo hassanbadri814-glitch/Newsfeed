@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v19.0 — State persistentie
+   WAR DESK v19.0 — State persistentie (v2)
    Onthoudt categorie, sortering en weergave na herladen
    ============================================================ */
 
@@ -26,65 +26,79 @@
     }catch(e){ return null; }
   }
 
+  function applyToUI(saved){
+    if(!saved) return;
+    var $ = function(id){ return document.getElementById(id); };
+    
+    document.querySelectorAll(".sheet-item[data-cat]").forEach(function(b){
+      b.classList.toggle("active", b.dataset.cat === (saved.cat || "all"));
+    });
+    
+    if($("sortImportance")){
+      $("sortImportance").classList.toggle("active", (saved.sort || "importance") === "importance");
+    }
+    if($("sortNewest")){
+      $("sortNewest").classList.toggle("active", (saved.sort || "importance") === "newest");
+    }
+    if($("viewCards")){
+      $("viewCards").classList.toggle("active", (saved.view || "cards") === "cards");
+    }
+    if($("viewList")){
+      $("viewList").classList.toggle("active", (saved.view || "cards") === "list");
+    }
+  }
+
+  function restore(){
+    var saved = load();
+    if(!saved) return false;
+    if(window.State){
+      State.currentCat = saved.cat || "all";
+      State.currentSort = saved.sort || "importance";
+      State.viewMode = saved.view || "cards";
+      return true;
+    }
+    return false;
+  }
+
   window.addEventListener("DOMContentLoaded", function(){
     var saved = load();
-    if(!saved) return;
+    
+    // Herstel state direct
+    if(saved){
+      restore();
+      applyToUI(saved);
+    }
 
-    // Wacht tot NewsAPI beschikbaar is
+    // BELANGRIJK: capture phase — vuurt VOOR stopPropagation
+    document.addEventListener("click", function(e){
+      // Alleen reageren op UI-klikken
+      var target = e.target.closest("[data-cat], #sortImportance, #sortNewest, #viewCards, #viewList");
+      if(target){
+        setTimeout(save, 200);
+      }
+    }, true); // ← true = capture phase, omzeilt stopPropagation
+
+    // Extra vangnetten
+    window.addEventListener("pagehide", save);
+    window.addEventListener("beforeunload", save);
+    document.addEventListener("visibilitychange", function(){
+      if(document.hidden) save();
+    });
+
+    // Wacht tot NewsAPI klaar is, dan re-renderen met herstelde state
     var attempts = 0;
     var waitInterval = setInterval(function(){
       attempts++;
       if(window.NewsAPI && window.State){
         clearInterval(waitInterval);
-
-        // Herstel state
-        if(saved.cat) State.currentCat = saved.cat;
-        if(saved.sort) State.currentSort = saved.sort;
-        if(saved.view) State.viewMode = saved.view;
-
-        // Zet de juiste knoppen actief
-        var $ = function(id){ return document.getElementById(id); };
-
-        // Categorie knop
-        document.querySelectorAll(".sheet-item[data-cat]").forEach(function(b){
-          b.classList.toggle("active", b.dataset.cat === saved.cat);
-        });
-
-        // Sortering
-        if($("sortImportance") && $("sortNewest")){
-          $("sortImportance").classList.toggle("active", saved.sort === "importance");
-          $("sortNewest").classList.toggle("active", saved.sort === "newest");
-        }
-
-        // Weergave
-        if($("viewCards") && $("viewList")){
-          $("viewCards").classList.toggle("active", saved.view === "cards");
-          $("viewList").classList.toggle("active", saved.view === "list");
-        }
-
-        // Re-render met herstelde state
-        try{
-          if(NewsAPI.render) NewsAPI.render();
-        }catch(e){}
-
-        console.log("[WAR DESK] State hersteld:", saved);
+        restore();
+        applyToUI(load());
+        try{ if(NewsAPI.render) NewsAPI.render(); }catch(e){}
+        console.log("[WAR DESK] State hersteld");
       }
-      // Na 10 seconden opgeven
       if(attempts > 100) clearInterval(waitInterval);
     }, 100);
-
-    // Bij elke wijziging opslaan
-    document.addEventListener("click", function(e){
-      var t = e.target.closest("[data-cat]");
-      if(t && t.classList.contains("sheet-item")){
-        setTimeout(save, 100);
-      }
-      if(e.target.id === "sortImportance" || e.target.id === "sortNewest" ||
-         e.target.id === "viewCards" || e.target.id === "viewList"){
-        setTimeout(save, 100);
-      }
-    });
   });
 
-  console.log("[WAR DESK] persist.js geladen");
+  console.log("[WAR DESK] persist.js v2 geladen");
 })();

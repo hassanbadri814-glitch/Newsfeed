@@ -449,7 +449,7 @@ main{padding:1.25rem 1rem 3rem}
 </main>
 
 <footer>
-  WAR DESK · <span class="app-version" id="appVersion">v17.5</span> · Live conflict monitor · Proxy via
+  WAR DESK · <span class="app-version" id="appVersion">v17.7</span> · Live conflict monitor · Proxy via
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
   <br>
   Sneltoetsen: <kbd>/</kbd> zoeken · <kbd>R</kbd> verversen · <kbd>M</kbd> kaart · <kbd>L</kbd> lijst · <kbd>F</kbd> favorieten · <kbd>T</kbd> thema · <kbd>P</kbd> print
@@ -588,17 +588,16 @@ main{padding:1.25rem 1rem 3rem}
 
 <script>
 /* ==========================================================
-   WAR DESK v17.5 — 6 runtime-bugs gefixt
-   1) Kaart-crash: map → $("map")
-   2) Breaking-banner timer reset
-   3) Source-select behoud bij tijdelijke offline bron
-   4) markAsRead debounced write
-   5) renderMap debounced bij slider
-   6) saveHealthDB dedupe (skip ongewijzigd)
+   WAR DESK v17.7
+   - PER_FEED=10 (was 5)
+   - Bron-dropdown toont aantallen
+   - 6 nieuwe sport-feeds (NOS Sport, NOS Voetbal, ESPN NL,
+     Voetbalnieuws, Ziggo Sport, Glory Kickboxing)
+   - v17.5 runtime-fixes behouden
    ========================================================== */
-const APP_VERSION = "v17.5";
+const APP_VERSION = "v17.7";
 const PROXY_URL="https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
-const PER_FEED=5, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
+const PER_FEED=10, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
 const PAGE_SIZE=30, TIMEOUT_MS=6000, INACTIVITY_MS=15000, CONCURRENCY=15;
 const LEAFLET_TIMEOUT_MS=10000;
 const READ_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -608,7 +607,7 @@ const STORE_ARTICLES="articles", STORE_KV="kv";
 const HEALTH_RETRY_MS = 3600000;
 const HEALTH_PRUNE_MS = 86400000;
 const FAIL_DISABLE_THRESHOLD = 3;
-const HIGH_PRIORITY=["Al Jazeera","BBC World","BBC Arabic","Al Jazeera AR","TRT World","Times of Israel","Jerusalem Post","NOS","De Telegraaf","AD.nl","RTL Nieuws","Reuters","AP News"];
+const HIGH_PRIORITY=["Al Jazeera","BBC World","BBC Arabic","Al Jazeera AR","TRT World","Times of Israel","Jerusalem Post","NOS","NOS Sport","De Telegraaf","AD.nl","RTL Nieuws","Reuters","AP News"];
 const ACTION_KEYWORDS=["airstrike","air strike","strikes","strike","attack","attacks","bombing","bomb","bombed","missile","missiles","drone","shelling","shelled","explosion","blast","raid","raids","invasion","invaded","offensive","assault","ceasefire","cease-fire","truce","peace deal","peace agreement","peace treaty","killed","dead","deaths","casualties","injured","wounded","massacre","hostage","hostages","captured","arrested","detained","released","elected","resigned","appointed","assassinated","assassination","declared war","sanctions","sanction","nuclear","nuke","chemical weapons","coup","overthrow","uprising","revolt","crashed","plane crash","earthquake","tsunami","pandemic","outbreak"];
 const HIGH_IMPACT=["killed","dead","deaths","massacre","nuclear","invasion","airstrike","ceasefire","assassinated","declared war"];
 const LOCATION_KEYWORDS=["gaza","rafah","khan younis","west bank","israel","israeli","palestin","hamas","hezbollah","lebanon","beirut","syria","damascus","iran","tehran","iraq","baghdad","yemen","houthi","sanaa","aden","ukraine","kyiv","kiev","russia","moscow","putin","zelensky","netanyahu","khamenei","sudan","khartoum","darfur","morocco","rabat","casablanca","egypt","cairo","saudi","riyadh","qatar","doha","uae","dubai","turkey","ankara","istanbul","trump","biden","usa","america","washington","china","beijing","north korea","jerusalem","tel aviv"];
@@ -623,6 +622,13 @@ const LIVE_CHANNELS={
 };
 const FEEDS=[
 {name:"NOS",lang:"nl",cat:"nl",lat:52.37,lon:4.90,url:"https://feeds.nos.nl/nosnieuwsalgemeen"},
+{name:"NOS Sport",lang:"nl",cat:"sport",lat:52.37,lon:4.90,url:"https://feeds.nos.nl/nossport"},
+{name:"NOS Voetbal",lang:"nl",cat:"sport",lat:52.37,lon:4.90,url:"https://feeds.nos.nl/nossportvoetbal"},
+{name:"ESPN NL",lang:"nl",cat:"sport",lat:52.37,lon:4.90,url:"https://www.espn.nl/rss"},
+{name:"Voetbalnieuws",lang:"nl",cat:"sport",lat:52.37,lon:4.90,url:"https://www.voetbalnieuws.nl/feed/"},
+{name:"Voetbalzone",lang:"nl",cat:"sport",lat:52.37,lon:4.90,url:"https://www.voetbalzone.nl/rss"},
+{name:"Ziggo Sport",lang:"nl",cat:"sport",lat:52.37,lon:4.90,url:"https://www.ziggosport.nl/rss"},
+{name:"Glory Kickboxing",lang:"en",cat:"sport",lat:52.37,lon:4.90,url:"https://glorykickboxing.com/rss"},
 {name:"De Telegraaf",lang:"nl",cat:"nl",lat:52.37,lon:4.90,url:"https://www.telegraaf.nl/rss"},
 {name:"AD.nl",lang:"nl",cat:"nl",lat:52.37,lon:4.90,url:"https://www.ad.nl/rss.xml"},
 {name:"De Volkskrant",lang:"nl",cat:"nl",lat:52.37,lon:4.90,url:"https://www.volkskrant.nl/rss"},
@@ -759,10 +765,10 @@ let progressToken=0;
 let hasRenderedOnce=false;
 let nextRefreshAt = Date.now() + REFRESH_MS;
 let trSaveTimer = null;
-let breakingTimer = null;          /* Fix 2 */
-let readSaveTimer = null;          /* Fix 4 */
-let mapRenderTimer = null;         /* Fix 5 */
-let lastHealthHash = "";           /* Fix 6 */
+let breakingTimer = null;
+let readSaveTimer = null;
+let mapRenderTimer = null;
+let lastHealthHash = "";
 const translateTimers=new Map();
 
 window.addEventListener("error", (e) => { try { console.error("[WAR DESK error]", e.error || e.message); } catch(_) {} });
@@ -884,7 +890,6 @@ async function saveReadDB(){
   try{ await idbPut(STORE_KV,{k:"read",v:readArticles}); }catch(e){}
   try{ localStorage.setItem("wardesk_read_v1", JSON.stringify(readArticles)); }catch(e){}
 }
-/* Fix 4: debounced read-save */
 function scheduleReadSave(){
   clearTimeout(readSaveTimer);
   readSaveTimer = setTimeout(saveReadDB, 1500);
@@ -903,7 +908,6 @@ function scheduleTrSaveDB(){
   clearTimeout(trSaveTimer);
   trSaveTimer = setTimeout(saveTrCacheDB, 2000);
 }
-/* Fix 6: health-hash om onnodige writes te skippen */
 function healthHash(){
   let s="";
   for(const k of Object.keys(sourceHealth).sort()){
@@ -931,7 +935,7 @@ async function cacheArticlesDB(items){
     const tx=db.transaction(STORE_ARTICLES,"readwrite");
     const store=tx.objectStore(STORE_ARTICLES);
     store.clear();
-    items.slice(0,500).forEach(it=>{
+    items.slice(0,800).forEach(it=>{
       const slim={title:it.title,link:it.link,desc:it.desc,img:it.img,date:it.date,source:it.source,cat:it.cat,lang:it.lang,lat:it.lat,lon:it.lon,sources:it.sources};
       store.put(slim);
     });
@@ -1093,7 +1097,7 @@ function isNewArticle(it){
 
 function detectTopic(title,desc,fallbackCat){
   const t=(title+" "+desc).toLowerCase();
-  if(/\b(football|soccer|match|league|goal|coach|player|team|trophy|cup final|olympics|champions league|fifa|uefa|world cup|tennis|basketball|nba|nfl|formula 1|grand prix|boxing|ufc|wrestling|cricket|rugby|golf|messi|ronaldo|salah|mbappé)\b/.test(t)) return "sport";
+  if(/\b(football|soccer|voetbal|match|league|goal|coach|player|team|trophy|cup final|olympics|champions league|fifa|uefa|world cup|tennis|basketball|nba|nfl|formula 1|grand prix|boxing|ufc|wrestling|cricket|rugby|golf|messi|ronaldo|salah|mbappé|kickboxing|glory|eredivisie|ajax|psv|feyenoord)\b/.test(t)) return "sport";
   if(/\b(economy|economic|market|stocks|shares|tariff|sanction|oil price|inflation|gdp|bank|banking|currency|dollar|euro|crypto|bitcoin|business|profit|revenue|financial|investment|trade deal|export|import)\b/.test(t)) return "business";
   if(/\b(technology|tech company|apple|google|microsoft|meta platforms|openai|chatgpt|artificial intelligence|cyber attack|hacker|software|iphone|android|robot|spacex|nasa|satellite|starlink)\b/.test(t)) return "tech";
   if(/\b(health|covid|coronavirus|virus|vaccine|hospital|disease|cancer|who warns|pandemic|medicine|medical|outbreak|epidemic)\b/.test(t)) return "health";
@@ -1250,7 +1254,6 @@ function detectBreaking(items){
   groups.sort((a,b)=>b.sources.size-a.sources.size);
   return {item:groups[0].items[0], sources:[...groups[0].sources]};
 }
-/* Fix 2: timer reset */
 function showBreaking(info){
   if(Date.now()-lastBreakingShown<BREAKING_COOLDOWN) return;
   lastBreakingShown=Date.now();
@@ -1301,7 +1304,7 @@ window.addEventListener("resize",()=>{
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden){
     saveLastVisitDB();
-    saveReadDB();      /* Fix 4: flush pending read-writes */
+    saveReadDB();
     refreshPaused=true; pausedIndicator.classList.add("show"); stopClock();
   } else {
     markActivity(); startClock();
@@ -1403,7 +1406,7 @@ async function loadFeeds(isAuto=false){
     if(finalDeduped.length) allItems=finalDeduped;
     failedFeeds=failed;
 
-    await saveHealthDBIfChanged();   /* Fix 6 */
+    await saveHealthDBIfChanged();
     await cacheArticlesDB(allItems);
 
     statSources.textContent=`${totalOk}/${activeFeedCount}`;
@@ -1460,13 +1463,15 @@ async function loadFeeds(isAuto=false){
   }
 }
 
-/* Fix 3: behoud selectie bij tijdelijke offline bron */
 function populateSources(){
   const sources=[...new Set(allItems.map(it=>it.source))].sort();
   if(sources.length===cachedSourcesList.length && sources.every((s,i)=>s===cachedSourcesList[i])) return;
   cachedSourcesList=sources;
+  const counts={};
+  allItems.forEach(it=>{ counts[it.source]=(counts[it.source]||0)+1; });
   const current=sourceSelect.value;
-  sourceSelect.innerHTML='<option value="all">Alle bronnen</option>'+sources.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  sourceSelect.innerHTML=`<option value="all">Alle bronnen (${allItems.length})</option>`
+    + sources.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)} (${counts[s]||0})</option>`).join("");
   if(sources.includes(current)) sourceSelect.value=current;
   else if(current && current!=="all"){
     const opt=document.createElement("option");
@@ -1716,7 +1721,6 @@ function showSources(sources){
 }
 srcClose.addEventListener("click",()=>srcPopup.classList.remove("show"));
 srcPopup.addEventListener("click",e=>{ if(e.target===srcPopup) srcPopup.classList.remove("show"); });
-/* Fix 4: debounced write */
 function markAsRead(link){
   if(!readArticles[link]){
     readArticles[link] = Date.now();
@@ -1883,7 +1887,6 @@ function renderMap(){
   if(clusterGroup) clusterGroup.addLayers(allMarkers);
   else if(markersLayer) allMarkers.forEach(m=>markersLayer.addLayer(m));
 }
-/* Fix 5: debounce slider */
 if(timeRangeInput){
   timeRangeInput.addEventListener("input",()=>{
     timeRangeHours=parseInt(timeRangeInput.value,10);
@@ -1914,7 +1917,6 @@ document.querySelectorAll(".live-chip").forEach(chip=>{
   });
 });
 
-/* Fix 1: gebruik $("map") — de DOM-node — niet de Leaflet-instantie `map` */
 async function showOnly(view){
   listView.style.display="none";
   liveView.style.display="none";

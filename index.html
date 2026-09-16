@@ -4,154 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#070c16">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/svg+xml" href="icoon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<script>try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches))document.documentElement.classList.add("light")}catch(e){}</script>
+<title>WAR DESK</title>
+
+<!-- Thema laden vóór CSS om flikkering te voorkomen -->
+<script>
+try{
+  var t = localStorage.getItem("wardesk_theme");
+  if(t === "light" || (!t && matchMedia("(prefers-color-scheme:light)").matches)){
+    document.documentElement.classList.add("light");
+  }
+}catch(e){}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<title>WAR DESK</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#070c16;--bg-2:#0d1522;--bg-3:#131e30;--card:#111b2d;--card-hover:#18253c;--ink:#f5f8ff;--ink-2:#a9b7ce;--ink-3:#6b7a93;--amber:#e2a857;--amber-2:#f0c78a;--amber-3:#8a5c26;--teal:#14b8a6;--coral:#e63950;--coral-2:#f87171;--line:#1a2540;--line-2:#26344f;--green:#10b981;--radius:14px}
-html.light body,body.light{--bg:#f6f4ee;--bg-2:#fff;--bg-3:#ece8df;--card:#fff;--card-hover:#fbf9f4;--ink:#0a101d;--ink-2:#44516a;--ink-3:#7a869d;--line:#e9e4d9;--line-2:#d6cfbf}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.5;font-size:15px;overscroll-behavior-y:contain}
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-thumb{background:var(--amber-3);border-radius:8px}
-:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:6px}
-button{font-family:inherit;cursor:pointer}
-input,textarea,select{font-family:inherit}
-.progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--amber),var(--teal));z-index:10000;width:0%;transition:width .3s;opacity:0}
-.progress-bar.show{opacity:1}
-header{background:linear-gradient(180deg,var(--bg-2),rgba(13,21,34,.95));border-bottom:1px solid var(--line);position:sticky;top:0;z-index:99;backdrop-filter:blur(20px);padding-top:env(safe-area-inset-top,0)}
-.header-inner{max-width:1400px;margin:0 auto;padding:.9rem 1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
-.brand-mark{width:40px;height:40px;background:linear-gradient(135deg,var(--amber-2),var(--amber),var(--amber-3));display:grid;place-items:center;border-radius:11px;box-shadow:0 4px 18px rgba(226,168,87,.4)}
-.brand-mark svg{width:22px;height:22px}
-.brand-text .name{font-family:"Playfair Display",serif;font-size:1.15rem;font-weight:800;background:linear-gradient(135deg,var(--amber-2),var(--amber));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--amber);display:block}
-.brand-text .tag{font-size:.5rem;color:var(--ink-3);letter-spacing:.2em;font-weight:600}
-.header-stats{margin-left:auto;display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
-.hstat{display:flex;flex-direction:column}
-.hstat-label{font-size:.55rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
-.hstat-value{font-size:.85rem;font-weight:700;font-variant-numeric:tabular-nums}
-.hstat.amber .hstat-value{color:var(--amber)}
-.hstat.coral .hstat-value{color:var(--coral-2)}
-.hstat.green .hstat-value{color:var(--green)}
-.actions{display:flex;gap:.4rem;align-items:center}
-.btn-menu{width:52px;height:52px;font-size:1.4rem;border-radius:14px;background:linear-gradient(135deg,rgba(226,168,87,.18),rgba(226,168,87,.05));border:1.5px solid rgba(226,168,87,.4);color:var(--amber);display:grid;place-items:center}
-.btn-mini{width:40px;height:40px;font-size:.95rem;border-radius:10px;background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);color:var(--ink-2);display:grid;place-items:center}
-.btn-mini:active{transform:scale(.92)}
-main{max-width:1400px;margin:0 auto;padding:1.5rem 1rem 4rem}
-.section-head{display:flex;align-items:baseline;gap:1rem;padding-bottom:.8rem;border-bottom:1px solid var(--line);margin-bottom:1.25rem}
-.section-head h2{font-family:"Playfair Display",serif;font-size:1.1rem;font-weight:700}
-.section-count{margin-left:auto;font-size:.75rem;color:var(--ink-3);font-weight:500}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem}
-article{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 8px -4px rgba(0,0,0,.6)}
-article:hover{transform:translateY(-3px);background:var(--card-hover);box-shadow:0 16px 40px -18px rgba(226,168,87,.4);border-color:rgba(226,168,87,.3)}
-article.war{border-left:3px solid var(--coral)}
-article.read{opacity:.55}
-.card-thumb{width:100%;aspect-ratio:16/9;background:var(--bg-3);overflow:hidden}
-.card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.card-body{padding:1rem 1.1rem 1.2rem;display:flex;flex-direction:column;gap:.6rem;flex:1}
-.card-meta{display:flex;gap:.5rem;font-size:.7rem;color:var(--ink-3);flex-wrap:wrap;align-items:center}
-.card-source{color:var(--amber);font-weight:700}
-.card-title{font-family:"Playfair Display",serif;font-size:1.05rem;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.card-desc{font-size:.84rem;color:var(--ink-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1}
-.card-footer{padding-top:.7rem;border-top:1px solid var(--line);font-size:.7rem;color:var(--ink-3);display:flex;align-items:center}
-.card-footer .arrow{margin-left:auto;color:var(--amber);font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em}
-.empty{grid-column:1/-1;text-align:center;padding:4rem 1rem;color:var(--ink-3)}
-.empty .big{font-size:2.5rem;opacity:.3;color:var(--amber);margin-bottom:.5rem}
-.empty .msg{font-size:.85rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
-/* IPTV */
-#iptvView{display:none}
-.iptv-tabs{display:flex;gap:.4rem;margin-bottom:1rem;background:var(--bg-3);padding:.35rem;border-radius:12px;border:1px solid var(--line)}
-.iptv-tab{flex:1;padding:.7rem .9rem;background:transparent;border:none;color:var(--ink-2);font-weight:600;font-size:.82rem;border-radius:9px;transition:all .18s}
-.iptv-tab.active{background:linear-gradient(135deg,var(--amber-2),var(--amber-3));color:#070c16}
-.iptv-panel{display:none}
-.iptv-panel.active{display:block}
-.iptv-setup{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;box-shadow:0 2px 8px -4px rgba(0,0,0,.6)}
-.iptv-row{display:flex;gap:.5rem;margin-bottom:.65rem;flex-wrap:wrap;align-items:center}
-.iptv-row:last-child{margin-bottom:0}
-.iptv-row input,.iptv-row select,.iptv-row textarea{flex:1;min-width:0;padding:.75rem .9rem;background:var(--bg-3);border:1px solid var(--line-2);color:var(--ink);border-radius:10px;font-size:.85rem;outline:none;transition:all .18s}
-.iptv-row input:focus,.iptv-row select:focus,.iptv-row textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(226,168,87,.15)}
-.iptv-row textarea{font-family:ui-monospace,monospace;font-size:.72rem;resize:vertical;min-height:100px;line-height:1.4}
-.pw-wrap{position:relative;flex:1;display:flex;min-width:0}
-.pw-wrap input{padding-right:3rem}
-.pw-toggle{position:absolute;right:.35rem;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--ink-3);font-size:1.1rem;padding:.5rem;border-radius:8px;line-height:1}
-.iptv-btn{padding:.75rem 1.15rem;background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);color:var(--ink-2);font-weight:600;font-size:.8rem;border-radius:10px;white-space:nowrap;transition:all .18s}
-.iptv-btn.primary{background:linear-gradient(135deg,var(--amber-2),var(--amber-3));color:#070c16;border-color:var(--amber);font-weight:700}
-.iptv-btn.danger{border-color:rgba(230,57,80,.5);color:var(--coral-2);padding:.75rem .9rem}
-.iptv-status{font-size:.78rem;color:var(--ink-3);margin-top:.65rem;padding:.55rem .75rem;border-radius:8px;background:var(--bg-3);border-left:3px solid var(--line-2);line-height:1.5;word-break:break-word;min-height:1rem}
-.iptv-status:empty{display:none;min-height:0;padding:0;margin:0}
-.iptv-status.ok{color:var(--green);border-left-color:var(--green);background:rgba(16,185,129,.08)}
-.iptv-status.err{color:var(--coral-2);border-left-color:var(--coral);background:rgba(230,57,80,.08)}
-.iptv-status.loading{color:var(--amber);border-left-color:var(--amber);background:rgba(226,168,87,.08)}
-.iptv-search-row{margin-bottom:.6rem}
-.iptv-search-row input{width:100%;padding:.7rem .9rem;background:var(--bg-3);border:1px solid var(--line-2);color:var(--ink);border-radius:10px;font-size:.85rem;outline:none}
-.iptv-filter-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.6rem}
-.iptv-filter-row select{flex:1;padding:.7rem .9rem;background:var(--bg-3);border:1px solid var(--line-2);color:var(--ink);border-radius:10px;font-size:.85rem;outline:none}
-.iptv-fav-btn{width:44px;height:44px;padding:0;font-size:1.1rem;background:var(--bg-3);border:1px solid var(--line-2);color:var(--ink-2);border-radius:10px}
-.iptv-fav-btn.active{background:linear-gradient(135deg,var(--amber-2),var(--amber-3));color:#070c16;border-color:var(--amber)}
-.iptv-channels{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.5rem;margin-top:.5rem}
-.iptv-channel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.65rem .8rem;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:.6rem;position:relative;overflow:hidden;text-align:left;color:var(--ink);width:100%}
-.iptv-channel:hover,.iptv-channel:focus-visible{border-color:var(--amber);transform:translateY(-2px);background:var(--card-hover)}
-.iptv-channel.fav{border-color:rgba(226,168,87,.5);background:linear-gradient(180deg,rgba(226,168,87,.06),transparent)}
-.iptv-logo{width:38px;height:38px;border-radius:6px;flex-shrink:0;display:grid;place-items:center;font-weight:700;font-size:.85rem;color:#070c16;background:linear-gradient(135deg,var(--amber-2),var(--amber-3));overflow:hidden}
-.iptv-logo img{width:100%;height:100%;object-fit:contain}
-.iptv-ch-info{min-width:0;flex:1}
-.iptv-ch-name{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.iptv-ch-grp{font-size:.62rem;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.iptv-ch-fav{position:absolute;top:.3rem;right:.3rem;background:transparent;border:none;color:var(--ink-3);font-size:1rem;padding:.2rem .35rem;border-radius:5px;line-height:1}
-.iptv-channel.fav .iptv-ch-fav{color:var(--amber)}
-.iptv-empty{grid-column:1/-1;padding:2.5rem 1.2rem;text-align:center;color:var(--ink-3);font-size:.82rem;background:var(--bg-2);border:1px dashed var(--line-2);border-radius:12px;line-height:1.7}
-.iptv-player{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:9500;display:none;align-items:center;justify-content:center;padding:.5rem}
-.iptv-player.show{display:flex}
-.iptv-player-box{background:var(--card);border:1px solid rgba(226,168,87,.4);border-radius:14px;max-width:900px;width:100%;overflow:hidden}
-.iptv-player-head{display:flex;justify-content:space-between;gap:.75rem;padding:.85rem 1rem;border-bottom:1px solid var(--line);font-size:.85rem;font-weight:600;color:var(--amber);align-items:center}
-.iptv-player-head span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
-.iptv-close{width:36px;height:36px;border-radius:50%;background:var(--bg-3);border:1px solid var(--line-2);color:var(--ink-2);font-size:1rem;display:grid;place-items:center;flex-shrink:0}
-.iptv-player-box video{width:100%;max-height:55vh;background:#000;display:block}
-.iptv-player-foot{padding:.85rem 1rem;font-size:.75rem;color:var(--ink-3);background:var(--bg-2);border-top:1px solid var(--line);line-height:1.6}
-.iptv-player-foot .action-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
-.iptv-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line-2);border-top-color:var(--amber);border-radius:50%;animation:spin .9s linear infinite;vertical-align:middle;margin-right:.4rem}
-@keyframes spin{to{transform:rotate(360deg)}}
-/* MENU */
-.menu{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .25s}
-.menu.show{opacity:1;pointer-events:auto}
-.menu-panel{position:absolute;top:0;left:0;right:0;background:linear-gradient(180deg,var(--bg-2),var(--bg));border-bottom:2px solid var(--amber);padding:1.5rem 1.25rem 2rem;max-height:88vh;overflow-y:auto;transform:translateY(-30px);transition:transform .32s;padding-top:calc(1.5rem + env(safe-area-inset-top,0))}
-.menu.show .menu-panel{transform:translateY(0)}
-.menu-close{position:absolute;top:calc(1.1rem + env(safe-area-inset-top,0));right:1.15rem;width:42px;height:42px;border-radius:50%;background:var(--bg-3);border:1px solid var(--line-2);color:var(--ink-3);font-size:1rem;display:grid;place-items:center}
-.menu-title{font-size:.6rem;font-weight:800;color:var(--ink-3);letter-spacing:.2em;text-transform:uppercase;margin-bottom:.7rem;padding-bottom:.4rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem}
-.menu-title::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--amber)}
-.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.4rem;margin-bottom:1.4rem}
-.menu-item{padding:.7rem .9rem;background:var(--bg-3);border:1px solid var(--line-2);color:var(--ink-2);font-size:.78rem;font-weight:600;border-radius:9px;text-align:left;display:flex;align-items:center;gap:.5rem;transition:all .16s}
-.menu-item:hover,.menu-item:active{border-color:var(--amber);color:var(--amber)}
-.menu-item.active{background:linear-gradient(135deg,var(--amber-2),var(--amber-3));color:#070c16;border-color:var(--amber);font-weight:700}
-.menu-item .emoji{font-size:1rem;flex-shrink:0}
-.menu-search{width:100%;padding:.75rem .9rem;background:var(--bg-3);border:1px solid var(--line-2);color:var(--ink);border-radius:10px;font-size:.9rem;outline:none;margin-bottom:1.4rem}
-/* TOAST */
-.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%) translateY(150%);background:var(--card);color:var(--ink);border:1px solid rgba(226,168,87,.4);padding:.75rem 1.2rem;border-radius:12px;font-size:.8rem;z-index:10000;max-width:90vw;transition:transform .3s;box-shadow:0 20px 50px -24px rgba(0,0,0,.8)}
-.toast.show{transform:translateX(-50%) translateY(0)}
-footer{padding:2rem 1rem calc(2rem + env(safe-area-inset-bottom,0));text-align:center;color:var(--ink-3);font-size:.68rem;border-top:1px solid var(--line);line-height:1.7}
-footer .app-version{color:var(--amber);font-weight:700}
-@media(max-width:640px){
-.header-stats{gap:.8rem;width:100%;margin-left:0;order:3}
-.hstat:nth-child(5){display:none}
-.grid{grid-template-columns:1fr}
-.iptv-channels{grid-template-columns:1fr 1fr}
-.iptv-ch-name{font-size:.72rem}
-.iptv-logo{width:32px;height:32px}
-}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+<!-- Voortgangsbalk bovenaan -->
 <div class="progress-bar" id="progressBar"></div>
 
-<header>
+<!-- ===== HEADER ===== -->
+<header class="header">
   <div class="header-inner">
     <div class="brand">
       <div class="brand-mark">
@@ -168,775 +47,258 @@ footer .app-version{color:var(--amber);font-weight:700}
         <span class="tag">LIVE MONITOR</span>
       </div>
     </div>
+
     <div class="header-stats">
-      <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
-      <div class="hstat amber"><span class="hstat-label">Bronnen</span><span class="hstat-value" id="statSources">0/0</span></div>
-      <div class="hstat coral"><span class="hstat-label">Oorlog</span><span class="hstat-value" id="statWar">0</span></div>
-      <div class="hstat green"><span class="hstat-label">Items</span><span class="hstat-value" id="statItems">0</span></div>
+      <div class="hstat">
+        <span class="hstat-label">Klok</span>
+        <span class="hstat-value" id="clock">--:--:--</span>
+      </div>
+      <div class="hstat amber">
+        <span class="hstat-label">Bronnen</span>
+        <span class="hstat-value" id="statSources">0/0</span>
+      </div>
+      <div class="hstat coral">
+        <span class="hstat-label">Oorlog</span>
+        <span class="hstat-value" id="statWar">0</span>
+      </div>
+      <div class="hstat green">
+        <span class="hstat-label">Items</span>
+        <span class="hstat-value" id="statItems">0</span>
+      </div>
     </div>
-    <div class="actions">
-      <button class="btn-menu" id="btnMenu" aria-label="Menu">☰</button>
-      <button class="btn-mini" id="btnRefresh" aria-label="Verversen">↻</button>
-      <button class="btn-mini" id="btnTheme" aria-label="Thema">◐</button>
+
+    <div class="header-actions">
+      <button class="btn-mini" id="btnTheme" aria-label="Thema wisselen">◐</button>
+      <button class="btn-mini" id="btnMenu" aria-label="Menu">☰</button>
     </div>
   </div>
 </header>
 
-<main>
-  <div id="listView">
-    <div class="section-head">
-      <h2 id="sectionTitle">Laatste berichten</h2>
-      <span class="section-count" id="sectionCount">—</span>
-    </div>
-    <div class="grid" id="feed"></div>
-  </div>
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main">
 
-  <div id="iptvView">
+  <!-- VIEW: NIEUWS -->
+  <section class="view" id="viewNews">
+    <div class="section-head">
+      <h2 id="newsTitle">Laatste berichten</h2>
+      <span class="section-count" id="newsCount">—</span>
+    </div>
+    <div class="feed-grid" id="feedGrid">
+      <div class="empty-state">
+        <div class="empty-icon">◌</div>
+        <div class="empty-msg">Nieuws wordt geladen in fase 2</div>
+        <div class="empty-hint">Deze fase bevat alleen structuur en uiterlijk</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW: IPTV -->
+  <section class="view" id="viewIptv" hidden>
     <div class="section-head">
       <h2>📡 IPTV</h2>
       <span class="section-count" id="iptvCount">0 kanalen</span>
     </div>
-
-    <div class="iptv-tabs">
-      <button class="iptv-tab active" data-tab="xtream">🔑 Xtream</button>
-      <button class="iptv-tab" data-tab="m3u">📋 M3U</button>
+    <div class="empty-state">
+      <div class="empty-icon">📡</div>
+      <div class="empty-msg">IPTV komt in fase 3</div>
+      <div class="empty-hint">Xtream + M3U + speler</div>
     </div>
+  </section>
 
-    <div class="iptv-panel active" data-panel="xtream">
-      <div class="iptv-setup">
-        <div class="iptv-row">
-          <input type="url" id="xtServer" placeholder="Server (http://provider.com:80)" autocomplete="off" autocorrect="off" spellcheck="false">
-        </div>
-        <div class="iptv-row">
-          <input type="text" id="xtUser" placeholder="Username" autocomplete="off" autocorrect="off" spellcheck="false">
-          <div class="pw-wrap">
-            <input type="password" id="xtPass" placeholder="Password" autocomplete="current-password" spellcheck="false">
-            <button type="button" class="pw-toggle" id="pwToggle">👁</button>
-          </div>
-        </div>
-        <div class="iptv-row">
-          <button class="iptv-btn" id="xtTestBtn">🔍 Test</button>
-          <button class="iptv-btn primary" id="xtLoadBtn">⬇ Laad kanalen</button>
-          <button class="iptv-btn danger" id="xtClearBtn" title="Gegevens wissen">🗑</button>
-        </div>
-        <div class="iptv-status" id="xtStatus"></div>
-      </div>
+  <!-- VIEW: KAART -->
+  <section class="view" id="viewMap" hidden>
+    <div class="section-head">
+      <h2>Conflictkaart</h2>
+      <span class="section-count">—</span>
     </div>
+    <div class="empty-state">
+      <div class="empty-icon">◉</div>
+      <div class="empty-msg">Kaart komt in fase 4</div>
+      <div class="empty-hint">Leaflet + clustering</div>
+    </div>
+  </section>
 
-    <div class="iptv-panel" data-panel="m3u">
-      <div class="iptv-setup">
-        <div class="iptv-row">
-          <input type="url" id="m3uUrl" placeholder="https://example.com/playlist.m3u" autocomplete="off" autocorrect="off" spellcheck="false">
-          <button class="iptv-btn primary" id="m3uFetchBtn">⬇ Laden</button>
-        </div>
-        <div class="iptv-row">
-          <button class="iptv-btn" id="m3uPasteBtn">📋 Plak M3U tekst</button>
-        </div>
-        <div class="iptv-row" id="m3uPasteRow" style="display:none">
-          <textarea id="m3uPasteArea" placeholder="Plak hier de volledige inhoud van je M3U-bestand (#EXTM3U...)"></textarea>
-        </div>
-        <div class="iptv-row" id="m3uPasteActions" style="display:none">
-          <button class="iptv-btn primary" id="m3uPasteLoadBtn">✓ Verwerk</button>
-          <button class="iptv-btn" id="m3uPasteCancelBtn">Annuleren</button>
-        </div>
-        <div class="iptv-status" id="m3uStatus"></div>
-      </div>
-    </div>
-
-    <div class="iptv-setup">
-      <div class="iptv-search-row">
-        <input type="search" id="iptvSearch" placeholder="🔍 Zoek kanaal..." autocomplete="off">
-      </div>
-      <div class="iptv-filter-row">
-        <select id="iptvGroup">
-          <option value="all">Alle groepen</option>
-        </select>
-        <button class="iptv-fav-btn" id="iptvFavOnlyBtn" title="Alleen favorieten">★</button>
-      </div>
-    </div>
-
-    <div class="iptv-channels" id="iptvChannels">
-      <div class="iptv-empty">Vul je Xtream gegevens in en klik <strong>⬇ Laad kanalen</strong>.<br>Of ga naar M3U en plak je playlist.</div>
-    </div>
-  </div>
 </main>
 
-<footer>
-  WAR DESK · <span class="app-version">v18.1</span>
-</footer>
+<!-- ===== BOTTOM TABS ===== -->
+<nav class="bottom-tabs" role="tablist">
+  <button class="tab active" data-view="news" role="tab">
+    <span class="tab-icon">📰</span>
+    <span class="tab-label">Nieuws</span>
+  </button>
+  <button class="tab" data-view="iptv" role="tab">
+    <span class="tab-icon">📡</span>
+    <span class="tab-label">IPTV</span>
+  </button>
+  <button class="tab" data-view="map" role="tab">
+    <span class="tab-icon">◉</span>
+    <span class="tab-label">Kaart</span>
+  </button>
+</nav>
 
-<div class="iptv-player" id="iptvPlayer">
-  <div class="iptv-player-box">
-    <div class="iptv-player-head">
-      <span id="iptvPlayerTitle">—</span>
-      <button class="iptv-close" id="iptvPlayerClose">✕</button>
+<!-- ===== BOTTOM SHEET MENU ===== -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>Menu</h3>
+    <button class="sheet-close" id="sheetClose" aria-label="Sluiten">✕</button>
+  </div>
+  <div class="sheet-content">
+    <div class="sheet-section">
+      <div class="sheet-title">Filters</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" data-cat="all">🌐 Alles</button>
+        <button class="sheet-item" data-cat="war">⚔️ Oorlog</button>
+        <button class="sheet-item" data-cat="mideast">🌍 Midden-Oosten</button>
+        <button class="sheet-item" data-cat="europe">🇪🇺 Europa</button>
+        <button class="sheet-item" data-cat="nl">🇳🇱 Nederland</button>
+        <button class="sheet-item" data-cat="sport">⚽ Sport</button>
+      </div>
     </div>
-    <video id="iptvVideo" controls playsinline></video>
-    <div class="iptv-player-foot" id="iptvPlayerStatus">—</div>
+    <div class="sheet-section">
+      <div class="sheet-title">Weergave</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" id="viewCards">▦ Kaarten</button>
+        <button class="sheet-item" id="viewList">☰ Lijst</button>
+      </div>
+    </div>
+    <div class="sheet-section">
+      <div class="sheet-title">Over</div>
+      <div class="sheet-about">
+        WAR DESK <span class="version">v19.0</span><br>
+        Live nieuws + IPTV monitor
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- ===== TOAST ===== -->
 <div class="toast" id="toast">Klaar</div>
 
-<div class="menu" id="menu">
-  <div class="menu-panel">
-    <button class="menu-close" id="menuClose">✕</button>
-    <div class="menu-title">Zoeken</div>
-    <input class="menu-search" type="search" id="searchInput" placeholder="Zoek in artikelen...">
-    <div class="menu-title">Weergave</div>
-    <div class="menu-grid">
-      <button class="menu-item" data-action="list"><span class="emoji">☰</span>Lijst</button>
-      <button class="menu-item" data-action="iptv"><span class="emoji">📡</span>IPTV</button>
-    </div>
-    <div class="menu-title">Filters</div>
-    <div class="menu-grid">
-      <button class="menu-item" data-cat="all"><span class="emoji">🌐</span>Alles</button>
-      <button class="menu-item" data-cat="war"><span class="emoji">⚔️</span>Oorlog</button>
-      <button class="menu-item" data-cat="gaza"><span class="emoji">🔥</span>Gaza</button>
-      <button class="menu-item" data-cat="ukraine"><span class="emoji">🇺🇦</span>Oekraïne</button>
-      <button class="menu-item" data-cat="mideast"><span class="emoji">🌍</span>Midden-Oosten</button>
-      <button class="menu-item" data-cat="nl"><span class="emoji">🇳🇱</span>Nederland</button>
-      <button class="menu-item" data-cat="sport"><span class="emoji">⚽</span>Sport</button>
-    </div>
-    <div class="menu-title">Diagnose</div>
-    <div class="menu-grid">
-      <button class="menu-item" id="diagBtn"><span class="emoji">🔬</span>IPTV diagnose</button>
-    </div>
-  </div>
-</div>
-
+<!-- ===== FASE 1 SCRIPT (minimaal, wordt uitgebreid in fase 2) ===== -->
 <script>
-/* ==========================================================
-   WAR DESK v18.1 — Clean, compact, werkend
-   ========================================================== */
-const APP_VERSION = "v18.1";
-const PROXY_URL = "https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
-const FALLBACK_PROXIES = [
-  "https://api.codetabs.com/v1/proxy?quest=",
-  "https://api.allorigins.win/raw?url="
-];
-const PER_FEED = 10, REFRESH_MS = 60000;
-const IPTV_MAX_CHANNELS = 8000;
-const IPTV_DISPLAY_LIMIT = 400;
+(function(){
+  "use strict";
 
-/* ===== DB ===== */
-let db = null;
-function openDB(){
-  return new Promise(resolve => {
-    if(!("indexedDB" in window)){ resolve(null); return; }
-    const req = indexedDB.open("wardesk_db_v1", 2);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if(!d.objectStoreNames.contains("articles")) d.createObjectStore("articles", {keyPath:"link"});
-      if(!d.objectStoreNames.contains("kv")) d.createObjectStore("kv", {keyPath:"k"});
-    };
-    req.onsuccess = e => { db = e.target.result; resolve(db); };
-    req.onerror = () => resolve(null);
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* === THEMA WISSELEN === */
+  $("btnTheme").addEventListener("click", function(){
+    var isLight = document.documentElement.classList.toggle("light");
+    document.body.classList.toggle("light", isLight);
+    try{ localStorage.setItem("wardesk_theme", isLight ? "light" : "dark"); }catch(e){}
   });
-}
-function idbPut(store, value){
-  if(!db) return Promise.resolve(false);
-  return new Promise(res => {
-    try{ const tx = db.transaction(store, "readwrite"); tx.objectStore(store).put(value); tx.oncomplete = () => res(true); tx.onerror = () => res(false); }catch(e){ res(false); }
-  });
-}
-function idbGet(store, key){
-  if(!db) return Promise.resolve(null);
-  return new Promise(res => {
-    try{ const tx = db.transaction(store, "readonly"); const r = tx.objectStore(store).get(key); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); }catch(e){ res(null); }
-  });
-}
-function idbGetAll(store){
-  if(!db) return Promise.resolve([]);
-  return new Promise(res => {
-    try{ const tx = db.transaction(store, "readonly"); const r = tx.objectStore(store).getAll(); r.onsuccess = () => res(r.result || []); r.onerror = () => res([]); }catch(e){ res([]); }
-  });
-}
-function idbDelete(store, key){
-  if(!db) return Promise.resolve(false);
-  return new Promise(res => {
-    try{ const tx = db.transaction(store, "readwrite"); tx.objectStore(store).delete(key); tx.oncomplete = () => res(true); tx.onerror = () => res(false); }catch(e){ res(false); }
-  });
-}
+  if(document.documentElement.classList.contains("light")){
+    document.body.classList.add("light");
+  }
 
-/* ===== HELPERS ===== */
-function $(id){ return document.getElementById(id); }
-function escapeHtml(s){ return (s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function stripHtml(s){ return (s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(); }
-function safeTime(d){ const t = new Date(d); return isNaN(t) ? 0 : t.getTime(); }
-function timeAgo(d){ const t = safeTime(d); if(!t) return ""; const diff = (Date.now() - t)/1000; if(diff < 60) return "nu"; if(diff < 3600) return Math.floor(diff/60) + "m"; if(diff < 86400) return Math.floor(diff/3600) + "u"; return Math.floor(diff/86400) + "d"; }
-function showToast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove("show"), 2500); }
+  /* === KLok === */
+  function tick(){
+    $("clock").textContent = new Date().toLocaleTimeString("nl-NL", {
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+  }
+  tick(); setInterval(tick, 1000);
 
-/* ===== NEWS FEEDS ===== */
-const FEEDS = [
-  {n:"NOS", lang:"nl", cat:"nl", url:"https://feeds.nos.nl/nosnieuwsalgemeen"},
-  {n:"NOS Sport", lang:"nl", cat:"sport", url:"https://feeds.nos.nl/nossport"},
-  {n:"Nu.nl", lang:"nl", cat:"nl", url:"https://www.nu.nl/rss/Algemeen"},
-  {n:"RTL Nieuws", lang:"nl", cat:"nl", url:"https://www.rtlnieuws.nl/rss"},
-  {n:"Telegraaf", lang:"nl", cat:"nl", url:"https://www.telegraaf.nl/rss"},
-  {n:"AD.nl", lang:"nl", cat:"nl", url:"https://www.ad.nl/rss.xml"},
-  {n:"Voetbalzone", lang:"nl", cat:"sport", url:"https://www.voetbalzone.nl/rss"},
-  {n:"HLN", lang:"nl", cat:"be", url:"https://www.hln.be/rss.xml"},
-  {n:"VRT NWS", lang:"nl", cat:"be", url:"https://www.vrt.be/vrtnws/nl.rss"},
-  {n:"Spiegel", lang:"de", cat:"de", url:"https://www.spiegel.de/schlagzeilen/tops/index.rss"},
-  {n:"Le Monde", lang:"fr", cat:"fr", url:"https://www.lemonde.fr/rss/une.xml"},
-  {n:"BBC UK", lang:"en", cat:"uk", url:"https://feeds.bbci.co.uk/news/uk/rss.xml"},
-  {n:"NYT", lang:"en", cat:"us", url:"https://rss.nytimes.com/services/xml/rss/nyt/World.xml"},
-  {n:"Al Jazeera", lang:"en", cat:"qa", url:"https://www.aljazeera.com/xml/rss/all.xml"},
-  {n:"BBC World", lang:"en", cat:"world", url:"https://feeds.bbci.co.uk/news/world/rss.xml"},
-  {n:"BBC Arabic", lang:"ar", cat:"mideast", url:"https://feeds.bbci.co.uk/arabic/rss.xml"},
-  {n:"Times of Israel", lang:"en", cat:"il", url:"https://www.timesofisrael.com/feed/"},
-  {n:"Kyiv Independent", lang:"en", cat:"ukraine", url:"https://kyivindependent.com/feed/"}
-];
-
-const CAT_GROUPS = {
-  mideast: ["qa","il","gaza","lebanon","syria","yemen","iran","tr","eg","sa","ae"],
-  europe: ["be","de","fr","es","it","uk"]
-};
-
-let allItems = [], currentCat = "all", currentSearch = "";
-
-async function loadFeeds(){
-  const bar = $("progressBar");
-  bar.classList.add("show"); bar.style.width = "10%";
-  const collected = [];
-  let ok = 0, tried = 0;
-
-  const processOne = async f => {
-    tried++;
-    try{
-      const r = await fetch(PROXY_URL + encodeURIComponent(f.url));
-      if(!r.ok) throw new Error("HTTP " + r.status);
-      const data = await r.json();
-      if(!data.items || !data.items.length) throw new Error("leeg");
-      data.items.slice(0, PER_FEED).forEach(it => {
-        const raw = it.description || "";
-        const img = it.thumbnail || it.enclosure?.link || (raw.match(/<img[^>]+src="([^"]+)"/i)?.[1]) || "";
-        collected.push({
-          title: stripHtml(it.title || ""),
-          link: it.link || "#",
-          desc: stripHtml(raw).slice(0, 300),
-          img, date: it.pubDate || "",
-          source: f.n, cat: f.cat, lang: f.lang
-        });
-      });
-      ok++;
-    }catch(e){ /* stil falen */ }
-    bar.style.width = (10 + Math.round((tried / FEEDS.length) * 85)) + "%";
+  /* === VIEW SWITCHEN (via bottom tabs) === */
+  var tabs = document.querySelectorAll(".bottom-tabs .tab");
+  var views = {
+    news: $("viewNews"),
+    iptv: $("viewIptv"),
+    map:  $("viewMap")
   };
 
-  // Parallel, max 8 tegelijk
-  const queue = [...FEEDS];
-  const workers = Array.from({length: 8}, async () => {
-    while(queue.length) await processOne(queue.shift());
-  });
-  await Promise.all(workers);
-
-  // Dedup
-  const map = new Map();
-  collected.forEach(it => {
-    const key = (it.link || it.title).toLowerCase().trim();
-    if(!map.has(key)) map.set(key, it);
-  });
-  allItems = Array.from(map.values()).sort((a,b) => safeTime(b.date) - safeTime(a.date));
-
-  $("statSources").textContent = ok + "/" + FEEDS.length;
-  $("statWar").textContent = allItems.filter(x => x.cat === "war").length;
-  $("statItems").textContent = allItems.length;
-
-  try{ await idbPut("kv", {k:"articles_cache", v:allItems.slice(0, 500)}); }catch(e){}
-
-  bar.style.width = "100%";
-  setTimeout(() => { bar.classList.remove("show"); bar.style.width = "0%"; }, 400);
-
-  renderFeed();
-}
-
-function renderFeed(){
-  const feed = $("feed");
-  let list = allItems;
-  if(currentCat !== "all"){
-    const cats = CAT_GROUPS[currentCat] || [currentCat];
-    list = list.filter(it => cats.includes(it.cat));
+  function showView(name){
+    Object.keys(views).forEach(function(k){
+      if(views[k]) views[k].hidden = (k !== name);
+    });
+    tabs.forEach(function(t){
+      t.classList.toggle("active", t.dataset.view === name);
+    });
+    window.scrollTo({top: 0, behavior: "smooth"});
   }
-  if(currentSearch){
-    list = list.filter(it => (it.title + " " + it.desc + " " + it.source).toLowerCase().includes(currentSearch));
-  }
-  $("sectionCount").textContent = list.length + " items";
-  if(!list.length){
-    feed.innerHTML = `<div class="empty"><div class="big">◌</div><div class="msg">Geen resultaten</div></div>`;
-    return;
-  }
-  feed.innerHTML = list.slice(0, 100).map((it, i) => `
-    <article class="${it.cat === "war" ? "war" : ""}" data-idx="${i}">
-      ${it.img ? `<div class="card-thumb"><img src="${escapeHtml(it.img)}" loading="lazy" onerror="this.parentNode.remove()"></div>` : ''}
-      <div class="card-body">
-        <div class="card-meta">
-          <span class="card-source">${escapeHtml(it.source)}</span>
-          <span>·</span><span>${timeAgo(it.date)}</span>
-        </div>
-        <h3 class="card-title">${escapeHtml(it.title)}</h3>
-        ${it.desc ? `<p class="card-desc">${escapeHtml(it.desc)}</p>` : ''}
-        <div class="card-footer"><span class="arrow">Lees verder →</span></div>
-      </div>
-    </article>
-  `).join("");
-  // Klik handlers
-  feed.querySelectorAll("article").forEach(art => {
-    art.addEventListener("click", () => {
-      const it = list[+art.dataset.idx];
-      if(it && it.link && it.link !== "#") window.open(it.link, "_blank", "noopener");
+
+  tabs.forEach(function(tab){
+    tab.addEventListener("click", function(){
+      showView(tab.dataset.view);
     });
   });
-}
 
-/* ===== IPTV ===== */
-let iptvChannels = [];
-let iptvFavs = new Set();
-let iptvGroupFilter = "all";
-let iptvSearchQuery = "";
-let iptvFavOnly = false;
-let hlsInstance = null;
-let hlsLoaded = false;
+  /* === BOTTOM SHEET === */
+  var sheet = $("sheet");
+  var overlay = $("sheetOverlay");
 
-async function xtFetch(url, asText = false){
-  const errors = [];
-  // Eigen Worker
-  try{
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 45000);
-    const r = await fetch(PROXY_URL + encodeURIComponent(url), {signal: ctrl.signal});
-    clearTimeout(t);
-    if(r.ok){
-      const text = await r.text();
-      if(asText) return {ok:true, text};
-      try{ return {ok:true, data:JSON.parse(text)}; }catch(e){ errors.push("geen JSON"); }
-    } else errors.push("worker HTTP " + r.status);
-  }catch(e){ errors.push("worker: " + (e.name === "AbortError" ? "timeout" : e.message)); }
-  // Fallback proxies
-  for(const ep of FALLBACK_PROXIES){
-    try{
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 20000);
-      const r = await fetch(ep + encodeURIComponent(url), {signal: ctrl.signal});
-      clearTimeout(t);
-      if(!r.ok){ errors.push("HTTP " + r.status); continue; }
-      const text = await r.text();
-      if(asText) return {ok:true, text};
-      try{ return {ok:true, data:JSON.parse(text)}; }catch(e){ errors.push("geen JSON"); }
-    }catch(e){ errors.push(e.name === "AbortError" ? "timeout" : e.message); }
+  function openSheet(){
+    sheet.classList.add("open");
+    overlay.classList.add("open");
+    document.body.style.overflow = "hidden";
   }
-  return {ok:false, error:errors.slice(0, 3).join(" · ")};
-}
+  function closeSheet(){
+    sheet.classList.remove("open");
+    overlay.classList.remove("open");
+    document.body.style.overflow = "";
+  }
 
-/* --- Credentials: auto-save op ELKE wijziging --- */
-let credsTimer = null;
-function scheduleSaveCreds(){
-  clearTimeout(credsTimer);
-  credsTimer = setTimeout(async () => {
-    const v = {
-      server: $("xtServer").value.trim(),
-      user: $("xtUser").value.trim(),
-      pass: $("xtPass").value.trim()
-    };
-    if(!v.server && !v.user && !v.pass) return;
-    await idbPut("kv", {k:"xtream_creds", v});
-  }, 500);
-}
+  $("btnMenu").addEventListener("click", openSheet);
+  $("sheetClose").addEventListener("click", closeSheet);
+  overlay.addEventListener("click", closeSheet);
 
-/* --- Xtream UI --- */
-function bindXtreamUI(){
-  ["xtServer", "xtUser", "xtPass"].forEach(id => {
-    const el = $(id);
-    el.addEventListener("input", scheduleSaveCreds);
-    el.addEventListener("change", scheduleSaveCreds);
-    el.addEventListener("blur", scheduleSaveCreds);
+  /* Sluit bij klik op een sheet-item */
+  document.querySelectorAll(".sheet-item").forEach(function(item){
+    item.addEventListener("click", function(){
+      if(item.id === "viewCards" || item.id === "viewList") return;
+      closeSheet();
+    });
   });
 
-  $("pwToggle").addEventListener("click", () => {
-    const p = $("xtPass");
-    if(p.type === "password"){ p.type = "text"; $("pwToggle").textContent = "🙈"; }
-    else { p.type = "password"; $("pwToggle").textContent = "👁"; }
+  /* === KAART/SLIJST toggle (visueel) === */
+  $("viewCards").addEventListener("click", function(){
+    $("feedGrid").classList.remove("list-mode");
+    showToast("Kaart-weergave");
+  });
+  $("viewList").addEventListener("click", function(){
+    $("feedGrid").classList.add("list-mode");
+    showToast("Lijst-weergave");
   });
 
-  $("xtTestBtn").addEventListener("click", async () => {
-    const server = $("xtServer").value.trim(), user = $("xtUser").value.trim(), pass = $("xtPass").value.trim();
-    if(!server || !user || !pass){ $("xtStatus").className = "iptv-status err"; $("xtStatus").textContent = "✗ Vul alle velden in"; return; }
-    await idbPut("kv", {k:"xtream_creds", v:{server, user, pass}});
-    $("xtStatus").className = "iptv-status loading"; $("xtStatus").textContent = "Testen...";
-    const t0 = performance.now();
-    const url = server.replace(/\/$/, "") + "/player_api.php?username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass) + "&action=get_live_categories";
-    const res = await xtFetch(url);
-    const ms = Math.round(performance.now() - t0);
-    if(res.ok && Array.isArray(res.data)){
-      $("xtStatus").className = "iptv-status ok";
-      $("xtStatus").textContent = `✓ OK — ${res.data.length} categorieën (${ms}ms)`;
-    } else {
-      $("xtStatus").className = "iptv-status err";
-      $("xtStatus").textContent = `✗ ${res.error}`;
+  /* === TOAST === */
+  var toastTimer;
+  window.showToast = function(msg){
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  };
+
+  /* === SWIPE om sheet te sluiten === */
+  var startY = 0, currentY = 0, dragging = false;
+  sheet.addEventListener("touchstart", function(e){
+    startY = e.touches[0].clientY;
+    dragging = true;
+  }, {passive: true});
+  sheet.addEventListener("touchmove", function(e){
+    if(!dragging) return;
+    currentY = e.touches[0].clientY;
+    var delta = currentY - startY;
+    if(delta > 0){
+      sheet.style.transform = "translateY(" + delta + "px)";
     }
+  }, {passive: true});
+  sheet.addEventListener("touchend", function(){
+    dragging = false;
+    var delta = currentY - startY;
+    if(delta > 100){
+      closeSheet();
+    }
+    sheet.style.transform = "";
+    startY = currentY = 0;
   });
 
-  $("xtLoadBtn").addEventListener("click", async () => {
-    const server = $("xtServer").value.trim(), user = $("xtUser").value.trim(), pass = $("xtPass").value.trim();
-    if(!server || !user || !pass){ $("xtStatus").className = "iptv-status err"; $("xtStatus").textContent = "✗ Vul alle velden in"; return; }
-    await idbPut("kv", {k:"xtream_creds", v:{server, user, pass}});
-    $("xtStatus").className = "iptv-status loading"; $("xtStatus").textContent = "Categorieën laden...";
-
-    const base = server.replace(/\/$/, "");
-    const catUrl = base + "/player_api.php?username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass) + "&action=get_live_categories";
-    const catRes = await xtFetch(catUrl);
-    if(!catRes.ok || !Array.isArray(catRes.data)){ $("xtStatus").className = "iptv-status err"; $("xtStatus").textContent = "✗ " + (catRes.error || "geen categorieën"); return; }
-    const catMap = {};
-    catRes.data.forEach(c => catMap[String(c.category_id)] = c.category_name || "Overig");
-
-    $("xtStatus").textContent = `Kanalen laden (${catRes.data.length} categorieën)...`;
-    const strUrl = base + "/player_api.php?username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass) + "&action=get_live_streams";
-    const strRes = await xtFetch(strUrl);
-    if(!strRes.ok || !Array.isArray(strRes.data)){ $("xtStatus").className = "iptv-status err"; $("xtStatus").textContent = "✗ " + (strRes.error || "geen streams"); return; }
-
-    iptvChannels = strRes.data.map(s => ({
-      id: String(s.stream_id),
-      name: s.name || ("Kanaal " + s.stream_id),
-      url: `${base}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${s.stream_id}.m3u8`,
-      logo: s.stream_icon || "",
-      group: catMap[String(s.category_id)] || "Overig"
-    })).filter(c => c.name && c.url);
-
-    await idbPut("kv", {k:"xtream_channels", v:iptvChannels.slice(0, IPTV_MAX_CHANNELS)});
-
-    $("xtStatus").className = "iptv-status ok";
-    $("xtStatus").textContent = `✓ ${iptvChannels.length} kanalen geladen`;
-
-    iptvGroupFilter = "all";
-    iptvSearchQuery = "";
-    iptvFavOnly = false;
-    renderIptvList();
-    showToast(`Xtream: ${iptvChannels.length} kanalen`);
-  });
-
-  $("xtClearBtn").addEventListener("click", async () => {
-    if(!confirm("Alle Xtream gegevens en kanalen wissen?")) return;
-    await idbDelete("kv", "xtream_creds");
-    await idbDelete("kv", "xtream_channels");
-    $("xtServer").value = ""; $("xtUser").value = ""; $("xtPass").value = "";
-    iptvChannels = [];
-    $("xtStatus").className = "iptv-status ok"; $("xtStatus").textContent = "✓ Gegevens gewist";
-    renderIptvList();
-  });
-}
-
-/* --- M3U UI --- */
-function bindM3uUI(){
-  $("m3uPasteBtn").addEventListener("click", () => {
-    const show = $("m3uPasteRow").style.display === "none";
-    $("m3uPasteRow").style.display = show ? "flex" : "none";
-    $("m3uPasteActions").style.display = show ? "flex" : "none";
-  });
-  $("m3uPasteCancelBtn").addEventListener("click", () => {
-    $("m3uPasteRow").style.display = "none";
-    $("m3uPasteActions").style.display = "none";
-    $("m3uPasteArea").value = "";
-  });
-  $("m3uPasteLoadBtn").addEventListener("click", async () => {
-    const text = $("m3uPasteArea").value.trim();
-    if(!text || !/#EXTM3U|#EXTINF/i.test(text)){ $("m3uStatus").className = "iptv-status err"; $("m3uStatus").textContent = "✗ Ongeldige M3U"; return; }
-    const list = parseM3U(text);
-    if(!list.length){ $("m3uStatus").className = "iptv-status err"; $("m3uStatus").textContent = "✗ 0 kanalen gevonden"; return; }
-    iptvChannels = list.slice(0, IPTV_MAX_CHANNELS);
-    await idbPut("kv", {k:"xtream_channels", v:iptvChannels.slice(0, IPTV_MAX_CHANNELS)});
-    $("m3uPasteRow").style.display = "none"; $("m3uPasteActions").style.display = "none";
-    $("m3uStatus").className = "iptv-status ok"; $("m3uStatus").textContent = `✓ ${list.length} kanalen uit tekst`;
-    iptvGroupFilter = "all"; iptvSearchQuery = ""; iptvFavOnly = false;
-    renderIptvList();
-  });
-  $("m3uFetchBtn").addEventListener("click", async () => {
-    const url = $("m3uUrl").value.trim();
-    if(!/^https?:\/\//i.test(url)){ $("m3uStatus").className = "iptv-status err"; $("m3uStatus").textContent = "✗ Voer een geldige URL in"; return; }
-    $("m3uStatus").className = "iptv-status loading"; $("m3uStatus").textContent = "Downloaden...";
-    const res = await xtFetch(url, true);
-    if(!res.ok){ $("m3uStatus").className = "iptv-status err"; $("m3uStatus").textContent = "✗ " + res.error; return; }
-    if(!/#EXTM3U|#EXTINF/i.test(res.text)){ $("m3uStatus").className = "iptv-status err"; $("m3uStatus").textContent = "✗ Geen geldige M3U inhoud"; return; }
-    const list = parseM3U(res.text);
-    if(!list.length){ $("m3uStatus").className = "iptv-status err"; $("m3uStatus").textContent = "✗ 0 kanalen"; return; }
-    iptvChannels = list.slice(0, IPTV_MAX_CHANNELS);
-    await idbPut("kv", {k:"xtream_channels", v:iptvChannels.slice(0, IPTV_MAX_CHANNELS)});
-    $("m3uStatus").className = "iptv-status ok"; $("m3uStatus").textContent = `✓ ${list.length} kanalen`;
-    iptvGroupFilter = "all"; iptvSearchQuery = ""; iptvFavOnly = false;
-    renderIptvList();
-  });
-}
-
-function parseM3U(text){
-  const lines = text.split(/\r?\n/), out = []; let pending = null;
-  for(const raw of lines){
-    const line = raw.trim(); if(!line) continue;
-    if(line.startsWith("#EXTINF")){
-      const name = (line.match(/,(.*)$/) || [,"Onbekend"])[1].trim();
-      const logo = (line.match(/tvg-logo="([^"]*)"/i) || [,""])[1];
-      const group = (line.match(/group-title="([^"]*)"/i) || [,"Overig"])[1];
-      pending = {id:null, name, logo, group};
-    } else if(line.startsWith("#")){ /* skip */ }
-    else if(pending){ pending.url = line; pending.id = line; out.push(pending); pending = null; }
-    else if(/^https?:\/\//i.test(line)){ out.push({id:line, url:line, name:"Kanaal " + (out.length + 1), logo:"", group:"Overig"}); }
-  }
-  return out;
-}
-
-/* --- Render kanalen (belangrijkste functie) --- */
-function renderIptvList(){
-  const cont = $("iptvChannels");
-  const countEl = $("iptvCount");
-  if(!cont) return;
-
-  if(!iptvChannels.length){
-    cont.innerHTML = `<div class="iptv-empty">Vul je Xtream gegevens in en klik <strong>⬇ Laad kanalen</strong>.<br>Of ga naar M3U en plak je playlist.</div>`;
-    countEl.textContent = "0 kanalen";
-    // Groepen dropdown resetten
-    $("iptvGroup").innerHTML = '<option value="all">Alle groepen</option>';
-    return;
-  }
-
-  // Groepen vullen
-  const groups = [...new Set(iptvChannels.map(c => c.group))].sort();
-  const groupSel = $("iptvGroup");
-  groupSel.innerHTML = '<option value="all">Alle groepen (' + iptvChannels.length + ')</option>' +
-    groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
-  if(groups.includes(iptvGroupFilter) || iptvGroupFilter === "all") groupSel.value = iptvGroupFilter;
-  else { iptvGroupFilter = "all"; groupSel.value = "all"; }
-
-  // Filter toepassen
-  let list = iptvChannels;
-  if(iptvGroupFilter !== "all") list = list.filter(c => c.group === iptvGroupFilter);
-  if(iptvFavOnly) list = list.filter(c => iptvFavs.has(c.id || c.url));
-  if(iptvSearchQuery) list = list.filter(c => c.name.toLowerCase().includes(iptvSearchQuery));
-
-  countEl.textContent = list.length + " / " + iptvChannels.length;
-
-  if(!list.length){
-    cont.innerHTML = `<div class="iptv-empty">Geen kanalen in deze filter.</div>`;
-    return;
-  }
-
-  const shown = list.slice(0, IPTV_DISPLAY_LIMIT);
-  cont.innerHTML = shown.map(c => {
-    const key = c.id || c.url;
-    const isFav = iptvFavs.has(key);
-    const initial = (c.name || "?").charAt(0).toUpperCase();
-    return `<button class="iptv-channel ${isFav ? 'fav' : ''}" data-key="${escapeHtml(key)}" data-url="${escapeHtml(c.url)}" data-name="${escapeHtml(c.name)}">
-      <div class="iptv-logo">${c.logo ? `<img src="${escapeHtml(c.logo)}" alt="" loading="lazy" onerror="this.parentNode.textContent='${initial}'">` : initial}</div>
-      <div class="iptv-ch-info">
-        <div class="iptv-ch-name">${escapeHtml(c.name)}</div>
-        <div class="iptv-ch-grp">${escapeHtml(c.group)}</div>
-      </div>
-      <span class="iptv-ch-fav">${isFav ? '★' : '☆'}</span>
-    </button>`;
-  }).join("") + (list.length > IPTV_DISPLAY_LIMIT ? `<div class="iptv-empty">+ ${list.length - IPTV_DISPLAY_LIMIT} meer — gebruik zoek of groep</div>` : "");
-
-  // Handlers opnieuw binden (belangrijk!)
-  cont.querySelectorAll(".iptv-channel").forEach(el => {
-    el.addEventListener("click", e => {
-      const favSpan = e.target.closest(".iptv-ch-fav");
-      const key = el.dataset.key;
-      if(favSpan){
-        e.stopPropagation();
-        if(iptvFavs.has(key)) iptvFavs.delete(key); else iptvFavs.add(key);
-        idbPut("kv", {k:"iptv_favs", v:[...iptvFavs]});
-        el.classList.toggle("fav");
-        favSpan.textContent = iptvFavs.has(key) ? "★" : "☆";
-        return;
-      }
-      playChannel(el.dataset.name, el.dataset.url);
-    });
-  });
-}
-
-/* --- Player --- */
-function playChannel(name, url){
-  $("iptvPlayerTitle").textContent = name;
-  $("iptvPlayer").classList.add("show");
-  const video = $("iptvVideo");
-  const status = $("iptvPlayerStatus");
-  if(hlsInstance){ try{ hlsInstance.destroy(); }catch(e){} hlsInstance = null; }
-  video.pause(); video.removeAttribute("src"); video.load();
-
-  const isHttp = /^http:\/\//i.test(url);
-  const onHttps = location.protocol === "https:";
-
-  if(isHttp && onHttps){
-    status.innerHTML = `⚠ HTTP-stream niet direct afspeelbaar in HTTPS-browser.<br>
-      <div class="action-row">
-        <button class="iptv-btn primary" id="pVlc">📺 Open in VLC</button>
-        <button class="iptv-btn" id="pCopy">📋 Kopieer URL</button>
-      </div>`;
-    $("pVlc").onclick = () => { try{ window.location.href = "intent:" + url + "#Intent;package=org.videolan.vlc;type=video/*;end"; }catch(e){ showToast("VLC niet gevonden"); } };
-    $("pCopy").onclick = () => navigator.clipboard.writeText(url).then(() => showToast("URL gekopieerd"));
-    return;
-  }
-
-  const isHls = /\.m3u8(\?|$)/i.test(url);
-  if(isHls && video.canPlayType("application/vnd.apple.mpegurl")){
-    video.src = url;
-    status.innerHTML = '<span class="iptv-spinner"></span>HLS native';
-    video.play().catch(() => status.textContent = "Klik play om te starten");
-  } else if(isHls){
-    status.innerHTML = '<span class="iptv-spinner"></span>HLS.js laden...';
-    loadHls().then(ok => {
-      if(ok && window.Hls && window.Hls.isSupported()){
-        hlsInstance = new window.Hls({enableWorker:true});
-        hlsInstance.loadSource(url);
-        hlsInstance.attachMedia(video);
-        hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => { status.textContent = "Stream actief"; video.play().catch(()=>{}); });
-        hlsInstance.on(window.Hls.Events.ERROR, (e, d) => { if(d.fatal) status.innerHTML = `Streamfout: ${d.details}<div class="action-row"><button class="iptv-btn primary" id="pVlc">📺 Open in VLC</button></div>`; const b = $("pVlc"); if(b) b.onclick = () => { try{ window.location.href = "intent:" + url + "#Intent;package=org.videolan.vlc;type=video/*;end"; }catch(e){} }; });
-      } else {
-        status.innerHTML = `HLS niet ondersteund.<div class="action-row"><button class="iptv-btn primary" id="pVlc">📺 Open in VLC</button></div>`;
-        const b = $("pVlc"); if(b) b.onclick = () => { try{ window.location.href = "intent:" + url + "#Intent;package=org.videolan.vlc;type=video/*;end"; }catch(e){} };
-      }
-    });
-  } else {
-    video.src = url;
-    status.textContent = "Directe stream";
-    video.play().catch(() => status.textContent = "Klik play om te starten");
-  }
-}
-function loadHls(){
-  if(hlsLoaded && window.Hls) return Promise.resolve(true);
-  return new Promise(res => {
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
-    s.onload = () => { hlsLoaded = true; res(true); };
-    s.onerror = () => res(false);
-    document.head.appendChild(s);
-  });
-}
-function closePlayer(){
-  $("iptvPlayer").classList.remove("show");
-  if(hlsInstance){ try{ hlsInstance.destroy(); }catch(e){} hlsInstance = null; }
-  const v = $("iptvVideo"); v.pause(); v.removeAttribute("src"); v.load();
-}
-
-/* --- IPTV events --- */
-function bindIptvEvents(){
-  // Tabs
-  document.querySelectorAll(".iptv-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      const t = tab.dataset.tab;
-      document.querySelectorAll(".iptv-tab").forEach(x => x.classList.toggle("active", x.dataset.tab === t));
-      document.querySelectorAll(".iptv-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === t));
-    });
-  });
-  // Filter
-  $("iptvGroup").addEventListener("change", e => { iptvGroupFilter = e.target.value; renderIptvList(); });
-  $("iptvSearch").addEventListener("input", e => {
-    iptvSearchQuery = e.target.value.toLowerCase().trim();
-    clearTimeout(window._iptvSearchTimer);
-    window._iptvSearchTimer = setTimeout(renderIptvList, 200);
-  });
-  $("iptvFavOnlyBtn").addEventListener("click", () => {
-    iptvFavOnly = !iptvFavOnly;
-    $("iptvFavOnlyBtn").classList.toggle("active", iptvFavOnly);
-    renderIptvList();
-  });
-  // Player close
-  $("iptvPlayerClose").addEventListener("click", closePlayer);
-  $("iptvPlayer").addEventListener("click", e => { if(e.target.id === "iptvPlayer") closePlayer(); });
-}
-
-/* ===== MENU ===== */
-function bindMenu(){
-  $("btnMenu").addEventListener("click", () => $("menu").classList.add("show"));
-  $("menuClose").addEventListener("click", () => $("menu").classList.remove("show"));
-  $("menu").addEventListener("click", e => { if(e.target.id === "menu") $("menu").classList.remove("show"); });
-  document.querySelectorAll(".menu-item").forEach(item => {
-    item.addEventListener("click", () => {
-      const cat = item.dataset.cat, action = item.dataset.action;
-      if(action === "list") switchView("list");
-      else if(action === "iptv") switchView("iptv");
-      else if(cat){ currentCat = cat; renderFeed(); }
-      $("menu").classList.remove("show");
-    });
-  });
-  $("searchInput").addEventListener("input", e => {
-    currentSearch = e.target.value.toLowerCase().trim();
-    clearTimeout(window._searchTimer);
-    window._searchTimer = setTimeout(renderFeed, 250);
-  });
-  $("diagBtn").addEventListener("click", () => {
-    const info = {
-      kanalen_in_array: iptvChannels.length,
-      kanaal_buttons_in_dom: document.querySelectorAll(".iptv-channel").length,
-      grid_zichtbaar: $("iptvView").style.display !== "none",
-      grid_innerHTML_lengte: $("iptvChannels").innerHTML.length,
-      eerste_100_chars: $("iptvChannels").innerHTML.slice(0, 100),
-      group_filter: iptvGroupFilter,
-      search_query: iptvSearchQuery,
-      fav_only: iptvFavOnly,
-      aantal_favs: iptvFavs.size,
-      browser: navigator.userAgent.slice(0, 80)
-    };
-    alert("IPTV DIAGNOSE\n\n" + JSON.stringify(info, null, 2));
-  });
-}
-
-/* ===== VIEWS ===== */
-function switchView(v){
-  $("listView").style.display = v === "list" ? "block" : "none";
-  $("iptvView").style.display = v === "iptv" ? "block" : "none";
-  if(v === "iptv") renderIptvList();
-}
-
-/* ===== THEME ===== */
-function bindTheme(){
-  $("btnTheme").addEventListener("click", () => {
-    document.documentElement.classList.toggle("light");
-    document.body.classList.toggle("light");
-    localStorage.setItem("wardesk_theme", document.documentElement.classList.contains("light") ? "light" : "dark");
-  });
-}
-
-/* ===== CLOCK ===== */
-function startClock(){
-  const tick = () => { $("clock").textContent = new Date().toLocaleTimeString("nl-NL", {hour:"2-digit",minute:"2-digit",second:"2-digit"}); };
-  tick(); setInterval(tick, 1000);
-}
-
-/* ===== INIT ===== */
-(async function init(){
-  await openDB();
-
-  // Laad opgeslagen credentials + kanalen + favs
-  const creds = await idbGet("kv", "xtream_creds");
-  const chans = await idbGet("kv", "xtream_channels");
-  const favs = await idbGet("kv", "iptv_favs");
-
-  if(creds && creds.v){
-    $("xtServer").value = creds.v.server || "";
-    $("xtUser").value = creds.v.user || "";
-    $("xtPass").value = creds.v.pass || "";
-  }
-  if(chans && Array.isArray(chans.v)){
-    iptvChannels = chans.v;
-  }
-  if(favs && Array.isArray(favs.v)){
-    iptvFavs = new Set(favs.v);
-  }
-
-  // Bind alles
-  bindXtreamUI();
-  bindM3uUI();
-  bindIptvEvents();
-  bindMenu();
-  bindTheme();
-
-  $("btnRefresh").addEventListener("click", loadFeeds);
-
-  startClock();
-  switchView("list");
-  renderIptvList();
-
-  // Laad feeds
-  loadFeeds();
+  console.log("[WAR DESK] Fase 1 actief — structuur geladen");
 })();
 </script>
+
 </body>
 </html>

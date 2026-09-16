@@ -25,7 +25,7 @@ try{
 </head>
 <body>
 
-<!-- ===== BREAKING BANNER ===== -->
+<!-- BREAKING BANNER -->
 <div class="breaking" id="breakingBanner" role="button" tabindex="0">
   <div class="breaking-icon">🚨</div>
   <div class="breaking-text">
@@ -36,10 +36,10 @@ try{
   <button class="breaking-close" id="breakingClose" aria-label="Sluiten">✕</button>
 </div>
 
-<!-- ===== PROGRESS BAR ===== -->
+<!-- PROGRESS -->
 <div class="progress-bar" id="progressBar"></div>
 
-<!-- ===== HEADER ===== -->
+<!-- HEADER -->
 <header class="header">
   <div class="header-inner">
     <div class="brand">
@@ -57,24 +57,21 @@ try{
         <span class="tag">LIVE MONITOR</span>
       </div>
     </div>
-
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
       <div class="hstat amber"><span class="hstat-label">Bronnen</span><span class="hstat-value" id="statSources">0/0</span></div>
       <div class="hstat coral"><span class="hstat-label">Oorlog</span><span class="hstat-value" id="statWar">0</span></div>
       <div class="hstat green"><span class="hstat-label">Items</span><span class="hstat-value" id="statItems">0</span></div>
     </div>
-
     <div class="header-actions">
-      <button class="btn-mini" id="btnTheme" aria-label="Thema wisselen">◐</button>
+      <button class="btn-mini" id="btnTheme" aria-label="Thema">◐</button>
       <button class="btn-mini" id="btnMenu" aria-label="Menu">☰</button>
     </div>
   </div>
 </header>
 
-<!-- ===== MAIN ===== -->
+<!-- MAIN -->
 <main class="main">
-
   <section class="view" id="viewNews">
     <div class="section-head">
       <h2 id="newsTitle">Laatste berichten</h2>
@@ -90,47 +87,30 @@ try{
   </section>
 
   <section class="view" id="viewIptv" hidden>
-    <div class="section-head">
-      <h2>📡 IPTV</h2>
-      <span class="section-count" id="iptvCount">0 kanalen</span>
-    </div>
+    <div class="section-head"><h2>📡 IPTV</h2><span class="section-count">Fase 3</span></div>
     <div class="empty-state">
       <div class="empty-icon">📡</div>
       <div class="empty-msg">IPTV komt in fase 3</div>
-      <div class="empty-hint">Xtream + M3U + speler</div>
     </div>
   </section>
 
   <section class="view" id="viewMap" hidden>
-    <div class="section-head">
-      <h2>Conflictkaart</h2>
-      <span class="section-count">—</span>
-    </div>
+    <div class="section-head"><h2>Conflictkaart</h2><span class="section-count">Fase 4</span></div>
     <div class="empty-state">
       <div class="empty-icon">◉</div>
       <div class="empty-msg">Kaart komt in fase 4</div>
     </div>
   </section>
-
 </main>
 
-<!-- ===== BOTTOM TABS ===== -->
-<nav class="bottom-tabs" role="tablist">
-  <button class="tab active" data-view="news" role="tab">
-    <span class="tab-icon">📰</span>
-    <span class="tab-label">Nieuws</span>
-  </button>
-  <button class="tab" data-view="iptv" role="tab">
-    <span class="tab-icon">📡</span>
-    <span class="tab-label">IPTV</span>
-  </button>
-  <button class="tab" data-view="map" role="tab">
-    <span class="tab-icon">◉</span>
-    <span class="tab-label">Kaart</span>
-  </button>
+<!-- BOTTOM TABS -->
+<nav class="bottom-tabs">
+  <button class="tab active" data-view="news"><span class="tab-icon">📰</span><span class="tab-label">Nieuws</span></button>
+  <button class="tab" data-view="iptv"><span class="tab-icon">📡</span><span class="tab-label">IPTV</span></button>
+  <button class="tab" data-view="map"><span class="tab-icon">◉</span><span class="tab-label">Kaart</span></button>
 </nav>
 
-<!-- ===== BOTTOM SHEET MENU ===== -->
+<!-- SHEET MENU -->
 <div class="sheet-overlay" id="sheetOverlay"></div>
 <div class="sheet" id="sheet">
   <div class="sheet-handle"></div>
@@ -139,12 +119,10 @@ try{
     <button class="sheet-close" id="sheetClose" aria-label="Sluiten">✕</button>
   </div>
   <div class="sheet-content">
-
     <div class="sheet-section">
       <div class="sheet-title">Zoeken</div>
       <input class="sheet-search" type="search" id="searchInput" placeholder="Zoek in artikelen..." autocomplete="off">
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Categorieën</div>
       <div class="sheet-grid">
@@ -156,43 +134,33 @@ try{
         <button class="sheet-item" data-cat="sport">⚽ Sport</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Sortering</div>
       <div class="sheet-grid">
-        <button class="sheet-item" id="sortImportance">🔥 Belangrijkheid</button>
+        <button class="sheet-item active" id="sortImportance">🔥 Belangrijkheid</button>
         <button class="sheet-item" id="sortNewest">🕒 Nieuwste eerst</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Weergave</div>
       <div class="sheet-grid">
-        <button class="sheet-item" id="viewCards">▦ Kaarten</button>
+        <button class="sheet-item active" id="viewCards">▦ Kaarten</button>
         <button class="sheet-item" id="viewList">☰ Lijst</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">
-        WAR DESK <span class="version">v19.0 · Fase 2</span><br>
-        Live nieuws + IPTV monitor
-      </div>
+      <div class="sheet-about">WAR DESK <span class="version">v19.0</span><br>Live nieuws monitor</div>
     </div>
-
   </div>
 </div>
 
 <div class="toast" id="toast">Klaar</div>
 
-<!-- ===== SCRIPTS (volgorde is belangrijk!) ===== -->
+<!-- SCRIPTS — VOLGORDE IS BELANGRIJK -->
 <script src="config.js"></script>
 <script src="news.js"></script>
 <script src="app.js"></script>
-<script src="patch.js"></script>
-
-
 
 </body>
 </html>

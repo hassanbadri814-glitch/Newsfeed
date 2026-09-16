@@ -190,9 +190,11 @@ article:hover .card-footer .arrow{gap:.7rem}
 .map-controls input[type="range"]{flex:1;min-width:140px;accent-color:var(--amber);cursor:pointer}
 .map-controls .time-value{font-size:.72rem;font-weight:700;color:var(--amber);min-width:70px;text-align:right;font-variant-numeric:tabular-nums}
 #map{height:72vh;min-height:480px;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:var(--bg-2);box-shadow:var(--shadow-deep)}
-.map-loader{height:72vh;min-height:480px;display:none;place-items:center;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--bg-2)}
+.map-loader{position:absolute;inset:0;display:none;place-items:center;background:var(--bg-2);border-radius:var(--radius-lg);z-index:10}
 .map-loader.show{display:grid}
+.map-loader-content{display:flex;flex-direction:column;align-items:center;gap:.75rem}
 .map-loader .ring{width:40px;height:40px;border:2px solid var(--line-2);border-top-color:var(--amber);border-radius:50%;animation:spin .9s linear infinite}
+.map-loader .msg{font-size:.72rem;color:var(--amber);font-weight:600;letter-spacing:.05em}
 .map-error{display:none;padding:3rem 1.5rem;text-align:center;color:var(--ink-3);border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--bg-2)}
 .map-error.show{display:block}
 .leaflet-marker-icon.custom-marker{background:transparent !important;border:none !important}
@@ -258,6 +260,10 @@ footer .app-version{color:var(--amber);font-weight:700;letter-spacing:.08em}
 .cat-menu-filters .select{max-width:100%;width:100%;font-size:.78rem;padding:.7rem 1.8rem .7rem .85rem;background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);color:var(--ink-2);font-family:inherit;font-weight:500;border-radius:10px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M1 3l4 4 4-4' stroke='%236b7a93' stroke-width='1.4' fill='none'/></svg>");background-repeat:no-repeat;background-position:right .7rem center;transition:all .18s}
 .cat-menu-filters .select:hover{border-color:var(--amber);color:var(--amber)}
 .cat-menu-filters .select:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(226,168,87,.15)}
+.cat-menu-actions{display:flex;gap:.5rem;margin-bottom:1.4rem}
+.cat-menu-action-btn{flex:1;padding:.7rem .9rem;background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);color:var(--ink-2);font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all .16s}
+.cat-menu-action-btn:hover{border-color:var(--amber);color:var(--amber);background:linear-gradient(180deg,rgba(226,168,87,.12),rgba(226,168,87,.05));box-shadow:0 0 16px rgba(226,168,87,.25)}
+.cat-menu-action-btn:active{transform:scale(.97)}
 .cat-menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.4rem;margin-bottom:1.4rem}
 .cat-menu-item{padding:.7rem .9rem;background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);color:var(--ink-2);font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;border-radius:9px;text-align:left;display:flex;align-items:center;gap:.5rem;transition:all .16s}
 .cat-menu-item:hover{border-color:var(--amber);color:var(--amber);background:linear-gradient(180deg,rgba(226,168,87,.12),rgba(226,168,87,.05));box-shadow:0 0 16px rgba(226,168,87,.25);transform:translateY(-1px)}
@@ -279,7 +285,7 @@ body{font-size:14px}
 .actions-group{gap:.25rem;padding:.35rem;border-radius:14px}
 .grid{grid-template-columns:1fr;gap:1.1rem}
 main{padding:1.25rem 1rem 3rem}
-#map,#mapView .map-loader{height:60vh}
+#map,#mapView .map-loader{height:60vh;min-height:400px}
 .ticker{height:34px}
 .ticker-track{font-size:.72rem}
 .section-head h2{font-size:1rem}
@@ -417,12 +423,17 @@ main{padding:1.25rem 1rem 3rem}
     <div class="section-head"><h2>Live conflictkaart</h2><span class="section-count">Tik op een marker</span></div>
     <div class="map-controls">
       <label for="timeRange">Tijdfilter</label>
-      <input type="range" id="timeRange" min="1" max="168" value="168" step="1">
+      <input type="range" id="timeRange" min="1" max="168" value="168" step="1" aria-label="Tijdfilter">
       <span class="time-value" id="timeRangeValue">Alle</span>
     </div>
     <div style="position:relative">
       <div id="map"></div>
-      <div class="map-loader" id="mapLoader"><div class="ring"></div></div>
+      <div class="map-loader" id="mapLoader">
+        <div class="map-loader-content">
+          <div class="ring"></div>
+          <div class="msg" id="mapLoaderMsg">Kaart laden...</div>
+        </div>
+      </div>
       <div class="map-error" id="mapError">⚠ Kaart kon niet geladen worden. Controleer je internetverbinding.</div>
       <div class="map-legend" id="mapLegend"><div class="title">Categorieën</div><div id="legendItems"></div></div>
     </div>
@@ -430,10 +441,10 @@ main{padding:1.25rem 1rem 3rem}
 </main>
 
 <footer>
-  WAR DESK · <span class="app-version" id="appVersion">v17.1</span> · Live conflict monitor · Proxy via
+  WAR DESK · <span class="app-version" id="appVersion">v17.2</span> · Live conflict monitor · Proxy via
   <a href="https://nieuwsproxy.hassanbadri814.workers.dev" target="_blank" rel="noopener">Cloudflare Workers</a>
   <br>
-  Sneltoetsen: <kbd>/</kbd> zoeken · <kbd>R</kbd> verversen · <kbd>M</kbd> kaart · <kbd>L</kbd> lijst · <kbd>F</kbd> favorieten · <kbd>T</kbd> thema
+  Sneltoetsen: <kbd>/</kbd> zoeken · <kbd>R</kbd> verversen · <kbd>M</kbd> kaart · <kbd>L</kbd> lijst · <kbd>F</kbd> favorieten · <kbd>T</kbd> thema · <kbd>P</kbd> print
 </footer>
 
 <div class="src-popup" id="srcPopup">
@@ -448,8 +459,8 @@ main{padding:1.25rem 1rem 3rem}
 <button class="back-top" id="backTop" aria-label="Terug naar boven">↑</button>
 
 <div class="cat-menu" id="catMenu">
-  <div class="cat-menu-panel">
-    <button class="cat-menu-close" id="catMenuClose" aria-label="Sluiten">✕</button>
+  <div class="cat-menu-panel" role="dialog" aria-modal="true" aria-label="Menu">
+    <button class="cat-menu-close" id="catMenuClose" aria-label="Menu sluiten">✕</button>
     <div class="cat-menu-header">
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none">
@@ -502,6 +513,10 @@ main{padding:1.25rem 1rem 3rem}
       <select class="select" id="sourceSelect" aria-label="Filter op bron">
         <option value="all">Alle bronnen</option>
       </select>
+    </div>
+    <div class="cat-menu-actions">
+      <button class="cat-menu-action-btn" id="resetFiltersBtn" aria-label="Alle filters wissen">↺ Filters wissen</button>
+      <button class="cat-menu-action-btn" id="printBtn" aria-label="Printen">🖨 Print</button>
     </div>
     <div class="cat-menu-title">Weergave</div>
     <div class="cat-menu-grid">
@@ -556,7 +571,7 @@ main{padding:1.25rem 1rem 3rem}
     </div>
     <div class="cat-menu-title">Instellingen</div>
     <div class="cat-menu-grid">
-      <button class="cat-menu-item" id="notifBtn" type="button">
+      <button class="cat-menu-item" id="notifBtn" type="button" aria-label="Meldingen aan of uit">
         <span class="emoji" id="notifIcon">🔕</span><span id="notifText">Meldingen aan</span>
       </button>
     </div>
@@ -565,15 +580,19 @@ main{padding:1.25rem 1rem 3rem}
 
 <script>
 /* ==========================================================
-   WAR DESK v17.1
-   Nieuw: versie-display, global error handler, SW update-melding,
-   focus-trap menu, aria-live, print-stylesheet, OS-thema fallback
+   WAR DESK v17.2 — alle bug fixes + nice-to-haves
+   Fixes: lastVisit timing, readArticles cleanup, progress race,
+   refresh finally, trQueue reset, trCache sortering, data-sources
+   encoding, dubbele fallback. Nieuw: filters reset, print-knop,
+   aria-labels, kaart loader msg.
    ========================================================== */
-const APP_VERSION = "v17.1";
+const APP_VERSION = "v17.2";
 const PROXY_URL="https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
 const PER_FEED=5, REFRESH_MS=30000, BREAKING_MS=900000, BREAKING_COOLDOWN=300000;
 const PAGE_SIZE=30, TIMEOUT_MS=6000, INACTIVITY_MS=15000, CONCURRENCY=15;
 const LEAFLET_TIMEOUT_MS=10000;
+const READ_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;  /* 30 dagen */
+const TR_CACHE_MAX = 3000;
 const DB_NAME="wardesk_db_v1", DB_VERSION=1;
 const STORE_ARTICLES="articles", STORE_KV="kv";
 const HIGH_PRIORITY=["Al Jazeera","BBC World","BBC Arabic","Al Jazeera AR","TRT World","Times of Israel","Jerusalem Post","NOS","De Telegraaf","AD.nl","RTL Nieuws","Reuters","AP News"];
@@ -714,7 +733,8 @@ let isUserScrolling=false, scrollTimeout=null, refreshPaused=false, lastBreaking
 let currentRender=[], lazyObserver=null, infiniteObserver=null;
 let timeRangeHours=168, lastBreakingItem=null;
 const targetLang="nl";
-let favorites=new Set(), readArticles=new Set(), trCache={}, sourceHealth={}, disabledSources=new Set();
+let favorites=new Set(), trCache={}, sourceHealth={}, disabledSources=new Set();
+let readArticles={}; /* link: timestamp */
 let lastVisit=0, notifEnabled=false, db=null;
 let cachedFiltered=null, cachedFilterSig="";
 let cachedNavCounts=null, cachedNavSig="";
@@ -722,37 +742,46 @@ let cachedForYouBase=null, cachedForYouSig="";
 let cachedTickerHtml="";
 let cachedSourcesList=[];
 let dataVersion=0;
+let progressToken=0;
 const translateTimers=new Map();
 
-/* Global error handler — voorkomt wit scherm */
+/* Global error handlers */
 window.addEventListener("error", (e) => {
-  try {
-    console.error("[WAR DESK error]", e.error || e.message);
-  } catch(_) {}
+  try { console.error("[WAR DESK error]", e.error || e.message); } catch(_) {}
 });
 window.addEventListener("unhandledrejection", (e) => {
-  try {
-    console.warn("[WAR DESK promise]", e.reason);
-  } catch(_) {}
+  try { console.warn("[WAR DESK promise]", e.reason); } catch(_) {}
 });
 
 function bumpDataVersion(){ dataVersion++; }
 function invalidateFilterCaches(){ cachedFiltered=null; cachedFilterSig=""; cachedForYouBase=null; cachedForYouSig=""; }
 function invalidateAllCaches(){ invalidateFilterCaches(); cachedNavCounts=null; cachedNavSig=""; cachedTickerHtml=""; }
-function clearTranslateTimers(){ translateTimers.forEach(t=>clearTimeout(t)); translateTimers.clear(); }
+function clearTranslateTimers(){
+  translateTimers.forEach(t=>clearTimeout(t));
+  translateTimers.clear();
+  trQueue.length = 0;
+  trTotal = 0;
+  trDone = 0;
+  updateTrStatus();
+}
 function isCardStillValid(idx, link){
   const el=document.getElementById("wcard-"+idx);
   if(!el) return false;
   return el.dataset.link === link;
 }
+function isRead(link){ return !!readArticles[link]; }
 
-/* Toon versie in footer */
-document.addEventListener("DOMContentLoaded", ()=>{
-  const el = document.getElementById("appVersion");
-  if(el) el.textContent = APP_VERSION;
-});
+/* Read-articles cleanup */
+function cleanupReadArticles(){
+  const now = Date.now();
+  let changed = false;
+  for(const link in readArticles){
+    if(now - readArticles[link] > READ_MAX_AGE_MS){ delete readArticles[link]; changed = true; }
+  }
+  return changed;
+}
 
-/* OS dark/light voorkeur als geen keuze gemaakt */
+/* OS dark/light voorkeur */
 function detectOSTheme(){
   try{
     if(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) return "light";
@@ -797,27 +826,55 @@ function idbGetAll(store){
 async function loadStateFromDB(){
   try{
     const favData=await idbGet(STORE_KV,"favorites"); if(favData && Array.isArray(favData.v)) favorites=new Set(favData.v);
-    const readData=await idbGet(STORE_KV,"read"); if(readData && Array.isArray(readData.v)) readArticles=new Set(readData.v);
+    const readData=await idbGet(STORE_KV,"read"); if(readData && readData.v && typeof readData.v==="object") readArticles = readData.v;
     const trData=await idbGet(STORE_KV,"translations"); if(trData && trData.v && typeof trData.v==="object") trCache=trData.v;
     const healthData=await idbGet(STORE_KV,"health"); if(healthData && healthData.v) sourceHealth=healthData.v;
     const lastData=await idbGet(STORE_KV,"lastVisit"); if(lastData && lastData.v) lastVisit=lastData.v;
     const notifData=await idbGet(STORE_KV,"notif"); if(notifData) notifEnabled=notifData.v==="1";
   }catch(e){}
-  if(!favorites.size){ try{ favorites=new Set(JSON.parse(localStorage.getItem("wardesk_favs_v1")||"[]")); }catch(e){} }
-  if(!readArticles.size){ try{ readArticles=new Set(JSON.parse(localStorage.getItem("wardesk_read_v1")||"[]")); }catch(e){} }
-  if(!Object.keys(trCache).length){ try{ trCache=JSON.parse(localStorage.getItem("wardesk_tr_v31")||"{}"); }catch(e){} }
+  /* localStorage fallbacks */
+  if(!favorites.size){
+    try{
+      const raw=localStorage.getItem("wardesk_favs_v1");
+      if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)) favorites=new Set(arr); }
+    }catch(e){}
+  }
+  if(!Object.keys(readArticles).length){
+    try{
+      const raw=localStorage.getItem("wardesk_read_v1");
+      if(raw){
+        const arr=JSON.parse(raw);
+        if(Array.isArray(arr)){ arr.forEach(link => { readArticles[link] = Date.now(); }); }
+        else if(arr && typeof arr === "object"){ readArticles = arr; }
+      }
+    }catch(e){}
+  }
+  if(!Object.keys(trCache).length){
+    try{ trCache=JSON.parse(localStorage.getItem("wardesk_tr_v31")||"{}"); }catch(e){}
+  }
   if(!lastVisit){
     const ls = parseInt(localStorage.getItem("wardesk_last_visit_v1")||"0",10);
     if(ls) lastVisit = ls;
   }
   for(const [src,d] of Object.entries(sourceHealth)){ if(d && d.fails>=3) disabledSources.add(src); }
+  /* Opruimen oude readArticles */
+  if(cleanupReadArticles()) saveReadDB();
 }
 async function saveFavoritesDB(){ await idbPut(STORE_KV,{k:"favorites",v:[...favorites]}); }
-async function saveReadDB(){ await idbPut(STORE_KV,{k:"read",v:[...readArticles]}); }
+async function saveReadDB(){
+  try{ await idbPut(STORE_KV,{k:"read",v:readArticles}); }catch(e){}
+  try{ localStorage.setItem("wardesk_read_v1", JSON.stringify(readArticles)); }catch(e){}
+}
 async function saveTrCacheDB(){
   const keys=Object.keys(trCache);
-  if(keys.length>5000){ const fresh={}; keys.slice(-3000).forEach(k=>fresh[k]=trCache[k]); trCache=fresh; }
-  await idbPut(STORE_KV,{k:"translations",v:trCache});
+  if(keys.length>TR_CACHE_MAX+2000){
+    const fresh={};
+    /* Sorteer op ingebouwde timestamp, of behoud laatste keys */
+    const sorted = keys.slice(-TR_CACHE_MAX);
+    sorted.forEach(k=>fresh[k]=trCache[k]);
+    trCache=fresh;
+  }
+  try{ await idbPut(STORE_KV,{k:"translations",v:trCache}); }catch(e){}
 }
 async function saveHealthDB(){ await idbPut(STORE_KV,{k:"health",v:sourceHealth}); }
 async function saveLastVisitDB(){
@@ -915,7 +972,8 @@ const progressBar=$("progressBar"), backTop=$("backTop");
 const pullIndicator=$("pullIndicator"), offlineBanner=$("offlineBanner");
 const infiniteLoader=$("infiniteLoader"), themeBtn=$("theme");
 const timeRangeInput=$("timeRange"), timeRangeValue=$("timeRangeValue");
-const mapLoader=$("mapLoader"), mapError=$("mapError");
+const mapLoader=$("mapLoader"), mapError=$("mapError"), mapLoaderMsg=$("mapLoaderMsg");
+const resetFiltersBtn=$("resetFiltersBtn"), printBtn=$("printBtn");
 
 let toastTimer=null;
 function showToast(msg,icon="ℹ"){ toastMsg.textContent=msg; const ic=toast.querySelector(".ic"); if(ic) ic.textContent=icon; toast.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>toast.classList.remove("show"),2400); }
@@ -977,7 +1035,7 @@ function isArabic(t){ return /[\u0600-\u06FF]/.test(t||""); }
 function needsTranslation(lang){ return lang!=="nl"; }
 function isNewArticle(it){
   if(!it || !it.link) return false;
-  if(readArticles.has(it.link)) return false;
+  if(isRead(it.link)) return false;
   if(!lastVisit) return false;
   const t = new Date(it.date).getTime();
   return !isNaN(t) && t > lastVisit;
@@ -1140,6 +1198,7 @@ function showBreaking(info){
   breakingTitle.textContent=tr.slice(0,180);
   breakingTitle.setAttribute("dir", isArabic(info.item.title)?"rtl":"ltr");
   breakingMeta.textContent=info.sources.join(" · ");
+  breakingBanner.setAttribute("aria-label","Open: "+info.item.title.slice(0,60));
   breakingBanner.classList.add("show");
   setTimeout(()=>breakingBanner.classList.remove("show"),30000);
 }
@@ -1191,6 +1250,7 @@ window.addEventListener("beforeunload", ()=>{ saveLastVisitDB(); });
 
 async function loadFeeds(isAuto=false){
   const session=++loadSession;
+  const myProgressToken = ++progressToken;
   const activeFeeds=FEEDS.filter(f=>!isDisabled(f.name));
 
   if(isFirstLoad){
@@ -1262,73 +1322,78 @@ async function loadFeeds(isAuto=false){
     }
   };
 
-  let idx=0;
-  async function worker(){
-    while(idx<sorted.length && session===loadSession){
-      const f=sorted[idx++];
-      await processOne(f);
+  try {
+    let idx=0;
+    async function worker(){
+      while(idx<sorted.length && session===loadSession){
+        const f=sorted[idx++];
+        await processOne(f);
+      }
+    }
+    await Promise.all(Array.from({length:CONCURRENCY}, ()=>worker()));
+    if(session!==loadSession) return;
+
+    const finalDeduped=dedupe(collected);
+    finalDeduped.sort((a,b)=>safeTime(b.date)-safeTime(a.date));
+    if(finalDeduped.length) allItems=finalDeduped;
+    failedFeeds=failed;
+
+    await saveHealthDB();
+    await cacheArticlesDB(allItems);
+
+    statSources.textContent=`${totalOk}/${FEEDS.length}`;
+    statWar.textContent=allItems.filter(x=>x.cat==="war").length;
+    statNew.textContent=allItems.filter(isNewArticle).length;
+
+    const breaking=detectBreaking(allItems);
+    if(breaking && firstRenderDone) showBreaking(breaking);
+
+    if(!isAuto && notifEnabled && "Notification" in window && Notification.permission==="granted"){
+      if(allItems.length>0){
+        try{ new Notification("WAR DESK · Update",{body:allItems[0].title.slice(0,120),tag:"wardesk"}); }catch(e){}
+      }
+    }
+
+    const disabledNow=[...disabledSources];
+    if(failedFeeds.length || disabledNow.length){
+      failedCount.textContent=failedFeeds.length+disabledNow.length;
+      failedToggle.style.display="inline-block";
+      let msg='';
+      if(failedFeeds.length) msg+=`<strong>${failedFeeds.length} bronnen falen nu:</strong> ${failedFeeds.map(escapeHtml).join(" · ")}`;
+      if(disabledNow.length){
+        if(msg) msg+='<br><br>';
+        msg+=`<strong>${disabledNow.length} bronnen zijn uitgeschakeld</strong>: ${disabledNow.map(escapeHtml).join(" · ")}`;
+        msg+='<br><button class="reset" id="resetHealth">↺ Reset uitgeschakelde bronnen</button>';
+      }
+      failedList.innerHTML=msg;
+      const resetBtn=document.getElementById("resetHealth");
+      if(resetBtn) resetBtn.addEventListener("click",()=>{
+        sourceHealth={}; disabledSources=new Set(); saveHealthDB();
+        showToast("Bronnen gereset","↺");
+        loadFeeds(false);
+      });
+    } else {
+      failedToggle.style.display="none";
+      failedList.classList.remove("show");
+    }
+
+    populateSources();
+    currentPage=1;
+    bumpDataVersion();
+    invalidateAllCaches();
+    clearTranslateTimers();
+    render(); renderTicker(); if(currentView==="map") renderMap(); updateNavCounts();
+    nextRefreshSeconds=REFRESH_MS/1000;
+  } finally {
+    /* Altijd: spin weghalen en progress verbergen, ongeacht fouten */
+    refreshBtn.classList.remove("spin");
+    if(!isAuto){
+      progressBar.style.width="100%";
+      setTimeout(()=>{
+        if(progressToken===myProgressToken) progressBar.classList.add("hidden");
+      },500);
     }
   }
-  await Promise.all(Array.from({length:CONCURRENCY}, ()=>worker()));
-  if(session!==loadSession) return;
-
-  const finalDeduped=dedupe(collected);
-  finalDeduped.sort((a,b)=>safeTime(b.date)-safeTime(a.date));
-  if(finalDeduped.length) allItems=finalDeduped;
-  failedFeeds=failed;
-
-  await saveHealthDB();
-  await cacheArticlesDB(allItems);
-
-  statSources.textContent=`${totalOk}/${FEEDS.length}`;
-  statWar.textContent=allItems.filter(x=>x.cat==="war").length;
-  statNew.textContent=allItems.filter(isNewArticle).length;
-
-  const breaking=detectBreaking(allItems);
-  if(breaking && firstRenderDone) showBreaking(breaking);
-
-  if(!isAuto && notifEnabled && "Notification" in window && Notification.permission==="granted"){
-    if(allItems.length>0){
-      try{ new Notification("WAR DESK · Update",{body:allItems[0].title.slice(0,120),tag:"wardesk"}); }catch(e){}
-    }
-  }
-
-  const disabledNow=[...disabledSources];
-  if(failedFeeds.length || disabledNow.length){
-    failedCount.textContent=failedFeeds.length+disabledNow.length;
-    failedToggle.style.display="inline-block";
-    let msg='';
-    if(failedFeeds.length) msg+=`<strong>${failedFeeds.length} bronnen falen nu:</strong> ${failedFeeds.map(escapeHtml).join(" · ")}`;
-    if(disabledNow.length){
-      if(msg) msg+='<br><br>';
-      msg+=`<strong>${disabledNow.length} bronnen zijn uitgeschakeld</strong>: ${disabledNow.map(escapeHtml).join(" · ")}`;
-      msg+='<br><button class="reset" id="resetHealth">↺ Reset uitgeschakelde bronnen</button>';
-    }
-    failedList.innerHTML=msg;
-    const resetBtn=document.getElementById("resetHealth");
-    if(resetBtn) resetBtn.addEventListener("click",()=>{
-      sourceHealth={}; disabledSources=new Set(); saveHealthDB();
-      showToast("Bronnen gereset","↺");
-      loadFeeds(false);
-    });
-  } else {
-    failedToggle.style.display="none";
-    failedList.classList.remove("show");
-  }
-
-  refreshBtn.classList.remove("spin");
-  if(!isAuto){
-    progressBar.style.width="100%";
-    setTimeout(()=>progressBar.classList.add("hidden"),500);
-  }
-
-  populateSources();
-  currentPage=1;
-  bumpDataVersion();
-  invalidateAllCaches();
-  clearTranslateTimers();
-  render(); renderTicker(); if(currentView==="map") renderMap(); updateNavCounts();
-  nextRefreshSeconds=REFRESH_MS/1000;
 }
 
 function populateSources(){
@@ -1483,10 +1548,11 @@ function cardHtml(it,i){
   const dispTitle=cachedTitle||it.title, dispDesc=cachedDesc||it.desc;
   const translating=!cachedTitle && needsTranslation(it.lang);
   const img=it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" onerror="this.parentElement.style.background='var(--bg-3)'; this.remove();">` : "";
-  const isWar=it.cat==="war", isRead=readArticles.has(it.link), isFav=favorites.has(it.link), isNew=isNewArticle(it);
+  const isWar=it.cat==="war", isReadFlag=isRead(it.link), isFav=favorites.has(it.link), isNew=isNewArticle(it);
   const sources=it.sources||[it.source], multiSrc=sources.length>1;
-  const classes=[isWar?'war':'', isRead?'read':'', isFav?'is-fav':''].filter(Boolean).join(' ');
+  const classes=[isWar?'war':'', isReadFlag?'read':'', isFav?'is-fav':''].filter(Boolean).join(' ');
   const catLabel=getCatLabel(it.cat), minutes=readTime(dispDesc);
+  const encodedSources = encodeURIComponent(JSON.stringify(sources));
   const metaLine=`
     <span class="card-source">${escapeHtml(it.source)}</span>
     <span class="card-sep">·</span>
@@ -1494,14 +1560,14 @@ function cardHtml(it,i){
     <span class="card-sep">·</span>
     <span>${timeAgo(it.date)}</span>
     ${isNew?`<span class="new-badge">NEW</span>`:''}
-    ${multiSrc?`<span class="card-multi" data-sources="${escapeHtml(JSON.stringify(sources))}">${sources.length}× bronnen</span>`:''}
+    ${multiSrc?`<span class="card-multi" data-sources="${encodedSources}" role="button" tabindex="0">${sources.length}× bronnen</span>`:''}
   `;
   return `
-    <article id="wcard-${i}" data-idx="${i}" data-link="${escapeHtml(it.link)}" class="${classes}" dir="${rtl?'rtl':'ltr'}">
+    <article id="wcard-${i}" data-idx="${i}" data-link="${escapeHtml(it.link)}" class="${classes}" dir="${rtl?'rtl':'ltr'}" role="article" aria-label="${escapeHtml(dispTitle.slice(0,80))}">
       <div class="card-thumb">${img}</div>
       <div class="card-actions">
-        <button class="icon-btn fav ${isFav?'active':''}" data-fav="${escapeHtml(it.link)}" title="${isFav?'Verwijder favoriet':'Voeg toe aan favorieten'}" aria-label="Favoriet">${isFav?'★':'☆'}</button>
-        <button class="icon-btn share" data-share="${escapeHtml(it.link)}" title="Delen" aria-label="Delen">⇗</button>
+        <button class="icon-btn fav ${isFav?'active':''}" data-fav="${escapeHtml(it.link)}" title="${isFav?'Verwijder favoriet':'Voeg toe aan favorieten'}" aria-label="${isFav?'Verwijder favoriet':'Voeg toe aan favorieten'}">${isFav?'★':'☆'}</button>
+        <button class="icon-btn share" data-share="${escapeHtml(it.link)}" title="Delen" aria-label="Artikel delen">⇗</button>
       </div>
       <div class="card-body">
         <div class="card-meta">${metaLine}</div>
@@ -1542,7 +1608,10 @@ feedEl.addEventListener("click",e=>{
   const multiBadge=e.target.closest(".card-multi");
   if(multiBadge){
     e.stopPropagation();
-    try{ const sources=JSON.parse(multiBadge.dataset.sources); showSources(sources); }catch(err){}
+    try{
+      const sources=JSON.parse(decodeURIComponent(multiBadge.dataset.sources));
+      showSources(sources);
+    }catch(err){}
     return;
   }
   const card=e.target.closest("article");
@@ -1560,7 +1629,11 @@ function showSources(sources){
 srcClose.addEventListener("click",()=>srcPopup.classList.remove("show"));
 srcPopup.addEventListener("click",e=>{ if(e.target===srcPopup) srcPopup.classList.remove("show"); });
 function markAsRead(link){
-  if(!readArticles.has(link)){ readArticles.add(link); saveReadDB(); }
+  if(!readArticles[link]){
+    readArticles[link] = Date.now();
+    cleanupReadArticles();
+    saveReadDB();
+  }
 }
 
 function doTranslate(it, idx){
@@ -1761,11 +1834,13 @@ async function showOnly(view){
     mapView.classList.add("active");
     if(!leafletLoaded){
       mapLoader.classList.add("show");
+      mapLoaderMsg.textContent = "Kaart laden...";
       map.style.display="none";
       const ok=await loadLeaflet();
       mapLoader.classList.remove("show");
       if(!ok){
         mapError.classList.add("show");
+        map.style.display="block";
         return;
       }
       map.style.display="block";
@@ -1805,7 +1880,6 @@ viewListBtn.addEventListener("click",(e)=>{
 catMenuClose.addEventListener("click",()=>{ catMenu.classList.remove("show"); if(lastFocusedElement && lastFocusedElement.focus) lastFocusedElement.focus(); });
 catMenu.addEventListener("click",(e)=>{ if(e.target===catMenu){ catMenu.classList.remove("show"); if(lastFocusedElement && lastFocusedElement.focus) lastFocusedElement.focus(); } });
 
-/* Focus-trap in menu */
 catMenu.addEventListener("keydown", (e) => {
   if(!catMenu.classList.contains("show")) return;
   if(e.key === "Escape"){ catMenu.classList.remove("show"); if(lastFocusedElement && lastFocusedElement.focus) lastFocusedElement.focus(); return; }
@@ -1847,6 +1921,26 @@ function updateCatMenuActive(){
     item.classList.toggle("active", item.dataset.cat===activeCat);
   });
 }
+
+/* Reset filters knop */
+resetFiltersBtn.addEventListener("click", ()=>{
+  searchInput.value = ""; searchWrap.classList.remove("has-value");
+  sourceSelect.value = "all"; activeSource = "all";
+  timeSelect.value = "all"; activeTime = "all";
+  langSelect.value = "all"; activeLang = "all";
+  sortSelect.value = "newest"; activeSort = "newest";
+  currentPage = 1;
+  clearTranslateTimers();
+  invalidateFilterCaches();
+  render();
+  showToast("Filters gewist", "↺");
+});
+
+/* Print knop */
+printBtn.addEventListener("click", ()=>{
+  catMenu.classList.remove("show");
+  setTimeout(()=>window.print(), 200);
+});
 
 let searchTimer=null;
 function onFilterChange(){
@@ -1922,6 +2016,7 @@ document.addEventListener("keydown",e=>{
   else if(k==="m"){ e.preventDefault(); switchView(currentView==="map"?"list":"map"); }
   else if(k==="l"){ e.preventDefault(); switchView("list"); }
   else if(k==="t"){ e.preventDefault(); themeBtn.click(); }
+  else if(k==="p"){ e.preventDefault(); window.print(); }
   else if(k==="f"){
     e.preventDefault();
     activeCat="fav"; currentPage=1; clearTranslateTimers(); invalidateFilterCaches();
@@ -2018,7 +2113,7 @@ setInterval(()=>{
   updateCatMenuActive();
   startClock();
   loadFeeds(false);
-  saveLastVisitDB();
+  /* lastVisit wordt NIET hier gezet — alleen bij sluiten (visibilitychange/pagehide) */
 })();
 
 /* Service worker registratie + update-melding */

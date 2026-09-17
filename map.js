@@ -1,9 +1,5 @@
 /* ============================================================
-   WAR DESK v3.3 — Live Conflictkaart
-   - OSM Humanitarian tiles (Engelse labels)
-   - Rood/blauw/grijs kleurschema
-   - Kleinere, strakkere markers
-   - 2 categorieën: Conflict & Politiek
+   WAR DESK v3.4 — Conflictkaart met detail-paneel
    ============================================================ */
 
 (function(){
@@ -12,7 +8,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v3.3 geladen");
+  LOG("v3.4 geladen");
 
   var MAP = {
     instance: null,
@@ -25,7 +21,6 @@
     api: "https://war-tracker.com/api/v1/events?limit=100"
   };
 
-  /* ===== 3-KLEUREN SCHEMA ===== */
   var TYPES = {
     "military strike":       { color: "#e63950", filter: "conflict",  label: "Aanval" },
     "ground clash":          { color: "#e63950", filter: "conflict",  label: "Gevecht" },
@@ -39,6 +34,68 @@
     if(!t) return TYPES["na"];
     var key = String(t).toLowerCase().trim();
     return TYPES[key] || TYPES["na"];
+  }
+
+  /* ===== DETAIL MODAL ===== */
+  function ensureDetailModal(){
+    var existing = $("wdDetailModal");
+    if(existing) return;
+
+    var modal = document.createElement("div");
+    modal.id = "wdDetailModal";
+    modal.className = "wd-detail-modal";
+    modal.innerHTML =
+      '<div class="wd-detail-box">' +
+        '<div class="wd-detail-head">' +
+          '<span class="wd-detail-type" id="wdDetailType">—</span>' +
+          '<button class="wd-detail-close" id="wdDetailClose" aria-label="Sluiten">✕</button>' +
+        '</div>' +
+        '<div class="wd-detail-body">' +
+          '<div class="wd-detail-meta" id="wdDetailMeta">—</div>' +
+          '<div class="wd-detail-text" id="wdDetailText">—</div>' +
+        '</div>' +
+        '<div class="wd-detail-foot">' +
+          '<button class="wd-detail-btn primary" id="wdDetailOpen">Open bron →</button>' +
+          '<button class="wd-detail-btn" id="wdDetailCloseBtn">Sluiten</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", function(e){
+      if(e.target === modal) closeDetail();
+    });
+    $("wdDetailClose").addEventListener("click", closeDetail);
+    $("wdDetailCloseBtn").addEventListener("click", closeDetail);
+  }
+
+  function openDetail(event){
+    ensureDetailModal();
+    var modal = $("wdDetailModal");
+    var color = event.typeConfig.color;
+
+    $("wdDetailType").textContent = event.typeConfig.label;
+    $("wdDetailType").style.background = color;
+    $("wdDetailMeta").textContent =
+      (event.country || "Onbekend") + " · " +
+      timeAgo(event.date) + " · " +
+      "confidence " + (event.confidence || "LOW");
+
+    $("wdDetailText").textContent = event.fullDescription || event.title || "(geen beschrijving)";
+
+    var openBtn = $("wdDetailOpen");
+    if(event.url){
+      openBtn.style.display = "inline-flex";
+      openBtn.onclick = function(){ window.open(event.url, "_blank", "noopener"); };
+    } else {
+      openBtn.style.display = "none";
+    }
+
+    modal.classList.add("show");
+  }
+
+  function closeDetail(){
+    var modal = $("wdDetailModal");
+    if(modal) modal.classList.remove("show");
   }
 
   /* ===== DATA ===== */
@@ -66,15 +123,15 @@
                e.lat !== 0 && e.lng !== 0;
       });
 
-      LOG(withCoords.length, "events met coördinaten");
-
       MAP.events = withCoords.map(function(e){
         var type = getType(e.event_type);
+        var fullDesc = (e.description || "").trim();
         return {
           id: e.id,
           lat: e.lat,
           lng: e.lng,
-          title: (e.description || "Event").slice(0, 200),
+          title: fullDesc.slice(0, 100) || "Event",
+          fullDescription: fullDesc,
           type: e.event_type || "NA",
           typeConfig: type,
           country: e.country || "?",
@@ -91,7 +148,7 @@
       renderLegend();
       renderLiveList();
 
-      LOG("Klaar:", MAP.events.length, "events op kaart");
+      LOG("Klaar:", MAP.events.length, "events");
     }catch(e){
       LOG("Fetch fout:", e.message);
       if(list){
@@ -122,16 +179,30 @@
       });
       var marker = L.marker([e.lat, e.lng], {icon: icon});
 
+      var shortDesc = (e.fullDescription || "").slice(0, 180);
       var popupHtml =
         '<div class="pop-cat" style="--cat-color:' + color + '">' + e.typeConfig.label + '</div>' +
-        '<div class="pop-title">' + escapeHtml(e.title.slice(0, 150)) + '</div>' +
+        '<div class="pop-title">' + escapeHtml(shortDesc) + (e.fullDescription.length > 180 ? "…" : "") + '</div>' +
         '<div class="pop-meta">' +
-        escapeHtml(e.country || "?") + ' · ' +
-        timeAgo(e.date) + ' · ' +
-        e.confidence + '</div>' +
-        (e.url ? '<a class="pop-link" href="' + escapeHtml(e.url) + '" target="_blank" rel="noopener">Lees bron →</a>' : "");
+        escapeHtml(e.country || "?") + ' · ' + timeAgo(e.date) + '</div>' +
+        '<button class="pop-more" data-id="' + escapeHtml(String(e.id)) + '">Volledige tekst →</button>';
 
       marker.bindPopup(popupHtml);
+
+      /* Klik op "Volledige tekst" in popup → detail modal */
+      marker.on("popupopen", function(){
+        setTimeout(function(){
+          var btn = document.querySelector('.pop-more[data-id="' + e.id + '"]');
+          if(btn){
+            btn.onclick = function(ev){
+              ev.preventDefault();
+              ev.stopPropagation();
+              openDetail(e);
+            };
+          }
+        }, 50);
+      });
+
       markers.push(marker);
     });
 
@@ -188,17 +259,27 @@
 
     list.innerHTML = filtered.slice(0, 80).map(function(e){
       var color = e.typeConfig.color;
-      return '<a class="live-event" style="--cat-color:' + color + '" ' +
-        (e.url ? 'href="' + escapeHtml(e.url) + '" target="_blank" rel="noopener"' : "") + '>' +
+      var shortText = (e.fullDescription || "").slice(0, 160);
+      var hasMore = e.fullDescription.length > 160;
+      return '<div class="live-event" data-id="' + escapeHtml(String(e.id)) + '" style="--cat-color:' + color + '">' +
         '<div class="live-event-body">' +
-        '<div class="live-event-title">' + escapeHtml(e.title) + '</div>' +
+        '<div class="live-event-title">' + escapeHtml(shortText) + (hasMore ? "…" : "") + '</div>' +
         '<div class="live-event-meta">' +
         '<span class="live-event-loc">' + escapeHtml(e.country || "—") + '</span>' +
         '<span>·</span>' +
         '<span>' + timeAgo(e.date) + '</span>' +
         '<span class="live-event-cat" style="--cat-color:' + color + '">' + e.typeConfig.label + '</span>' +
-        '</div></div></a>';
+        '</div></div></div>';
     }).join("");
+
+    /* Klik op live-event → detail modal */
+    Array.prototype.forEach.call(list.querySelectorAll(".live-event"), function(el){
+      el.addEventListener("click", function(){
+        var id = el.dataset.id;
+        var ev = MAP.events.find(function(x){ return String(x.id) === String(id); });
+        if(ev) openDetail(ev);
+      });
+    });
   }
 
   /* ===== HELPERS ===== */
@@ -233,11 +314,10 @@
       attributionControl: true
     });
 
-    /* OSM Humanitarian — Engelse labels internationaal */
     MAP.tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
       maxZoom: 19,
       subdomains: "abc",
-      attribution: '&copy; OpenStreetMap · Tiles: HOT'
+      attribution: '&copy; OpenStreetMap · HOT'
     }).addTo(MAP.instance);
 
     MAP.cluster = L.markerClusterGroup({
@@ -251,17 +331,10 @@
       chunkDelay: 50
     });
     MAP.instance.addLayer(MAP.cluster);
-
-    LOG("Kaart geïnitialiseerd");
   }
 
-  /* ===== CONTROLS ===== */
   function bindControls(){
-    var zi = $("mapZoomIn");
-    var zo = $("mapZoomOut");
-    var loc = $("mapLocate");
-    var full = $("mapFull");
-
+    var zi = $("mapZoomIn"), zo = $("mapZoomOut"), loc = $("mapLocate"), full = $("mapFull");
     if(zi) zi.addEventListener("click", function(){ MAP.instance && MAP.instance.zoomIn(); });
     if(zo) zo.addEventListener("click", function(){ MAP.instance && MAP.instance.zoomOut(); });
     if(full) full.addEventListener("click", function(){
@@ -279,7 +352,6 @@
     });
   }
 
-  /* ===== FILTERS ===== */
   function bindFilters(){
     document.querySelectorAll(".live-filter").forEach(function(btn){
       btn.addEventListener("click", function(){
@@ -292,16 +364,12 @@
     });
   }
 
-  /* ===== REFRESH ===== */
   window.__mapRefresh = function(){ fetchEvents(); };
   window.__mapResetView = function(){ if(MAP.instance) MAP.instance.setView([40, 30], 3); };
 
-  /* ===== VIEW SWITCH ===== */
   function activateMapView(){
     initMap();
-    if(MAP.instance){
-      setTimeout(function(){ if(MAP.instance) MAP.instance.invalidateSize(); }, 150);
-    }
+    if(MAP.instance) setTimeout(function(){ if(MAP.instance) MAP.instance.invalidateSize(); }, 150);
     if(!MAP.events.length) fetchEvents();
     else { renderMarkers(); renderLegend(); renderLiveList(); }
   }
@@ -314,7 +382,6 @@
     });
   }
 
-  /* ===== AUTO REFRESH ===== */
   function startAutoRefresh(){
     clearInterval(MAP.refreshTimer);
     MAP.refreshTimer = setInterval(function(){
@@ -324,9 +391,9 @@
     }, 300000);
   }
 
-  /* ===== START ===== */
   window.addEventListener("DOMContentLoaded", function(){
     setTimeout(function(){
+      ensureDetailModal();
       bindControls();
       bindFilters();
       hookViewSwitch();
@@ -336,8 +403,6 @@
       var viewMap = document.getElementById("viewMap");
       var isMapActive = (mapTab && mapTab.classList.contains("active")) || (viewMap && !viewMap.hidden);
       if(isMapActive) setTimeout(activateMapView, 400);
-
-      LOG("Klaar");
     }, 600);
   });
 
@@ -348,9 +413,11 @@
     }, 1500);
   });
 
-  window.MAPAPI = {
-    refresh: fetchEvents,
-    state: MAP
-  };
+  /* Escape sluit modal */
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") closeDetail();
+  });
+
+  window.MAPAPI = { refresh: fetchEvents, state: MAP };
 
 })();

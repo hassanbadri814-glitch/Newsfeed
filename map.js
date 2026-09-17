@@ -1,6 +1,7 @@
 /* ============================================================
-   WAR DESK v3.1 — Live Conflictkaart
+   WAR DESK v3.2 — Live Conflictkaart
    Bronnen: War-Tracker + GDELT
+   Kaart: OpenFreeMap (geen API key)
    ============================================================ */
 
 (function(){
@@ -9,14 +10,13 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v3.1 geladen");
+  LOG("v3.2 geladen");
 
   /* ===== STATE ===== */
   var MAP = {
     instance: null,
     cluster: null,
     tileLayer: null,
-    markers: [],
     events: [],
     currentCat: "all",
     lastUpdate: 0,
@@ -37,27 +37,21 @@
 
   /* ===== LAND-NAAR-CATEGORIE ===== */
   var COUNTRY_CAT = {
-    // Midden-Oosten
     IL:"mideast", PS:"mideast", LB:"mideast", SY:"mideast", IR:"mideast", IQ:"mideast",
     YE:"mideast", SA:"mideast", AE:"mideast", QA:"mideast", JO:"mideast", KW:"mideast",
     TR:"mideast", EG:"mideast", BH:"mideast", OM:"mideast",
-    // Oekraïne
     UA:"ukraine", RU:"ukraine", BY:"ukraine", MD:"ukraine",
-    // Afrika
     SD:"africa", LY:"africa", ET:"africa", SO:"africa", ML:"africa", NG:"africa",
     CD:"africa", CF:"africa", BF:"africa", NE:"africa", TD:"africa", CM:"africa",
     ZA:"africa", KE:"africa", TZ:"africa", MZ:"africa", ZW:"africa", AO:"africa",
     MA:"africa", DZ:"africa", TN:"africa", MR:"africa",
-    // Azië
     CN:"asia", IN:"asia", PK:"asia", AF:"asia", BD:"asia", MM:"asia", TH:"asia",
     VN:"asia", PH:"asia", ID:"asia", MY:"asia", SG:"asia", JP:"asia", KR:"asia",
     KP:"asia", TW:"asia", LK:"asia", NP:"asia", KH:"asia", LA:"asia",
-    // Europa
     GB:"europe", FR:"europe", DE:"europe", IT:"europe", ES:"europe", PT:"europe",
     NL:"europe", BE:"europe", PL:"europe", RO:"europe", GR:"europe", SE:"europe",
     NO:"europe", FI:"europe", DK:"europe", IE:"europe", AT:"europe", CH:"europe",
     CZ:"europe", HU:"europe", RS:"europe", HR:"europe", BG:"europe", SK:"europe",
-    // Amerika
     US:"americas", CA:"americas", MX:"americas", BR:"americas", AR:"americas",
     CO:"americas", VE:"americas", CL:"americas", PE:"americas", CU:"americas",
     HT:"americas", DO:"americas", GT:"americas", HN:"americas", SV:"americas",
@@ -93,33 +87,6 @@
     PA:"Panama", EC:"Ecuador", BO:"Bolivia", PY:"Paraguay", UY:"Uruguay"
   };
 
-  /* ===== STEDEN-NAAR-LOCATIE (westerse tekens) ===== */
-  var CITY_COORDS = {
-    "gaza":       [31.50, 34.47], "rafah":      [31.28, 34.25],
-    "khan younis": [31.35, 34.30], "tel aviv":  [32.08, 34.78],
-    "jerusalem":  [31.77, 35.21], "beirut":     [33.89, 35.50],
-    "damascus":   [33.51, 36.29], "tehran":     [35.69, 51.39],
-    "baghdad":    [33.31, 44.36], "sanaa":      [15.37, 44.19],
-    "kyiv":       [50.45, 30.52], "kharkiv":    [49.99, 36.23],
-    "odesa":      [46.48, 30.73], "mariupol":   [47.09, 37.54],
-    "moscow":     [55.75, 37.61], "istanbul":   [41.01, 28.98],
-    "ankara":     [39.93, 32.86], "cairo":      [30.04, 31.24],
-    "riyadh":     [24.71, 46.67], "dubai":      [25.20, 55.27],
-    "doha":       [25.28, 51.53], "khartoum":   [15.50, 32.50],
-    "tripoli":    [32.89, 13.19], "kabul":      [34.53, 69.17],
-    "islamabad":  [33.68, 73.05], "new delhi":  [28.61, 77.21],
-    "beijing":    [39.90, 116.40], "tokyo":     [35.68, 139.69],
-    "london":     [51.50, -0.12], "paris":      [48.85, 2.35],
-    "berlin":     [52.52, 13.40], "rome":       [41.90, 12.50],
-    "madrid":     [40.42, -3.70], "amsterdam":  [52.37, 4.90],
-    "brussels":   [50.85, 4.35], "washington": [38.90, -77.04],
-    "new york":   [40.71, -74.00], "los angeles":[34.05, -118.24],
-    "mexico city":[19.43, -99.13], "brasilia":  [-15.79, -47.88],
-    "buenos aires":[-34.60, -58.38], "nairobi": [1.29, 36.82],
-    "lagos":      [6.52, 3.37], "johannesburg":[-26.20, 28.04],
-    "mogadishu":  [2.05, 45.32], "addis ababa":[9.03, 38.74]
-  };
-
   /* ===== CATEGORIE HELPERS ===== */
   function getCategory(countryCode, text){
     if(countryCode && COUNTRY_CAT[countryCode]) return COUNTRY_CAT[countryCode];
@@ -136,15 +103,6 @@
   function getCountryName(code){
     if(!code) return "";
     return COUNTRY_NAME[code.toUpperCase()] || code.toUpperCase();
-  }
-
-  function getCityCoords(text){
-    if(!text) return null;
-    var t = text.toLowerCase();
-    for(var city in CITY_COORDS){
-      if(t.indexOf(city) >= 0) return CITY_COORDS[city];
-    }
-    return null;
   }
 
   /* ===== DATA OPHALEN ===== */
@@ -195,7 +153,6 @@
   /* ===== GDELT ===== */
   async function fetchGDELT(){
     try{
-      // GDELT GeoJSON API (gratis, geen key)
       var url = "https://api.gdeltproject.org/api/v2/geo/geo?query=conflict%20OR%20strike%20OR%20attack&mode=PointData&format=GeoJSON&maxrecords=200&timespan=1440";
       var data = await proxyFetch(url);
       if(!data || !data.features) return [];
@@ -323,7 +280,7 @@
 
     var filtered = MAP.events.filter(function(e){
       if(MAP.currentCat === "all") return true;
-      if(MAP.currentCat === "world") return true; // alles
+      if(MAP.currentCat === "world") return true;
       return e.cat === MAP.currentCat;
     });
 
@@ -384,13 +341,12 @@
 
     var isLight = document.documentElement.classList.contains("light") || document.body.classList.contains("light");
     var tileUrl = isLight
-      ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+      ? "https://tiles.openfreemap.org/styles/positron"
+      : "https://tiles.openfreemap.org/styles/dark";
 
     MAP.tileLayer = L.tileLayer(tileUrl, {
       maxZoom: 19,
-      subdomains: "abcd",
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
+      attribution: '&copy; OpenStreetMap &copy; OpenFreeMap'
     }).addTo(MAP.instance);
 
     MAP.cluster = L.markerClusterGroup({
@@ -455,8 +411,8 @@
         if(!MAP.tileLayer) return;
         var isLight = document.documentElement.classList.contains("light") || document.body.classList.contains("light");
         MAP.tileLayer.setUrl(isLight
-          ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png");
+          ? "https://tiles.openfreemap.org/styles/positron"
+          : "https://tiles.openfreemap.org/styles/dark");
       }, 150);
     });
   }

@@ -1,6 +1,7 @@
 /* ============================================================
-   WAR DESK v19.0 — Nieuws logica
+   WAR DESK v19.1 — Nieuws logica (robust parser)
    ============================================================ */
+window.__newsVersion = "v19.1-robust-parser";
 
 /* ===== STATE ===== */
 window.State = {
@@ -145,7 +146,6 @@ function esc(s){
 function detectTopic(title, desc, fallback){
   var t = ((title || "") + " " + (desc || "")).toLowerCase();
 
-  // Sport eerst
   var sportSignal = fallback === "sport" ||
     /\b(voetbal|football|soccer|eredivisie|eerste divisie|knvb|ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|n\.e\.c\.|sparta|willem ii|go ahead|pec zwolle|rkc|fortuna sittard|excelsior|almere city|heracles|voetbalzone|voetbalnieuws|voetbalprimeur|match|wedstrijd|goal|doelpunt|keeper|doelman|coach|trainer|speler|selectie|toernooi|competitie|champions league|europa league|conference league|knvb beker|johan cruijff schaal|fifa|uefa|wk|ek|kickboxing|glory|mma|ufc|boksen|boks|vechtsport|formule 1|f1|grand prix|motogp|olympische|tennis|wimbledon|roland garros|us open|australian open|basketbal|nba|nfl|nhl|mlb|wielrennen|tour de france|giro|vuelta|darts|schaatsen|zwemmen|atletiek|hockey|handbal|volleybal|honkbal|rugby|cricket|golf|surfen|ski|snowboard)\b/.test(t);
 
@@ -154,7 +154,6 @@ function detectTopic(title, desc, fallback){
     return "sport";
   }
 
-  // Conflict zones
   if(/\b(gaza|rafah|khan younis|hamas|palestin|netanyahu|tel aviv|jerusalem|idf|hebron|jenin|nablus|ramallah|west bank)\b/.test(t)) return "gaza";
   if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah|sidon|tripoli|tyre)\b/.test(t)) return "lebanon";
   if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf|pezeshkian)\b/.test(t)) return "iran";
@@ -164,7 +163,6 @@ function detectTopic(title, desc, fallback){
   if(/\b(sudan|sudanese|khartoum|darfur|rsf|omdurman)\b/.test(t)) return "sudan";
   if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara)\b/.test(t)) return "maroc";
 
-  // Algemene oorlog
   if(/\b(airstrike|air strike|missile|invasion|invaded|ceasefire|cease-fire|military|soldier|troops|combat|offensive|bombing|shelling|artillery|tank|drone strike|hostage|massacre|war crime)\b/.test(t)) return "war";
 
   return fallback || "algemeen";
@@ -211,7 +209,6 @@ function dedupe(items){
    ROBUUSTE PARSER — XML / rss2json / genestelde JSON
    ============================================================ */
 
-/* Parse raw RSS/Atom XML → array van item-objecten */
 function parseRssXml(xmlText){
   try{
     var doc = new DOMParser().parseFromString(xmlText, "text/xml");
@@ -243,8 +240,6 @@ function parseRssXml(xmlText){
   }catch(e){ return []; }
 }
 
-/* Normaliseer een item naar {title, link, description, pubDate, thumbnail}
-   Ondersteunt: platte objecten, {fields:{}}, {_source:{}}, strings */
 function normalizeItem(it){
   if(it == null) return {title:"", link:"", description:"", pubDate:"", thumbnail:""};
   if(typeof it === "string") return {title: it, link:"", description:"", pubDate:"", thumbnail:""};
@@ -285,7 +280,6 @@ async function loadAllFeeds(){
   bar.classList.add("show");
   bar.style.width = "10%";
 
-  /* reset diagnostiek-teller per laadsessie */
   window.__wdDiagCount = 0;
 
   async function processOne(f){
@@ -342,7 +336,6 @@ async function loadAllFeeds(){
         }
       });
 
-      /* Diagnostiek — eerste 5 succes-feeds naar debug-paneel */
       if(window.__wdDiagCount < 5 && window.wdLog){
         window.__wdDiagCount++;
         window.wdLog.info("✓ " + f.n + " [" + shape + "] items=" + items.length + " nieuw=" + added);
@@ -645,4 +638,4 @@ window.NewsAPI = {
   render: renderNews
 };
 
-console.log("[WAR DESK] news.js geladen");
+console.log("[WAR DESK] news.js " + window.__newsVersion + " geladen");

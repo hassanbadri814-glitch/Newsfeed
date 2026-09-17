@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v3.4 — Conflictkaart met detail-paneel
+   WAR DESK v3.5 — Conflictkaart met volledige tekst-detail
    ============================================================ */
 
 (function(){
@@ -8,7 +8,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v3.4 geladen");
+  LOG("v3.5 geladen");
 
   var MAP = {
     instance: null,
@@ -18,7 +18,8 @@
     currentFilter: "all",
     refreshTimer: null,
     worker: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
-    api: "https://war-tracker.com/api/v1/events?limit=100"
+    api: "https://war-tracker.com/api/v1/events?limit=100",
+    detailCache: {} /* ← nieuw: per event-id de volledige tekst */
   };
 
   var TYPES = {
@@ -55,8 +56,8 @@
           '<div class="wd-detail-text" id="wdDetailText">—</div>' +
         '</div>' +
         '<div class="wd-detail-foot">' +
-          '<button class="wd-detail-btn primary" id="wdDetailOpen">Open bron →</button>' +
-          '<button class="wd-detail-btn" id="wdDetailCloseBtn">Sluiten</button>' +
+          '<button class="wd-detail-btn primary" id="wdDetailCloseBtn">Sluiten</button>' +
+          '<button class="wd-detail-btn" id="wdDetailOpen">Open op war-tracker.com →</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(modal);
@@ -80,17 +81,74 @@
       timeAgo(event.date) + " · " +
       "confidence " + (event.confidence || "LOW");
 
-    $("wdDetailText").textContent = event.fullDescription || event.title || "(geen beschrijving)";
+    var textEl = $("wdDetailText");
 
+    /* 1. Toon direct wat we hebben (uit de lijst) */
+    textEl.textContent = event.fullDescription || event.title || "(geen beschrijving)";
+    textEl.style.transition = "opacity .2s";
+
+    /* 2. "Open bron"-knop: secundair, geen primaire actie meer */
     var openBtn = $("wdDetailOpen");
     if(event.url){
       openBtn.style.display = "inline-flex";
-      openBtn.onclick = function(){ window.open(event.url, "_blank", "noopener"); };
+      openBtn.onclick = function(){ window.open(event.url, "_blank", "noopener,noreferrer"); };
     } else {
       openBtn.style.display = "none";
     }
 
     modal.classList.add("show");
+
+    /* 3. Async: haal volledige tekst op via detail-endpoint */
+    loadFullText(event, textEl);
+  }
+
+  async function loadFullText(event, textEl){
+    if(!textEl) return;
+
+    /* Cache hit → direct tonen */
+    if(MAP.detailCache[event.id]){
+      textEl.textContent = MAP.detailCache[event.id];
+      return;
+    }
+
+    /* Visuele hint dat we aan het laden zijn */
+    textEl.style.opacity = ".55";
+
+    try{
+      var detailUrl = "https://war-tracker.com/api/v1/events/" + encodeURIComponent(event.id);
+      var ctrl = new AbortController();
+      var timer = setTimeout(function(){ ctrl.abort(); }, 15000);
+      var r = await fetch(MAP.worker + encodeURIComponent(detailUrl), {signal: ctrl.signal});
+      clearTimeout(timer);
+      if(!r.ok) throw new Error("HTTP " + r.status);
+
+      var data = await r.json();
+
+      /* Kies de langste tekst uit de response */
+      var fullText = "";
+      if(typeof data.description === "string" && data.description.length > fullText.length){
+        fullText = data.description;
+      }
+      if(Array.isArray(data.article_paragraphs) && data.article_paragraphs.length){
+        var joined = data.article_paragraphs.join("\n\n");
+        if(joined.length > fullText.length) fullText = joined;
+      }
+      if(!fullText) fullText = event.fullDescription || event.title || "(geen beschrijving)";
+
+      /* Cache het resultaat */
+      MAP.detailCache[event.id] = fullText;
+
+      /* Update UI */
+      if(textEl.textContent !== fullText){
+        textEl.textContent = fullText;
+      }
+      textEl.style.opacity = "1";
+      LOG("Volledige tekst geladen voor", event.id, "(" + fullText.length + " chars)");
+    }catch(e){
+      LOG("Detail fetch fout:", e.message);
+      textEl.style.opacity = "1";
+      /* Korte tekst blijft gewoon staan — geen error voor de gebruiker */
+    }
   }
 
   function closeDetail(){
@@ -189,7 +247,6 @@
 
       marker.bindPopup(popupHtml);
 
-      /* Klik op "Volledige tekst" in popup → detail modal */
       marker.on("popupopen", function(){
         setTimeout(function(){
           var btn = document.querySelector('.pop-more[data-id="' + e.id + '"]');
@@ -272,7 +329,6 @@
         '</div></div></div>';
     }).join("");
 
-    /* Klik op live-event → detail modal */
     Array.prototype.forEach.call(list.querySelectorAll(".live-event"), function(el){
       el.addEventListener("click", function(){
         var id = el.dataset.id;
@@ -413,7 +469,6 @@
     }, 1500);
   });
 
-  /* Escape sluit modal */
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape") closeDetail();
   });

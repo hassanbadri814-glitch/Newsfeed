@@ -72,6 +72,7 @@ try{
 
 <!-- MAIN -->
 <main class="main">
+
   <section class="view" id="viewNews">
     <div class="section-head">
       <h2 id="newsTitle">Laatste berichten</h2>
@@ -87,10 +88,42 @@ try{
   </section>
 
   <section class="view" id="viewIptv" hidden>
-    <div class="section-head"><h2>📡 IPTV</h2><span class="section-count">Fase 3</span></div>
-    <div class="empty-state">
-      <div class="empty-icon">📡</div>
-      <div class="empty-msg">IPTV komt in fase 3</div>
+    <div class="section-head">
+      <h2>📡 IPTV</h2>
+      <span class="section-count" id="iptvCount">0 kanalen</span>
+    </div>
+
+    <div class="iptv-setup" id="iptvSetup">
+      <div class="iptv-row">
+        <input type="url" id="iptvServer" placeholder="Server (http://provider.com:80)" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="iptv-row">
+        <input type="text" id="iptvUser" placeholder="Username" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="pw-wrap">
+          <input type="password" id="iptvPass" placeholder="Password" autocomplete="current-password" spellcheck="false">
+          <button type="button" class="pw-toggle" id="iptvPwToggle" aria-label="Toon wachtwoord">👁</button>
+        </div>
+      </div>
+      <div class="iptv-row">
+        <button class="iptv-btn" id="iptvTestBtn">🔍 Test</button>
+        <button class="iptv-btn primary" id="iptvLoadBtn">⬇ Laad kanalen</button>
+        <button class="iptv-btn danger" id="iptvClearBtn">🗑</button>
+      </div>
+      <div class="iptv-status" id="iptvStatus"></div>
+    </div>
+
+    <div class="iptv-filter-row" id="iptvFilter" hidden>
+      <select id="iptvGroupFilter">
+        <option value="all">Alle groepen</option>
+      </select>
+    </div>
+
+    <div class="iptv-grid" id="iptvGrid">
+      <div class="empty-state">
+        <div class="empty-icon">📡</div>
+        <div class="empty-msg">Vul je Xtream gegevens in</div>
+        <div class="empty-hint">Server · Username · Password</div>
+      </div>
     </div>
   </section>
 
@@ -101,6 +134,7 @@ try{
       <div class="empty-msg">Kaart komt in fase 4</div>
     </div>
   </section>
+
 </main>
 
 <!-- BOTTOM TABS -->
@@ -155,6 +189,18 @@ try{
   </div>
 </div>
 
+<!-- IPTV PLAYER -->
+<div class="iptv-player" id="iptvPlayer">
+  <div class="iptv-player-box">
+    <div class="iptv-player-head">
+      <span id="iptvPlayerTitle">—</span>
+      <button class="iptv-close" id="iptvPlayerClose" aria-label="Sluiten">✕</button>
+    </div>
+    <video id="iptvVideo" controls playsinline></video>
+    <div class="iptv-player-foot" id="iptvPlayerStatus">—</div>
+  </div>
+</div>
+
 <div class="toast" id="toast">Klaar</div>
 
 <!-- SCRIPTS — VOLGORDE IS BELANGRIJK -->
@@ -163,8 +209,7 @@ try{
 <script src="app.js"></script>
 <script src="persist.js"></script>
 <script src="refresh.js"></script>
-
-
+<script src="iptv.js"></script>
 
 </body>
 </html>

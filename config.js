@@ -1,13 +1,13 @@
 /* ============================================================
-   WAR DESK v19.1 — Configuratie (Fase 1, 2 & 3 geïntegreerd)
+   WAR DESK v19.4 — Configuratie
    Bronnen, categorieën en instellingen
    ============================================================ */
 
 window.CONFIG = {
-  perFeed: 10,
+  perFeed: 12,                 // Gewijzigd: 10 → 12
   autoRefreshMs: 60000,
   pauseOnScrollMs: 15000,
-  failThreshold: 5,           // Fase 2: Verhoogd van 3 naar 5
+  failThreshold: 5,
   retryAfterMs: 3600000,
   maxCacheItems: 200,
 
@@ -22,8 +22,8 @@ window.CONFIG = {
     "https://corsproxy.io/?url="
   ],
 
-  fetchTimeoutMs: 8000,       // Fase 2: Verhoogd van 6000 naar 8000
-  parallelWorkers: 5          // Fase 2: Verlaagd van 10 naar 5
+  fetchTimeoutMs: 5000,        // Gewijzigd: 8000 → 5000
+  parallelWorkers: 5           // Was 10, nu 5 om rate-limiting te voorkomen
 };
 
 /* Categorie-groepen — welke subcats horen bij welke menu-knop */
@@ -228,4 +228,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js geladen —", window.FEEDS.length, "feeds,", window.CONFIG.proxies.length, "proxies");
+console.log("[WAR DESK] config.js v19.4 geladen —", window.FEEDS.length, "feeds,", window.CONFIG.proxies.length, "proxies");

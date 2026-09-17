@@ -1,12 +1,11 @@
 /* ============================================================
-   WAR DESK v19.5 — Nieuws logica
+   WAR DESK v19.7 — Nieuws logica
    Robuuste parser + proxy cooldown + tag-gebaseerde filtering
-   Fix: geen persistente disabled sources meer tussen sessies
-   Fix: renderHash over volledige lijst
+   Fix: Google News krijgt allorigins eerst (Cloudflare Workers falen)
+   Fix: loadedSources wordt gereset per refresh-cyclus
    ============================================================ */
-window.__newsVersion = "v19.5-fresh-session";
+window.__newsVersion = "v19.7-smart-proxy-routing";
 
-/* ===== STATE ===== */
 window.State = {
   items: [],
   currentCat: "all",
@@ -101,11 +100,7 @@ var NewsDB = (function(){
     });
   }
   return {
-    open: open,
-    put: put,
-    get: get,
-    getAll: getAll,
-    saveItems: saveItems,
+    open: open, put: put, get: get, getAll: getAll, saveItems: saveItems,
     loadItems: function(){
       return getAll("items").then(function(items){
         return items.sort(function(a,b){ return tm(b.date) - tm(a.date); });
@@ -128,7 +123,6 @@ var NewsDB = (function(){
   };
 })();
 
-/* ===== HELPERS ===== */
 function tm(d){ var x = new Date(d); return isNaN(x) ? 0 : x.getTime(); }
 function ago(d){
   var t = tm(d); if(!t) return "";
@@ -146,8 +140,6 @@ function esc(s){
   });
 }
 
-/* ===== TAGS EXTRACTIE =====
-   Overschrijft NIET de bron-categorie. Voegt alleen tags toe. */
 function extractTags(title, desc, fallback){
   var tags = [];
   var t = ((title || "") + " " + (desc || "")).toLowerCase();
@@ -173,7 +165,6 @@ function extractTags(title, desc, fallback){
   return tags.filter(function(v, i, a){ return a.indexOf(v) === i; });
 }
 
-/* ===== SCORE ===== */
 function scoreArticle(it){
   var score = 0;
   var sources = (it.sources || [it.source]).length;
@@ -187,7 +178,6 @@ function scoreArticle(it){
   return score;
 }
 
-/* ===== DEDUPE ===== */
 function titleKey(title){
   return (title || "").toLowerCase().replace(/[^\w\s]/g, "")
     .split(/\s+/).filter(function(w){ return w.length > 3; })
@@ -216,9 +206,6 @@ function dedupe(items){
   return Array.from(map.values());
 }
 
-/* ============================================================
-   ROBUUSTE PARSER
-   ============================================================ */
 function parseRssXml(xmlText){
   try{
     var doc = new DOMParser().parseFromString(xmlText, "text/xml");
@@ -277,7 +264,7 @@ function normalizeItem(it){
 }
 
 /* ============================================================
-   PROXY FALLBACK — met cooldown i.p.v. permanente disable
+   PROXY FALLBACK — met cooldown + slimme Google News routing
    ============================================================ */
 window.__proxyHealth = {};
 
@@ -321,8 +308,22 @@ function parseResponse(txt){
   }
 }
 
+/* ===== SLIMME PROXY ROUTING =====
+   Google News URL's → allorigins eerst (Cloudflare Workers falen)
+   Andere URL's → Cloudflare Workers eerst (snel)
+   ============================================================ */
 async function fetchFeedWithFallback(feedUrl){
-  var proxies = (CONFIG.proxies && CONFIG.proxies.length) ? CONFIG.proxies : [CONFIG.proxy];
+  var isGoogleNews = /news\.google\.com/.test(feedUrl);
+  var proxies;
+
+  if(isGoogleNews && CONFIG.googleNewsProxies && CONFIG.googleNewsProxies.length){
+    proxies = CONFIG.googleNewsProxies;
+  } else if(CONFIG.proxies && CONFIG.proxies.length){
+    proxies = CONFIG.proxies;
+  } else {
+    proxies = [CONFIG.proxy];
+  }
+
   var lastErr = null;
 
   for(var i = 0; i < proxies.length; i++){
@@ -340,7 +341,7 @@ async function fetchFeedWithFallback(feedUrl){
       var parsed = parseResponse(txt);
       if(!parsed.items.length) throw new Error("0 items");
       markProxyOk(p);
-      return { items: parsed.items, shape: parsed.shape, proxyIdx: i };
+      return { items: parsed.items, shape: parsed.shape, proxyIdx: i, viaGoogleNews: isGoogleNews };
     }catch(e){
       lastErr = e;
       markProxyFail(p);
@@ -355,6 +356,7 @@ async function loadAllFeeds(){
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
   State.totalSources = active.length;
   State.failedSources = [];
+  State.loadedSources = 0;  /* FIX: was nooit gereset */
 
   var collected = [];
   var collectedLinks = {};
@@ -418,7 +420,6 @@ async function loadAllFeeds(){
       if(!State.health[f.n]) State.health[f.n] = {fails:0, last:0};
       State.health[f.n].fails++;
       State.health[f.n].last = Date.now();
-      /* Binnen een sessie mag een bron tijdelijk uit, maar niet persistent */
       if(State.health[f.n].fails >= CONFIG.failThreshold){
         State.disabled[f.n] = true;
       }
@@ -469,7 +470,6 @@ async function loadAllFeeds(){
   }
 }
 
-/* ===== BREAKING ===== */
 function detectBreaking(){
   if(Date.now() - State.breakingShownAt < 1800000) return;
   var now = Date.now();
@@ -523,7 +523,6 @@ function detectBreaking(){
   }
 }
 
-/* ===== FILTER + RENDER ===== */
 function filterItems(){
   var list = State.items.slice();
 
@@ -559,23 +558,17 @@ function renderNews(){
   var title = document.getElementById("newsTitle");
   var count = document.getElementById("newsCount");
 
-  /* FIX: Volledige hash over alle links — niet meer alleen top-5 */
   var hash = State.currentCat + "|" + State.currentSort + "|" + State.currentSearch + "|" + State.viewMode + "|" + list.length;
   for(var h = 0; h < list.length; h++){
     hash += "|" + (list[h].link || "");
   }
-  if(hash === State._lastRenderHash){
-    return;
-  }
+  if(hash === State._lastRenderHash) return;
   State._lastRenderHash = hash;
 
   var titles = {
-    all: "Laatste berichten",
-    war: "Oorlog & conflict",
-    mideast: "Midden-Oosten",
-    europe: "Europa",
-    nl: "Nederland",
-    sport: "Sport"
+    all: "Laatste berichten", war: "Oorlog & conflict",
+    mideast: "Midden-Oosten", europe: "Europa",
+    nl: "Nederland", sport: "Sport"
   };
   if(title) title.textContent = titles[State.currentCat] || "Laatste berichten";
   if(count) count.textContent = list.length + " artikelen";
@@ -584,17 +577,9 @@ function renderNews(){
 
   if(!list.length){
     if(State.items.length === 0){
-      grid.innerHTML = '<div class="empty-state">' +
-        '<div class="empty-icon">◌</div>' +
-        '<div class="empty-msg">Nieuws wordt geladen...</div>' +
-        '<div class="empty-hint">Eerste keer kan 20-30 seconden duren</div>' +
-        '</div>';
+      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-msg">Nieuws wordt geladen...</div><div class="empty-hint">Eerste keer kan 20-30 seconden duren</div></div>';
     } else {
-      grid.innerHTML = '<div class="empty-state">' +
-        '<div class="empty-icon">◌</div>' +
-        '<div class="empty-msg">Geen artikelen in deze categorie</div>' +
-        '<div class="empty-hint">Probeer een andere categorie of zoekterm</div>' +
-        '</div>';
+      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-msg">Geen artikelen in deze categorie</div><div class="empty-hint">Probeer een andere categorie of zoekterm</div></div>';
     }
     return;
   }
@@ -662,7 +647,6 @@ function renderNews(){
   });
 }
 
-/* ===== AUTO REFRESH ===== */
 function startAutoRefresh(){
   clearInterval(State.refreshTimer);
   State.refreshTimer = setInterval(function(){
@@ -674,12 +658,9 @@ function startAutoRefresh(){
   }, CONFIG.autoRefreshMs);
 }
 
-/* ===== INIT ===== */
 async function initNews(){
   await NewsDB.open();
 
-  /* FIX: Laad health voor statistiek, maar blokkeer NIETS bij start.
-     Elke sessie begint met een schone lei — alle bronnen krijgen een kans. */
   State.health = await NewsDB.loadHealth();
   State.disabled = {};
 
@@ -708,7 +689,6 @@ async function initNews(){
   });
 }
 
-/* ===== API ===== */
 window.NewsAPI = {
   init: initNews,
   reload: loadAllFeeds,

@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v19.0 — Configuratie
+   WAR DESK v19.1 — Configuratie (Fase 1, 2 & 3 geïntegreerd)
    Bronnen, categorieën en instellingen
    ============================================================ */
 
@@ -7,23 +7,23 @@ window.CONFIG = {
   perFeed: 10,
   autoRefreshMs: 60000,
   pauseOnScrollMs: 15000,
-  failThreshold: 3,
+  failThreshold: 5,           // Fase 2: Verhoogd van 3 naar 5
   retryAfterMs: 3600000,
   maxCacheItems: 200,
 
   /* Primaire proxy (backward compat) */
-  proxy: "https://nieuwsproxy.hassanbadri814.workers.dev/?url=",
+  proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
   /* Fallback-keten: in deze volgorde geprobeerd */
   proxies: [
+    "https://newsfeed2.hassanbadri814.workers.dev/?url=",
     "https://nieuwsproxy.hassanbadri814.workers.dev/?url=",
     "https://api.allorigins.win/raw?url=",
-    "https://corsproxy.io/?url=",
-    "https://api.codetabs.com/v1/proxy?quest="
+    "https://corsproxy.io/?url="
   ],
 
-  fetchTimeoutMs: 6000,
-  parallelWorkers: 10
+  fetchTimeoutMs: 8000,       // Fase 2: Verhoogd van 6000 naar 8000
+  parallelWorkers: 5          // Fase 2: Verlaagd van 10 naar 5
 };
 
 /* Categorie-groepen — welke subcats horen bij welke menu-knop */

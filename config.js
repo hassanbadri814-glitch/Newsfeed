@@ -1,20 +1,18 @@
 /* ============================================================
-   WAR DESK v19.4 — Configuratie
-   Bronnen, categorieën en instellingen
+   WAR DESK v19.5 — Configuratie
+   Google News fallback voor IP-geblokkeerde bronnen
    ============================================================ */
 
 window.CONFIG = {
-  perFeed: 12,                 // Gewijzigd: 10 → 12
+  perFeed: 12,
   autoRefreshMs: 60000,
   pauseOnScrollMs: 15000,
   failThreshold: 5,
   retryAfterMs: 3600000,
   maxCacheItems: 200,
 
-  /* Primaire proxy (backward compat) */
   proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
-  /* Fallback-keten: in deze volgorde geprobeerd */
   proxies: [
     "https://newsfeed2.hassanbadri814.workers.dev/?url=",
     "https://nieuwsproxy.hassanbadri814.workers.dev/?url=",
@@ -22,11 +20,11 @@ window.CONFIG = {
     "https://corsproxy.io/?url="
   ],
 
-  fetchTimeoutMs: 5000,        // Gewijzigd: 8000 → 5000
-  parallelWorkers: 5           // Was 10, nu 5 om rate-limiting te voorkomen
+  fetchTimeoutMs: 5000,
+  parallelWorkers: 5
 };
 
-/* Categorie-groepen — welke subcats horen bij welke menu-knop */
+/* Categorie-groepen */
 window.CAT_GROUPS = {
   war:     ["war"],
   mideast: ["mideast","il","gaza","lebanon","syria","yemen","iran","tr","eg","sa","ae","qa"],
@@ -35,14 +33,12 @@ window.CAT_GROUPS = {
   sport:   ["sport"]
 };
 
-/* Bronnen met hogere prioriteit in belangrijkheid-score */
 window.HIGH_PRIORITY = [
   "Al Jazeera","Al Jazeera AR","BBC World","BBC Arabic","BBC UK",
   "Reuters","AP News","TRT World","Times of Israel","Jerusalem Post",
   "NOS","NOS Sport","De Telegraaf","AD.nl","RTL Nieuws"
 ];
 
-/* Keywords voor belangrijkheid-score */
 window.KEYWORDS_HIGH = [
   "killed","dead","deaths","massacre","nuclear","invasion",
   "airstrike","ceasefire","assassinated","declared war"
@@ -53,29 +49,31 @@ window.KEYWORDS_MED = [
 ];
 
 /* ============================================================
-   NIEUWSBRONNEN — ~130 feeds
+   NIEUWSBRONNEN
+   Bronnen met "→ GN" zijn omgezet naar Google News vanwege
+   Cloudflare IP-blokkade op de originele domeinen.
    ============================================================ */
 window.FEEDS = [
   // ===== NEDERLAND =====
   {n:"NOS",lang:"nl",cat:"nl",url:"https://feeds.nos.nl/nosnieuwsalgemeen"},
   {n:"De Telegraaf",lang:"nl",cat:"nl",url:"https://www.telegraaf.nl/rss"},
   {n:"AD.nl",lang:"nl",cat:"nl",url:"https://www.ad.nl/rss.xml"},
-  {n:"De Volkskrant",lang:"nl",cat:"nl",url:"https://www.volkskrant.nl/rss"},
+  {n:"De Volkskrant",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:volkskrant.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
   {n:"NRC",lang:"nl",cat:"nl",url:"https://www.nrc.nl/rss"},
-  {n:"Het Parool",lang:"nl",cat:"nl",url:"https://www.parool.nl/rss"},
-  {n:"Trouw",lang:"nl",cat:"nl",url:"https://www.trouw.nl/rss"},
-  {n:"RTL Nieuws",lang:"nl",cat:"nl",url:"https://www.rtlnieuws.nl/rss"},
+  {n:"Het Parool",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:parool.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"Trouw",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:trouw.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"RTL Nieuws",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
   {n:"Nu.nl",lang:"nl",cat:"nl",url:"https://www.nu.nl/rss/Algemeen"},
   {n:"Omroep Brabant",lang:"nl",cat:"nl",url:"https://www.omroepbrabant.nl/rss"},
-  {n:"Omroep Flevoland",lang:"nl",cat:"nl",url:"https://www.omroepflevoland.nl/rss"},
-  {n:"NH Nieuws",lang:"nl",cat:"nl",url:"https://www.nhnieuws.nl/rss"},
-  {n:"RTV Utrecht",lang:"nl",cat:"nl",url:"https://www.rtvutrecht.nl/rss"},
+  {n:"Omroep Flevoland",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:omroepflevoland.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"NH Nieuws",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:nhnieuws.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"RTV Utrecht",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:rtvutrecht.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
   {n:"Omroep Gelderland",lang:"nl",cat:"nl",url:"https://www.omroepgelderland.nl/rss"},
-  {n:"L1",lang:"nl",cat:"nl",url:"https://www.l1.nl/rss"},
+  {n:"L1",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:l1.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
   {n:"RTV Oost",lang:"nl",cat:"nl",url:"https://www.rtvoost.nl/rss"},
   {n:"Omroep West",lang:"nl",cat:"nl",url:"https://www.omroepwest.nl/rss"},
 
-  // ===== SPORT (uitgebreid) =====
+  // ===== SPORT =====
   {n:"NOS Sport",lang:"nl",cat:"sport",url:"https://feeds.nos.nl/nossport"},
   {n:"NOS Voetbal",lang:"nl",cat:"sport",url:"https://feeds.nos.nl/nossportvoetbal"},
   {n:"ESPN NL",lang:"nl",cat:"sport",url:"https://www.espn.nl/rss"},
@@ -86,31 +84,31 @@ window.FEEDS = [
   {n:"Soccernews",lang:"nl",cat:"sport",url:"https://www.soccernews.nl/rss"},
   {n:"NUsport",lang:"nl",cat:"sport",url:"https://www.nu.nl/rss/Sport"},
   {n:"Sportnieuws.nl",lang:"nl",cat:"sport",url:"https://sportnieuws.nl/feed/"},
-  {n:"RTL Sport",lang:"nl",cat:"sport",url:"https://www.rtlnieuws.nl/rss/sport"},
+  {n:"RTL Sport",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl+sport&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
   {n:"Glory Kickboxing",lang:"en",cat:"sport",url:"https://glorykickboxing.com/rss"},
   {n:"Wielerflits",lang:"nl",cat:"sport",url:"https://www.wielerflits.nl/feed/"},
   {n:"GPUpdate",lang:"nl",cat:"sport",url:"https://www.gpupdate.net/nl/rss"},
   {n:"Racexpress",lang:"nl",cat:"sport",url:"https://www.racexpress.nl/rss.php"},
   {n:"MMA DNA",lang:"nl",cat:"sport",url:"https://mmadna.nl/feed/"},
 
-  // ===== BELGIË =====
-  {n:"HLN",lang:"nl",cat:"be",url:"https://www.hln.be/rss.xml"},
-  {n:"Nieuwsblad",lang:"nl",cat:"be",url:"https://www.nieuwsblad.be/rss.xml"},
-  {n:"De Standaard",lang:"nl",cat:"be",url:"https://www.standaard.be/rss"},
-  {n:"VRT NWS",lang:"nl",cat:"be",url:"https://www.vrt.be/vrtnws/nl.rss"},
-  {n:"De Morgen",lang:"nl",cat:"be",url:"https://www.demorgen.be/rss"},
-  {n:"De Tijd",lang:"nl",cat:"be",url:"https://www.tijd.be/rss"},
-  {n:"Gazet van Antwerpen",lang:"nl",cat:"be",url:"https://www.gva.be/rss.xml"},
-  {n:"Het Belang van Limburg",lang:"nl",cat:"be",url:"https://www.hbvl.be/rss.xml"},
+  // ===== BELGIË — allemaal → GN =====
+  {n:"HLN",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:hln.be&hl=nl&gl=BE&ceid=BE:nl"},
+  {n:"Nieuwsblad",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:nieuwsblad.be&hl=nl&gl=BE&ceid=BE:nl"},
+  {n:"De Standaard",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:standaard.be&hl=nl&gl=BE&ceid=BE:nl"},
+  {n:"VRT NWS",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:vrt.be&hl=nl&gl=BE&ceid=BE:nl"},
+  {n:"De Morgen",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:demorgen.be&hl=nl&gl=BE&ceid=BE:nl"},
+  {n:"De Tijd",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:tijd.be&hl=nl&gl=BE&ceid=BE:nl"},
+  {n:"Gazet van Antwerpen",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:gva.be&hl=nl&gl=BE&ceid=BE:nl"},
+  {n:"Het Belang van Limburg",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:hbvl.be&hl=nl&gl=BE&ceid=BE:nl"},
 
-  // ===== DUITSLAND =====
-  {n:"Spiegel",lang:"de",cat:"de",url:"https://www.spiegel.de/schlagzeilen/tops/index.rss"},
-  {n:"Bild",lang:"de",cat:"de",url:"https://www.bild.de/feed/alles.xml"},
-  {n:"Zeit",lang:"de",cat:"de",url:"https://newsfeed.zeit.de/index"},
-  {n:"FAZ",lang:"de",cat:"de",url:"https://www.faz.net/rss/aktuell/"},
-  {n:"Süddeutsche",lang:"de",cat:"de",url:"https://rss.sueddeutsche.de/rss/Topthemen"},
-  {n:"Tagesschau",lang:"de",cat:"de",url:"https://www.tagesschau.de/xml/rss2/"},
-  {n:"Die Welt",lang:"de",cat:"de",url:"https://www.welt.de/feeds/latest.rss"},
+  // ===== DUITSLAND — allemaal → GN =====
+  {n:"Spiegel",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:spiegel.de&hl=de&gl=DE&ceid=DE:de"},
+  {n:"Bild",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:bild.de&hl=de&gl=DE&ceid=DE:de"},
+  {n:"Zeit",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:zeit.de&hl=de&gl=DE&ceid=DE:de"},
+  {n:"FAZ",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:faz.net&hl=de&gl=DE&ceid=DE:de"},
+  {n:"Süddeutsche",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:sueddeutsche.de&hl=de&gl=DE&ceid=DE:de"},
+  {n:"Tagesschau",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:tagesschau.de&hl=de&gl=DE&ceid=DE:de"},
+  {n:"Die Welt",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:welt.de&hl=de&gl=DE&ceid=DE:de"},
 
   // ===== FRANKRIJK =====
   {n:"Le Monde",lang:"fr",cat:"fr",url:"https://www.lemonde.fr/rss/une.xml"},
@@ -183,7 +181,7 @@ window.FEEDS = [
   {n:"Jerusalem Post",lang:"en",cat:"il",url:"https://www.jpost.com/rss/rssfeedsheadlines.aspx"},
   {n:"Ynet",lang:"en",cat:"il",url:"https://www.ynetnews.com/Integration/StoryRss2.xml"},
 
-  // ===== MIDDEN-OOSTEN ALGEMEEN =====
+  // ===== MIDDEN-OOSTEN =====
   {n:"Al Monitor",lang:"en",cat:"mideast",url:"https://www.al-monitor.com/rss"},
   {n:"Middle East Eye",lang:"en",cat:"mideast",url:"https://www.middleeasteye.net/rss"},
   {n:"RT Arabic",lang:"ar",cat:"mideast",url:"https://arabic.rt.com/rss/"},
@@ -228,4 +226,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v19.4 geladen —", window.FEEDS.length, "feeds,", window.CONFIG.proxies.length, "proxies");
+console.log("[WAR DESK] config.js v19.5 geladen —", window.FEEDS.length, "feeds (Google News fallback actief)");

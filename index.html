@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v3.1</title>
+<title>WAR DESK v3.2</title>
 
 <script>
 try{
@@ -24,7 +24,7 @@ try{
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
 
@@ -54,7 +54,7 @@ try{
       </div>
       <div class="brand-text">
         <span class="name">WAR DESK</span>
-        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v3.1</span></span>
+        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v3.2</span></span>
       </div>
     </div>
     <div class="header-stats">
@@ -90,18 +90,25 @@ try{
     <div class="section-head">
       <h2>📡 IPTV</h2>
       <span class="section-count" id="iptvCount">0 kanalen</span>
-      <button class="btn-mini" id="iptvToggleSetup"
-        onclick="var s=document.getElementById('iptvSetup');if(s){s.hidden=!s.hidden;if(!s.hidden)setTimeout(function(){s.scrollIntoView({behavior:'smooth',block:'start'})},60)}">⚙</button>
+      <button class="btn-mini" id="iptvToggleSetup" aria-label="Wijzig inloggegevens" title="Wijzig inloggegevens"
+        onclick="
+          var s=document.getElementById('iptvSetup');
+          if(!s) return;
+          s.hidden = !s.hidden;
+          if(!s.hidden){
+            setTimeout(function(){ s.scrollIntoView({behavior:'smooth', block:'start'}); }, 60);
+          }
+        ">⚙</button>
     </div>
     <div class="iptv-setup" id="iptvSetup">
       <div class="iptv-row">
-        <input type="url" id="iptvServer" placeholder="Server (http://provider.com:80)" autocomplete="off">
+        <input type="url" id="iptvServer" placeholder="Server (http://provider.com:80)" autocomplete="off" autocorrect="off" spellcheck="false">
       </div>
       <div class="iptv-row">
-        <input type="text" id="iptvUser" placeholder="Username" autocomplete="off">
+        <input type="text" id="iptvUser" placeholder="Username" autocomplete="off" autocorrect="off" spellcheck="false">
         <div class="pw-wrap">
-          <input type="password" id="iptvPass" placeholder="Password" autocomplete="current-password">
-          <button type="button" class="pw-toggle" id="iptvPwToggle">👁</button>
+          <input type="password" id="iptvPass" placeholder="Password" autocomplete="current-password" spellcheck="false">
+          <button type="button" class="pw-toggle" id="iptvPwToggle" aria-label="Toon wachtwoord">👁</button>
         </div>
       </div>
       <div class="iptv-row">
@@ -121,7 +128,6 @@ try{
 
   <section class="view" id="viewMap" hidden>
     <div class="map-page">
-      <!-- Kaart -->
       <div class="map-wrap">
         <div id="map"></div>
         <div class="map-controls">
@@ -136,7 +142,6 @@ try{
         </div>
       </div>
 
-      <!-- Live feed -->
       <div class="live-feed" id="liveFeed">
         <div class="live-head">
           <div class="live-title">
@@ -221,7 +226,7 @@ try{
     </div>
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v3.1</span><br>Live nieuws + IPTV + Conflictkaart</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v3.2</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
   </div>
 </div>
@@ -242,13 +247,13 @@ try{
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-<script src="config.js?v=9"></script>
-<script src="news.js?v=9"></script>
-<script src="app.js?v=9"></script>
-<script src="persist.js?v=9"></script>
-<script src="refresh.js?v=9"></script>
-<script src="iptv.js?v=9"></script>
-<script src="map.js?v=9"></script>
+<script src="config.js?v=10"></script>
+<script src="news.js?v=10"></script>
+<script src="app.js?v=10"></script>
+<script src="persist.js?v=10"></script>
+<script src="refresh.js?v=10"></script>
+<script src="iptv.js?v=10"></script>
+<script src="map.js?v=10"></script>
 
 <script>
 (function(){
@@ -267,7 +272,7 @@ try{
     if(t){ t.classList.remove("show"); t._shownAt = 0; }
   });
 })();
-console.log("%c WAR DESK %c v3.1 ", 
+console.log("%c WAR DESK %c v3.2 ", 
   "background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;",
   "background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>

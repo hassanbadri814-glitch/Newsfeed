@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v3.5 — Conflictkaart met volledige tekst-detail
+   WAR DESK v3.6 — Conflictkaart (CARTO Dark + SVG iconen)
    ============================================================ */
 
 (function(){
@@ -8,7 +8,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v3.5 geladen");
+  LOG("v3.6 geladen");
 
   var MAP = {
     instance: null,
@@ -19,7 +19,7 @@
     refreshTimer: null,
     worker: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
     api: "https://war-tracker.com/api/v1/events?limit=100",
-    detailCache: {} /* ← nieuw: per event-id de volledige tekst */
+    detailCache: {}
   };
 
   var TYPES = {
@@ -31,10 +31,59 @@
     "na":                    { color: "#6b7a93", filter: "other",     label: "Onbekend" }
   };
 
+  /* SVG-iconen per categorie — 24x24 viewBox, fill = currentColor */
+  var ICONS = {
+    conflict:  '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 21 L2 21 Z"/></svg>',
+    political: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 8 L22 10 L2 10 L2 8 Z M4 12 L4 20 L8 20 L8 12 Z M10 12 L10 20 L14 20 L14 12 Z M16 12 L16 20 L20 20 L20 12 Z M2 20 L22 20 L22 22 L2 22 Z"/></svg>',
+    other:     '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 12 L12 22 L2 12 Z"/></svg>'
+  };
+
   function getType(t){
     if(!t) return TYPES["na"];
     var key = String(t).toLowerCase().trim();
     return TYPES[key] || TYPES["na"];
+  }
+
+  function iconFor(filter){
+    if(filter === "conflict") return ICONS.conflict;
+    if(filter === "political") return ICONS.political;
+    return ICONS.other;
+  }
+
+  /* ===== INJECT MARKER + CLUSTER STYLES ===== */
+  function injectMapStyles(){
+    if(document.getElementById("wdMapStyles")) return;
+    var s = document.createElement("style");
+    s.id = "wdMapStyles";
+    s.textContent =
+      /* --- Marker container --- */
+      ".wd-marker{background:transparent!important;border:none!important}" +
+      ".wd-marker-inner{position:relative;width:16px;height:16px;display:grid;place-items:center}" +
+      ".wd-marker-icon{width:14px;height:14px;display:grid;place-items:center;position:relative;z-index:2;" +
+        "filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)) drop-shadow(0 0 3px currentColor);}" +
+      ".wd-marker-icon svg{width:100%;height:100%;display:block;" +
+        "stroke:#070c16;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;}" +
+      ".wd-marker-pulse{position:absolute;inset:0;border-radius:50%;background:currentColor;opacity:.22;z-index:1;" +
+        "animation:wdMarkerPulse 2.6s ease-out infinite}" +
+      "@keyframes wdMarkerPulse{0%{transform:scale(.5);opacity:.35}100%{transform:scale(2.2);opacity:0}}" +
+      /* --- Cluster (gouden rondjes) verkleinen --- */
+      ".marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:transparent!important}" +
+      ".marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{" +
+        "background:linear-gradient(135deg,#8a5c26,#e2a857)!important;" +
+        "color:#070c16!important;font-weight:800!important;" +
+        "border:1.5px solid rgba(255,255,255,.9)!important;" +
+        "box-shadow:0 2px 6px rgba(0,0,0,.5),0 0 12px rgba(226,168,87,.35)!important;" +
+        "display:flex!important;align-items:center!important;justify-content:center!important;" +
+        "font-family:Inter,sans-serif!important;" +
+      "}" +
+      ".marker-cluster-small, .marker-cluster-small div{width:28px!important;height:28px!important}" +
+      ".marker-cluster-small{margin-left:-14px!important;margin-top:-14px!important}" +
+      ".marker-cluster-medium, .marker-cluster-medium div{width:34px!important;height:34px!important}" +
+      ".marker-cluster-medium{margin-left:-17px!important;margin-top:-17px!important}" +
+      ".marker-cluster-large, .marker-cluster-large div{width:42px!important;height:42px!important}" +
+      ".marker-cluster-large{margin-left:-21px!important;margin-top:-21px!important}" +
+      ".marker-cluster div span{font-size:.72rem!important;line-height:1!important}";
+    document.head.appendChild(s);
   }
 
   /* ===== DETAIL MODAL ===== */
@@ -82,12 +131,9 @@
       "confidence " + (event.confidence || "LOW");
 
     var textEl = $("wdDetailText");
-
-    /* 1. Toon direct wat we hebben (uit de lijst) */
     textEl.textContent = event.fullDescription || event.title || "(geen beschrijving)";
     textEl.style.transition = "opacity .2s";
 
-    /* 2. "Open bron"-knop: secundair, geen primaire actie meer */
     var openBtn = $("wdDetailOpen");
     if(event.url){
       openBtn.style.display = "inline-flex";
@@ -97,23 +143,16 @@
     }
 
     modal.classList.add("show");
-
-    /* 3. Async: haal volledige tekst op via detail-endpoint */
     loadFullText(event, textEl);
   }
 
   async function loadFullText(event, textEl){
     if(!textEl) return;
-
-    /* Cache hit → direct tonen */
     if(MAP.detailCache[event.id]){
       textEl.textContent = MAP.detailCache[event.id];
       return;
     }
-
-    /* Visuele hint dat we aan het laden zijn */
     textEl.style.opacity = ".55";
-
     try{
       var detailUrl = "https://war-tracker.com/api/v1/events/" + encodeURIComponent(event.id);
       var ctrl = new AbortController();
@@ -121,10 +160,8 @@
       var r = await fetch(MAP.worker + encodeURIComponent(detailUrl), {signal: ctrl.signal});
       clearTimeout(timer);
       if(!r.ok) throw new Error("HTTP " + r.status);
-
       var data = await r.json();
 
-      /* Kies de langste tekst uit de response */
       var fullText = "";
       if(typeof data.description === "string" && data.description.length > fullText.length){
         fullText = data.description;
@@ -135,19 +172,12 @@
       }
       if(!fullText) fullText = event.fullDescription || event.title || "(geen beschrijving)";
 
-      /* Cache het resultaat */
       MAP.detailCache[event.id] = fullText;
-
-      /* Update UI */
-      if(textEl.textContent !== fullText){
-        textEl.textContent = fullText;
-      }
+      if(textEl.textContent !== fullText) textEl.textContent = fullText;
       textEl.style.opacity = "1";
-      LOG("Volledige tekst geladen voor", event.id, "(" + fullText.length + " chars)");
     }catch(e){
       LOG("Detail fetch fout:", e.message);
       textEl.style.opacity = "1";
-      /* Korte tekst blijft gewoon staan — geen error voor de gebruiker */
     }
   }
 
@@ -228,13 +258,19 @@
     var markers = [];
     filtered.forEach(function(e){
       var color = e.typeConfig.color;
+      var glyph = iconFor(e.typeConfig.filter);
+
       var icon = L.divIcon({
-        className: "custom-event-marker",
-        html: '<div class="event-marker" style="color:' + color + '">' +
-              '<span class="pulse"></span><span class="dot"></span></div>',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
+        className: "wd-marker",
+        html: '<div class="wd-marker-inner" style="color:' + color + '">' +
+              '<span class="wd-marker-pulse"></span>' +
+              '<span class="wd-marker-icon">' + glyph + '</span>' +
+              '</div>',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+        popupAnchor: [0, -10]
       });
+
       var marker = L.marker([e.lat, e.lng], {icon: icon});
 
       var shortDesc = (e.fullDescription || "").slice(0, 180);
@@ -367,13 +403,15 @@
       maxZoom: 18,
       worldCopyJump: true,
       zoomControl: false,
-      attributionControl: true
+      attributionControl: true,
+      preferCanvas: true
     });
 
-    MAP.tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      subdomains: "abc",
-      attribution: '&copy; OpenStreetMap · HOT'
+    /* CARTO Dark Matter — donker, clean, geen key nodig */
+    MAP.tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 20,
+      subdomains: "abcd",
+      attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(MAP.instance);
 
     MAP.cluster = L.markerClusterGroup({
@@ -449,6 +487,7 @@
 
   window.addEventListener("DOMContentLoaded", function(){
     setTimeout(function(){
+      injectMapStyles();
       ensureDetailModal();
       bindControls();
       bindFilters();

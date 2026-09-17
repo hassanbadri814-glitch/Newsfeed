@@ -1,8 +1,7 @@
 /* ============================================================
-   WAR DESK v19.0 — Alle styling
+   WAR DESK v2.6 — Volledige styling
    ============================================================ */
 
-/* ===== VARIABELEN ===== */
 :root{
   --bg:#070c16;
   --bg-2:#0d1522;
@@ -42,7 +41,6 @@ body.light{
   --shadow-deep:0 20px 50px -24px rgba(0,0,0,.15);
 }
 
-/* ===== RESET ===== */
 *{
   box-sizing:border-box;
   margin:0;
@@ -162,6 +160,10 @@ body.light .header{
   font-weight:600;
   margin-top:3px;
 }
+.version-badge{
+  color:var(--amber);
+  font-weight:700;
+}
 
 .header-stats{
   margin-left:auto;
@@ -231,7 +233,7 @@ body.light .header{
 .section-head{
   display:flex;
   align-items:baseline;
-  gap:1rem;
+  gap:.85rem;
   padding-bottom:.85rem;
   border-bottom:1px solid var(--line);
   margin-bottom:1.25rem;
@@ -257,8 +259,14 @@ body.light .header{
   color:var(--ink-3);
   font-weight:500;
 }
+.section-head .btn-mini{
+  width:36px;
+  height:36px;
+  font-size:1rem;
+  margin-left:.4rem;
+}
 
-/* ===== FEED GRID + NEWS CARDS ===== */
+/* ===== FEED GRID ===== */
 .feed-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
@@ -322,10 +330,7 @@ body.light .header{
   color:var(--ink-3);
   flex-wrap:wrap;
 }
-.card-source{
-  color:var(--amber);
-  font-weight:700;
-}
+.card-source{ color:var(--amber); font-weight:700; }
 .card-sep{ opacity:.4; }
 .card-multi{
   background:rgba(230,57,80,.12);
@@ -400,16 +405,11 @@ body.light .header{
   min-width:110px;
   aspect-ratio:1;
 }
-.feed-grid.list-mode .card-body{
-  padding:.75rem .9rem;
-}
-.feed-grid.list-mode .card-title{
-  font-size:.95rem;
-  -webkit-line-clamp:2;
-}
+.feed-grid.list-mode .card-body{ padding:.75rem .9rem; }
+.feed-grid.list-mode .card-title{ font-size:.95rem; -webkit-line-clamp:2; }
 .feed-grid.list-mode .card-desc{ display:none; }
 
-/* ===== EMPTY STATE ===== */
+/* ===== EMPTY ===== */
 .empty-state{
   grid-column:1/-1;
   text-align:center;
@@ -481,7 +481,7 @@ body.light .bottom-tabs{
 }
 .tab:active{ transform:scale(.96); }
 
-/* ===== BOTTOM SHEET ===== */
+/* ===== SHEET ===== */
 .sheet-overlay{
   position:fixed;
   inset:0;
@@ -640,7 +640,7 @@ body.light .bottom-tabs{
   letter-spacing:.05em;
 }
 
-/* ===== BREAKING BANNER ===== */
+/* ===== BREAKING ===== */
 .breaking{
   position:fixed;
   top:0; left:0; right:0;
@@ -709,12 +709,14 @@ body.light .bottom-tabs{
   transform:rotate(90deg);
 }
 
-/* ===== TOAST ===== */
+/* ===== TOAST (robuust) ===== */
 .toast{
   position:fixed;
   bottom:calc(90px + env(safe-area-inset-bottom,0));
   left:50%;
-  transform:translateX(-50%) translateY(150%);
+  transform:translateX(-50%) translateY(20px);
+  opacity:0;
+  visibility:hidden;
   background:linear-gradient(135deg,var(--card),var(--card-hover));
   color:var(--ink);
   border:1px solid rgba(226,168,87,.4);
@@ -724,16 +726,17 @@ body.light .bottom-tabs{
   font-weight:500;
   z-index:10000;
   max-width:90vw;
-  transition:transform .3s cubic-bezier(.2,.9,.3,1);
+  transition:opacity .25s, transform .25s, visibility .25s;
   box-shadow:var(--shadow-deep);
   pointer-events:none;
 }
-.toast.show{ transform:translateX(-50%) translateY(0); }
+.toast.show{
+  opacity:1;
+  visibility:visible;
+  transform:translateX(-50%) translateY(0);
+}
 
-/* ============================================================
-   IPTV styling
-   ============================================================ */
-
+/* ===== IPTV ===== */
 .iptv-setup{
   background:var(--card);
   border:1px solid var(--line);
@@ -834,9 +837,7 @@ body.light .bottom-tabs{
 .iptv-status.loading{ color:var(--amber); border-left-color:var(--amber); background:rgba(226,168,87,.08); }
 .iptv-status.loading::before{ content:"⏳ "; }
 
-.iptv-filter-row{
-  margin-bottom:.75rem;
-}
+.iptv-filter-row{ margin-bottom:.75rem; }
 .iptv-filter-row select{
   width:100%;
   padding:.7rem .9rem;
@@ -848,7 +849,6 @@ body.light .bottom-tabs{
   outline:none;
 }
 
-/* ===== KANAAL-TEGELS (verbeterd) ===== */
 .iptv-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
@@ -911,7 +911,6 @@ body.light .bottom-tabs{
   color:var(--ink);
 }
 
-/* ===== IPTV PLAYER ===== */
 .iptv-player{
   position:fixed;
   inset:0;
@@ -1000,10 +999,7 @@ body.light .bottom-tabs{
 @media(max-width:640px){
   body{ font-size:14px; }
 
-  .header-inner{
-    padding:.75rem .9rem;
-    gap:.6rem;
-  }
+  .header-inner{ padding:.75rem .9rem; gap:.6rem; }
   .brand-mark{ width:36px; height:36px; }
   .brand-mark svg{ width:20px; height:20px; }
   .brand-text .name{ font-size:1.05rem; }
@@ -1043,15 +1039,8 @@ body.light .bottom-tabs{
     grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
     gap:.5rem;
   }
-  .iptv-ch{
-    padding:.65rem .55rem;
-    min-height:90px;
-  }
-  .iptv-ch-logo{
-    width:38px;
-    height:38px;
-    font-size:1rem;
-  }
+  .iptv-ch{ padding:.65rem .55rem; min-height:90px; }
+  .iptv-ch-logo{ width:38px; height:38px; font-size:1rem; }
   .iptv-ch-name{ font-size:.7rem; }
 }
 

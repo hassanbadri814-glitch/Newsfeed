@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v2.3</title>
+<title>WAR DESK v2.4</title>
 
 <script>
 try{
@@ -21,7 +21,7 @@ try{
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
 
@@ -54,7 +54,7 @@ try{
       </div>
       <div class="brand-text">
         <span class="name">WAR DESK</span>
-        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v2.3</span></span>
+        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v2.4</span></span>
       </div>
     </div>
     <div class="header-stats">
@@ -91,6 +91,7 @@ try{
     <div class="section-head">
       <h2>📡 IPTV</h2>
       <span class="section-count" id="iptvCount">0 kanalen</span>
+      <button class="btn-mini" id="iptvToggleSetup" aria-label="Wijzig inloggegevens" title="Wijzig inloggegevens">⚙</button>
     </div>
 
     <div class="iptv-setup" id="iptvSetup">
@@ -185,7 +186,7 @@ try{
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
       <div class="sheet-about">
-        WAR DESK <span class="version" id="appVersionMenu">v2.3</span><br>
+        WAR DESK <span class="version" id="appVersionMenu">v2.4</span><br>
         Live nieuws + IPTV monitor
       </div>
     </div>
@@ -207,15 +208,15 @@ try{
 <div class="toast" id="toast">Klaar</div>
 
 <!-- SCRIPTS — VOLGORDE IS BELANGRIJK -->
-<script src="config.js?v=4"></script>
-<script src="news.js?v=4"></script>
-<script src="app.js?v=4"></script>
-<script src="persist.js?v=4"></script>
-<script src="refresh.js?v=4"></script>
-<script src="iptv.js?v=4"></script>
+<script src="config.js?v=5"></script>
+<script src="news.js?v=5"></script>
+<script src="app.js?v=5"></script>
+<script src="persist.js?v=5"></script>
+<script src="refresh.js?v=5"></script>
+<script src="iptv.js?v=5"></script>
 
 <script>
-console.log("%c WAR DESK %c v2.3 ", 
+console.log("%c WAR DESK %c v2.4 ", 
   "background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;",
   "background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

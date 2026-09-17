@@ -1,8 +1,5 @@
 /* ============================================================
-   WAR DESK v2.5 — IPTV (Xtream Codes)
-   - 7 vangnetten voor credentials
-   - Menu IPTV Beheer (wijzig inlog, herlaad, verwijder kanalen)
-   - Toast fix: geen hangende "Openen in VLC" meer
+   WAR DESK v2.6 — IPTV (Xtream Codes)
    ============================================================ */
 
 (function(){
@@ -11,7 +8,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[IPTV]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("Script geladen");
+  LOG("v2.6 geladen");
 
   var IPTV = {
     server: "", user: "", pass: "",
@@ -130,40 +127,94 @@
     el.textContent = msg || "";
   }
 
-  /* Sluit sheet menu */
-  function closeSheet(){
-    var s = $("sheet");
-    var o = $("sheetOverlay");
-    if(s) s.classList.remove("open");
-    if(o) o.classList.remove("open");
-    document.body.style.overflow = "";
+  /* ===== CORE FUNCTIES ===== */
+  async function loadChannels(){
+    var s = $("iptvServer"), u = $("iptvUser"), p = $("iptvPass");
+    IPTV.server = ((s && s.value) || "").trim();
+    IPTV.user = ((u && u.value) || "").trim();
+    IPTV.pass = (p && p.value) || "";
+
+    if(!IPTV.server || !IPTV.user || !IPTV.pass){
+      setStatus("✗ Vul alle velden in", "err");
+      return;
+    }
+
+    await dbPut("creds", {server:IPTV.server, user:IPTV.user, pass:IPTV.pass});
+
+    var setup = $("iptvSetup");
+    if(setup) setup.hidden = false;
+
+    setStatus("Categorieën laden...", "loading");
+
+    try{
+      var cats = await fetchJson(buildUrl("get_live_categories"));
+      if(!Array.isArray(cats)) throw new Error("Geen categorieën");
+
+      var catMap = {};
+      cats.forEach(function(c){ catMap[String(c.category_id)] = c.category_name || "Overig"; });
+
+      setStatus("Kanalen laden (" + cats.length + " categorieën)...", "loading");
+      var streams = await fetchJson(buildUrl("get_live_streams"));
+      if(!Array.isArray(streams)) throw new Error("Geen kanalen");
+
+      var base = IPTV.server.replace(/\/$/, "");
+      var newChannels = streams.map(function(s){
+        return {
+          id: String(s.stream_id),
+          name: s.name || ("Kanaal " + s.stream_id),
+          url: base + "/live/" + encodeURIComponent(IPTV.user) + "/" + encodeURIComponent(IPTV.pass) + "/" + s.stream_id + ".m3u8",
+          logo: s.stream_icon || "",
+          group: catMap[String(s.category_id)] || "Overig"
+        };
+      }).filter(function(c){ return c.name && c.url; });
+
+      IPTV.channels = newChannels;
+      await dbPut("channels", IPTV.channels);
+      IPTV.currentGroup = "all";
+
+      setStatus("✓ " + IPTV.channels.length + " kanalen geladen", "ok");
+
+      if(setup) setup.hidden = true;
+
+      renderChannels();
+    }catch(e){
+      setStatus("✗ " + (e.message || "fout"), "err");
+    }
   }
 
-  /* Ga naar IPTV view + open setup */
-  function gotoIptvWithSetup(){
-    var iptvTab = document.querySelector('.tab[data-view="iptv"]');
-    if(iptvTab) iptvTab.click();
-    setTimeout(function(){
-      var setup = $("iptvSetup");
-      if(setup){
-        setup.hidden = false;
-        setTimeout(function(){
-          setup.scrollIntoView({behavior:"smooth", block:"start"});
-        }, 100);
-      }
-    }, 250);
+  async function clearChannelsOnly(){
+    IPTV.channels = [];
+    await dbPut("channels", []);
+    var setup = $("iptvSetup");
+    if(setup) setup.hidden = false;
+    renderChannels();
+    var t = document.querySelector('.tab[data-view="iptv"]');
+    if(t) t.click();
+    setStatus("✓ Kanalen verwijderd — inlog bewaard", "ok");
   }
 
-  /* ===== TOAST CLEAR ===== */
-  function clearToast(){
-    var t = $("toast");
-    if(t) t.classList.remove("show");
-    if(window.__toastTimer) clearTimeout(window.__toastTimer);
+  async function clearAll(){
+    await dbDelete("creds");
+    await dbDelete("channels");
+    IPTV.server = ""; IPTV.user = ""; IPTV.pass = ""; IPTV.channels = [];
+    var sEl = $("iptvServer"); if(sEl) sEl.value = "";
+    var uEl = $("iptvUser"); if(uEl) uEl.value = "";
+    var pEl = $("iptvPass"); if(pEl) pEl.value = "";
+    var setup = $("iptvSetup"); if(setup) setup.hidden = false;
+    var filter = $("iptvFilter"); if(filter) filter.hidden = true;
+    var t = document.querySelector('.tab[data-view="iptv"]');
+    if(t) t.click();
+    renderChannels();
+    setStatus("✓ Alles gewist", "ok");
   }
 
+  window.__iptvLoadChannels = loadChannels;
+  window.__iptvClearChannels = clearChannelsOnly;
+  window.__iptvClearAll = clearAll;
+
+  /* ===== BIND UI ===== */
   function bindUI(){
     LOG("bindUI start");
-    var ok = 0;
 
     var pwToggle = $("iptvPwToggle");
     if(pwToggle){
@@ -172,19 +223,15 @@
         if(p.type === "password"){ p.type = "text"; this.textContent = "🙈"; }
         else { p.type = "password"; this.textContent = "👁"; }
       });
-      ok++;
     }
 
-    /* ===== CREDENTIALS — 7 VANGNETTEN ===== */
     function saveCreds(){
       IPTV.server = (($("iptvServer") || {}).value || "").trim();
       IPTV.user = (($("iptvUser") || {}).value || "").trim();
       IPTV.pass = ($("iptvPass") || {}).value || "";
       if(!IPTV.server && !IPTV.user && !IPTV.pass) return;
       dbPut("creds", {server:IPTV.server, user:IPTV.user, pass:IPTV.pass});
-      LOG("Creds opgeslagen");
     }
-    window.__iptvSaveCreds = saveCreds;
 
     ["iptvServer","iptvUser","iptvPass"].forEach(function(id){
       var el = $(id);
@@ -199,7 +246,6 @@
       el.addEventListener("keydown", function(e){
         if(e.key === "Enter"){ e.preventDefault(); saveCreds(); }
       });
-      ok++;
     });
 
     window.addEventListener("pagehide", saveCreds);
@@ -208,25 +254,6 @@
       if(document.hidden) saveCreds();
     });
 
-    /* ===== ⚙ TOGGLE SETUP ===== */
-    var toggleBtn = $("iptvToggleSetup");
-    if(toggleBtn){
-      toggleBtn.addEventListener("click", function(){
-        var setup = $("iptvSetup");
-        if(!setup) return;
-        if(setup.hidden){
-          setup.hidden = false;
-          setTimeout(function(){
-            setup.scrollIntoView({behavior:"smooth", block:"start"});
-          }, 50);
-        } else {
-          setup.hidden = true;
-        }
-      });
-      ok++;
-    }
-
-    /* ===== TEST ===== */
     var testBtn = $("iptvTestBtn");
     if(testBtn){
       testBtn.addEventListener("click", async function(){
@@ -243,139 +270,25 @@
           setStatus("✗ " + (e.message || "fout"), "err");
         }
       });
-      ok++;
     }
-
-    /* ===== LAAD KANALEN ===== */
-    async function loadChannels(){
-      saveCreds();
-      if(!IPTV.server || !IPTV.user || !IPTV.pass){ setStatus("✗ Vul alle velden in", "err"); return; }
-
-      setStatus("Categorieën laden...", "loading");
-      try{
-        var cats = await fetchJson(buildUrl("get_live_categories"));
-        if(!Array.isArray(cats)) throw new Error("Geen categorieën");
-
-        var catMap = {};
-        cats.forEach(function(c){ catMap[String(c.category_id)] = c.category_name || "Overig"; });
-
-        setStatus("Kanalen laden (" + cats.length + " categorieën)...", "loading");
-        var streams = await fetchJson(buildUrl("get_live_streams"));
-        if(!Array.isArray(streams)) throw new Error("Geen kanalen");
-
-        var base = IPTV.server.replace(/\/$/, "");
-        var newChannels = streams.map(function(s){
-          return {
-            id: String(s.stream_id),
-            name: s.name || ("Kanaal " + s.stream_id),
-            url: base + "/live/" + encodeURIComponent(IPTV.user) + "/" + encodeURIComponent(IPTV.pass) + "/" + s.stream_id + ".m3u8",
-            logo: s.stream_icon || "",
-            group: catMap[String(s.category_id)] || "Overig"
-          };
-        }).filter(function(c){ return c.name && c.url; });
-
-        IPTV.channels = newChannels;
-        await dbPut("channels", IPTV.channels);
-        IPTV.currentGroup = "all";
-
-        setStatus("✓ " + IPTV.channels.length + " kanalen geladen", "ok");
-
-        var setup = $("iptvSetup");
-        if(setup) setup.hidden = true;
-
-        renderChannels();
-
-        if(window.showToast) window.showToast(IPTV.channels.length + " kanalen geladen");
-      }catch(e){
-        setStatus("✗ " + (e.message || "fout"), "err");
-      }
-    }
-    window.__iptvLoadChannels = loadChannels;
 
     var loadBtn = $("iptvLoadBtn");
-    if(loadBtn){
-      loadBtn.addEventListener("click", loadChannels);
-      ok++;
-    }
+    if(loadBtn) loadBtn.addEventListener("click", loadChannels);
 
-    /* ===== WISSEN ALLES ===== */
     var clearBtn = $("iptvClearBtn");
     if(clearBtn){
       clearBtn.addEventListener("click", async function(){
         if(!confirm("Alle IPTV gegevens en kanalen wissen?")) return;
-        await dbDelete("creds");
-        await dbDelete("channels");
-        IPTV.server = ""; IPTV.user = ""; IPTV.pass = ""; IPTV.channels = [];
-        var sEl = $("iptvServer"); if(sEl) sEl.value = "";
-        var uEl = $("iptvUser"); if(uEl) uEl.value = "";
-        var pEl = $("iptvPass"); if(pEl) pEl.value = "";
-        setStatus("✓ Alles gewist", "ok");
-        var setup = $("iptvSetup"); if(setup) setup.hidden = false;
-        var filter = $("iptvFilter"); if(filter) filter.hidden = true;
-        var grid = $("iptvGrid");
-        if(grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-msg">Vul je Xtream gegevens in</div></div>';
-        var cnt = $("iptvCount"); if(cnt) cnt.textContent = "0 kanalen";
+        await clearAll();
       });
-      ok++;
     }
 
-    /* ===== MENU: WIJZIG INLOG ===== */
-    var menuEdit = $("menuIptvEdit");
-    if(menuEdit){
-      menuEdit.addEventListener("click", function(e){
-        e.preventDefault();
-        closeSheet();
-        gotoIptvWithSetup();
-        if(window.showToast) window.showToast("IPTV gegevens aanpassen");
-      });
-      ok++;
-    }
-
-    /* ===== MENU: HERLAAD KANALEN ===== */
-    var menuReload = $("menuIptvReload");
-    if(menuReload){
-      menuReload.addEventListener("click", function(e){
-        e.preventDefault();
-        closeSheet();
-        var iptvTab = document.querySelector('.tab[data-view="iptv"]');
-        if(iptvTab) iptvTab.click();
-        setTimeout(function(){
-          if(window.showToast) window.showToast("Kanalen opnieuw laden...");
-          loadChannels();
-        }, 250);
-      });
-      ok++;
-    }
-
-    /* ===== MENU: VERWIJDER KANALEN (bewaar inlog) ===== */
-    var menuClearCh = $("menuIptvClearChannels");
-    if(menuClearCh){
-      menuClearCh.addEventListener("click", async function(e){
-        e.preventDefault();
-        closeSheet();
-        if(!confirm("Kanalen verwijderen? Je inloggegevens blijven bewaard.")) return;
-        IPTV.channels = [];
-        await dbPut("channels", []);
-        var iptvTab = document.querySelector('.tab[data-view="iptv"]');
-        if(iptvTab) iptvTab.click();
-        setTimeout(function(){
-          var setup = $("iptvSetup");
-          if(setup) setup.hidden = false;
-          renderChannels();
-          if(window.showToast) window.showToast("Kanalen verwijderd");
-        }, 250);
-      });
-      ok++;
-    }
-
-    /* ===== GROEP FILTER ===== */
     var groupFilter = $("iptvGroupFilter");
     if(groupFilter){
       groupFilter.addEventListener("change", function(){
         IPTV.currentGroup = this.value;
         renderChannels();
       });
-      ok++;
     }
 
     var playerClose = $("iptvPlayerClose");
@@ -386,7 +299,7 @@
       if(e.target.id === "iptvPlayer") closePlayer();
     });
 
-    LOG("bindUI klaar — " + ok + " elementen gebonden");
+    LOG("bindUI klaar");
   }
 
   function renderChannels(){
@@ -439,7 +352,7 @@
       var logoHtml = c.logo
         ? '<img src="' + esc(c.logo) + '" loading="lazy" alt="" onerror="this.parentNode.textContent=\'' + initial + '\'">'
         : initial;
-      html += '<button class="iptv-ch" data-idx="' + i + '" style="--ch-color:' + color + '" aria-label="' + esc(c.name) + '">';
+      html += '<button class="iptv-ch" data-idx="' + i + '" style="--ch-color:' + color + '">';
       html += '<div class="iptv-ch-logo">' + logoHtml + '</div>';
       html += '<div class="iptv-ch-name">' + esc(c.name) + '</div>';
       html += '</button>';
@@ -490,24 +403,19 @@
     }
   }
 
-  /* ===== VISIBILITY: toast fix + VLC tracking ===== */
   document.addEventListener("visibilitychange", function(){
     if(document.hidden){
-      /* Vertrekken — meteen toast weg */
-      clearToast();
       if(IPTV.vlcOpenTime && Date.now() - IPTV.vlcOpenTime < 5000){
         IPTV.vlcDidHide = true;
         clearTimeout(IPTV.vlcWatchdog);
       }
     } else {
-      /* Terug — nog een keer toast weg (vangnet) */
-      clearToast();
       if(IPTV.vlcOpenTime){
         var elapsed = Date.now() - IPTV.vlcOpenTime;
         IPTV.vlcOpenTime = 0;
         if(elapsed < 2000 && IPTV.vlcDidHide){
           setTimeout(function(){
-            if(window.showToast) window.showToast("Stream lijkt offline — probeer een ander kanaal");
+            if(window.showToast) window.showToast("Stream lijkt offline");
           }, 500);
         }
       }
@@ -520,7 +428,6 @@
     var isHttpsPage = location.protocol === "https:";
 
     if(isHttp && isHttpsPage){
-      if(window.showToast) window.showToast("Openen in VLC...");
       vlcOpen(url, ch.name);
       return;
     }
@@ -572,7 +479,6 @@
     try{
       LOG("init start");
       await openDB();
-      LOG("DB geopend");
 
       var creds = await dbGet("creds");
       if(creds){
@@ -582,7 +488,6 @@
         var sEl = $("iptvServer"); if(sEl) sEl.value = IPTV.server;
         var uEl = $("iptvUser"); if(uEl) uEl.value = IPTV.user;
         var pEl = $("iptvPass"); if(pEl) pEl.value = IPTV.pass;
-        LOG("Creds geladen");
       }
 
       var channels = await dbGet("channels");
@@ -591,7 +496,6 @@
         var setup = $("iptvSetup");
         if(setup) setup.hidden = true;
         renderChannels();
-        LOG("Kanalen geladen:", channels.length);
       }
 
       bindUI();
@@ -603,15 +507,8 @@
 
   window.IPTVAPI = { init: init, state: IPTV };
 
-  function start(){
-    LOG("start() — readyState:", document.readyState);
-    init();
-  }
-
-  if(document.readyState === "complete" || document.readyState === "interactive"){
-    setTimeout(start, 200);
-  } else {
-    document.addEventListener("DOMContentLoaded", function(){ setTimeout(start, 200); });
-  }
+  function start(){ init(); }
+  if(document.readyState === "complete" || document.readyState === "interactive") setTimeout(start, 200);
+  else document.addEventListener("DOMContentLoaded", function(){ setTimeout(start, 200); });
   window.addEventListener("load", function(){ setTimeout(start, 500); });
 })();

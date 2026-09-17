@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v4.0 — Conflictkaart (auto-fullscreen + subtiele modal)
+   WAR DESK v4.1 — Conflictkaart (amber labels, donkere base)
    ============================================================ */
 
 (function(){
@@ -8,7 +8,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v4.0 geladen");
+  LOG("v4.1 geladen");
 
   var MAP = {
     instance: null,
@@ -59,7 +59,20 @@
     s.textContent =
       /* --- Leaflet basis --- */
       ".leaflet-control-attribution{display:none!important}" +
-      ".leaflet-container{background:#0a101c!important}" +
+      ".leaflet-container{background:#05080f!important}" +
+
+      /* --- Kaart-tegels: donkere base --- */
+      ".wd-tiles-base{" +
+        "filter:brightness(0.6) contrast(1.25) saturate(0.35)!important;" +
+        "transform:translateZ(0);" +
+      "}" +
+
+      /* --- Kaart-tegels: amber/gouden labels --- */
+      ".wd-tiles-labels{" +
+        "filter:sepia(1) saturate(3.2) hue-rotate(-15deg) brightness(1.7) contrast(1.1)!important;" +
+        "mix-blend-mode:screen;" +
+        "transform:translateZ(0);" +
+      "}" +
 
       /* --- Marker --- */
       ".wd-marker{background:transparent!important;border:none!important}" +
@@ -72,7 +85,7 @@
         "animation:wdMarkerPulse 2.6s ease-out infinite}" +
       "@keyframes wdMarkerPulse{0%{transform:scale(.5);opacity:.35}100%{transform:scale(2.2);opacity:0}}" +
 
-      /* --- Clusters (18/22/26) --- */
+      /* --- Clusters --- */
       ".marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:transparent!important}" +
       ".marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{" +
         "background:linear-gradient(135deg,#8a5c26,#e2a857)!important;" +
@@ -90,11 +103,9 @@
       ".marker-cluster-large{margin-left:-13px!important;margin-top:-13px!important}" +
       ".marker-cluster div span{font-size:.56rem!important;line-height:1!important;letter-spacing:-.02em!important}" +
 
-      /* --- Fullscreen: verberg de originele ⛶ knop, verberg legend --- */
+      /* --- Fullscreen --- */
       ".map-wrap.fullscreen .map-legend{display:none!important}" +
       ".map-wrap.fullscreen .map-controls .map-ctrl[data-role='full']{display:none!important}" +
-
-      /* --- Fullscreen sluit-knop (kruisje rechtsboven) --- */
       ".wd-map-close{display:none;position:absolute;top:.8rem;right:.8rem;z-index:600;" +
         "width:42px;height:42px;border-radius:50%;" +
         "background:rgba(10,16,28,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);" +
@@ -104,8 +115,6 @@
         "box-shadow:0 4px 16px rgba(0,0,0,.6);transition:all .18s}" +
       ".wd-map-close:hover{background:rgba(20,28,44,.95);border-color:rgba(255,255,255,.25);transform:rotate(90deg)}" +
       ".map-wrap.fullscreen .wd-map-close{display:grid!important}" +
-
-      /* --- Fullscreen: controls naar LINKSBOVEN (kruisje zit rechts) --- */
       ".map-wrap.fullscreen .map-controls{top:.8rem;left:.8rem;right:auto}" +
 
       /* --- Detail modal subtiel --- */
@@ -263,7 +272,6 @@
   function closeDetail(){
     var modal = $("wdDetailModal");
     if(modal) modal.classList.remove("show");
-    /* Kaart blijft fullscreen — bewust niet terugzetten */
   }
 
   /* ===== DATA ===== */
@@ -492,12 +500,14 @@
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
       { maxZoom: 16, crossOrigin: true }
     ).addTo(MAP.instance);
+    try{ MAP.tileLayer.getContainer().classList.add("wd-tiles-base"); }catch(e){}
 
-    /* Reference: steden/landen/wegen labels */
+    /* Reference: steden/landen labels (amber via CSS) */
     MAP.labelLayer = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 16, crossOrigin: true, opacity: 0.9 }
+      { maxZoom: 16, crossOrigin: true, opacity: 0.95 }
     ).addTo(MAP.instance);
+    try{ MAP.labelLayer.getContainer().classList.add("wd-tiles-labels"); }catch(e){}
 
     MAP.cluster = L.markerClusterGroup({
       maxClusterRadius: 45,
@@ -516,7 +526,6 @@
     var zi = $("mapZoomIn"), zo = $("mapZoomOut"), loc = $("mapLocate"), full = $("mapFull");
     if(zi) zi.addEventListener("click", function(){ MAP.instance && MAP.instance.zoomIn(); });
     if(zo) zo.addEventListener("click", function(){ MAP.instance && MAP.instance.zoomOut(); });
-    /* De ⛶ knop is nu een toggle: fullscreen aan/uit */
     if(full){
       full.setAttribute("data-role", "full");
       full.addEventListener("click", function(){
@@ -552,7 +561,6 @@
   function activateMapView(){
     initMap();
     ensureFullscreenClose();
-    /* Automatisch fullscreen bij openen van Kaart-tab */
     setTimeout(enterFullscreen, 100);
     if(MAP.instance) setTimeout(function(){ if(MAP.instance) MAP.instance.invalidateSize(); }, 350);
     if(!MAP.events.length) fetchEvents();
@@ -565,7 +573,6 @@
         if(tab.dataset.view === "map"){
           setTimeout(activateMapView, 200);
         } else {
-          /* Verlaat de kaart-tab → sluit fullscreen als 'ie open is */
           if(MAP.isFullscreen) exitFullscreen();
         }
       });

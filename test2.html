@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WAR DESK — Bronnen Test 2 (via Worker)</title>
+<title>WAR DESK — Bronnen Test 2 (via Worker v2.2)</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#070c16;color:#f5f8ff;padding:1rem;line-height:1.5;font-size:15px}
@@ -36,10 +36,10 @@ pre{background:#0d1522;padding:.5rem;border-radius:6px;font-size:.65rem;overflow
 <body>
 
 <h1>WAR DESK — Bronnen Test 2</h1>
-<div class="sub">Via Cloudflare Worker proxy — omzeilt CORS</div>
+<div class="sub">Via Cloudflare Worker v2.2 (newsfeed2)</div>
 
 <div class="note">
-  <strong>Wat deze test doet:</strong> elke API wordt aangeroepen via jouw Cloudflare Worker. De Worker haalt de data op en stuurt die terug naar de browser. Zo omzeilen we het CORS-probleem dat we in test 1 zagen.
+  <strong>Wat deze test doet:</strong> elke API wordt aangeroepen via je nieuwe Cloudflare Worker <code>newsfeed2</code>. De Worker haalt de data op en stuurt die terug naar de browser. Zo omzeilen we het CORS-probleem dat we in test 1 zagen.
 </div>
 
 <div class="summary" id="summary">
@@ -52,10 +52,10 @@ pre{background:#0d1522;padding:.5rem;border-radius:6px;font-size:.65rem;overflow
 
 <script>
 /* ============================================================
-   WAR DESK — Bronnen Test 2 (via Worker)
+   WAR DESK — Bronnen Test 2 (via Worker v2.2)
    ============================================================ */
 
-var WORKER = "https://nieuwsproxy.hassanbadri814.workers.dev/?url=";
+var WORKER = "https://newsfeed2.hassanbadri814.workers.dev/?url=";
 
 var APIS = [
   {
@@ -202,7 +202,7 @@ function testApi(a){
           el.classList.add("fail");
           el.querySelector(".test-icon").textContent = "❌";
           el.querySelector(".test-status").textContent = "faalt";
-          var preview = res.text.slice(0, 200) || "(leeg)";
+          var preview = (res.text || "").slice(0, 200) || "(leeg)";
           el.querySelector(".test-info").innerHTML = a.desc +
             '<br><span style="color:#e63950">HTTP ' + res.status + '</span>' +
             '<pre>' + preview + '</pre>';

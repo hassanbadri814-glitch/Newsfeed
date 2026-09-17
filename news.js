@@ -1,8 +1,10 @@
 /* ============================================================
-   WAR DESK v19.4 — Nieuws logica
+   WAR DESK v19.5 — Nieuws logica
    Robuuste parser + proxy cooldown + tag-gebaseerde filtering
+   Fix: geen persistente disabled sources meer tussen sessies
+   Fix: renderHash over volledige lijst
    ============================================================ */
-window.__newsVersion = "v19.4-proxy-cooldown";
+window.__newsVersion = "v19.5-fresh-session";
 
 /* ===== STATE ===== */
 window.State = {
@@ -416,6 +418,7 @@ async function loadAllFeeds(){
       if(!State.health[f.n]) State.health[f.n] = {fails:0, last:0};
       State.health[f.n].fails++;
       State.health[f.n].last = Date.now();
+      /* Binnen een sessie mag een bron tijdelijk uit, maar niet persistent */
       if(State.health[f.n].fails >= CONFIG.failThreshold){
         State.disabled[f.n] = true;
       }
@@ -556,7 +559,11 @@ function renderNews(){
   var title = document.getElementById("newsTitle");
   var count = document.getElementById("newsCount");
 
-  var hash = State.currentCat + "|" + State.currentSort + "|" + State.currentSearch + "|" + State.viewMode + "|" + list.length + "|" + list.slice(0, 5).map(function(x){ return x.link; }).join(",");
+  /* FIX: Volledige hash over alle links — niet meer alleen top-5 */
+  var hash = State.currentCat + "|" + State.currentSort + "|" + State.currentSearch + "|" + State.viewMode + "|" + list.length;
+  for(var h = 0; h < list.length; h++){
+    hash += "|" + (list[h].link || "");
+  }
   if(hash === State._lastRenderHash){
     return;
   }
@@ -671,14 +678,10 @@ function startAutoRefresh(){
 async function initNews(){
   await NewsDB.open();
 
+  /* FIX: Laad health voor statistiek, maar blokkeer NIETS bij start.
+     Elke sessie begint met een schone lei — alle bronnen krijgen een kans. */
   State.health = await NewsDB.loadHealth();
   State.disabled = {};
-  Object.keys(State.health).forEach(function(n){
-    var h = State.health[n];
-    if(h.fails >= CONFIG.failThreshold && Date.now() - h.last < CONFIG.retryAfterMs){
-      State.disabled[n] = true;
-    }
-  });
 
   State.readMap = await NewsDB.loadReadMap();
 

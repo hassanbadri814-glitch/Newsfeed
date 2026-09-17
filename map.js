@@ -1,7 +1,6 @@
 /* ============================================================
    WAR DESK v3.2 — Live Conflictkaart (War-Tracker)
-   Bron: war-tracker.com via newsfeed2 Worker
-   Kaart: OpenStreetMap (geen API key)
+   Fix: kaart-view detectie na herladen
    ============================================================ */
 
 (function(){
@@ -23,7 +22,6 @@
     api: "https://war-tracker.com/api/v1/events?limit=100"
   };
 
-  /* ===== EVENT TYPE → KLEUR + LABEL ===== */
   var TYPES = {
     "military strike":  { color: "#e63950", icon: "💥", label: "Aanval",     filter: "strike" },
     "ground clash":     { color: "#f59e0b", icon: "⚔️", label: "Gevecht",    filter: "clash" },
@@ -39,7 +37,6 @@
     return TYPES[key] || TYPES["na"];
   }
 
-  /* ===== DATA OPHALEN ===== */
   async function fetchEvents(){
     LOG("Fetch events...");
     var list = $("liveList");
@@ -58,7 +55,6 @@
       var events = (data && data.events) ? data.events : (Array.isArray(data) ? data : []);
       LOG(events.length, "events ontvangen");
 
-      // Filter events met coördinaten
       var withCoords = events.filter(function(e){
         return typeof e.lat === "number" && typeof e.lng === "number" &&
                isFinite(e.lat) && isFinite(e.lng) &&
@@ -100,7 +96,6 @@
     }
   }
 
-  /* ===== MARKERS ===== */
   function renderMarkers(){
     if(!MAP.cluster) return;
     MAP.cluster.clearLayers();
@@ -139,7 +134,6 @@
     MAP.cluster.addLayers(markers);
   }
 
-  /* ===== LEGEND ===== */
   function renderLegend(){
     var el = $("legendItems");
     if(!el) return;
@@ -151,11 +145,9 @@
     var sorted = Object.entries(counts).sort(function(a, b){ return b[1] - a[1]; });
     if(!sorted.length){ el.innerHTML = '<div class="legend-item">Geen data</div>'; return; }
 
-    var seen = {};
     el.innerHTML = sorted.map(function(pair){
       var f = pair[0];
       var n = pair[1];
-      // Pak de eerste type config voor deze filter
       var cfg = null;
       for(var k in TYPES){ if(TYPES[k].filter === f){ cfg = TYPES[k]; break; } }
       if(!cfg) cfg = TYPES["other"];
@@ -166,7 +158,6 @@
     }).join("");
   }
 
-  /* ===== LIVE LIST ===== */
   function renderLiveList(){
     var list = $("liveList");
     var countEl = $("liveCount");
@@ -177,7 +168,6 @@
       return e.typeConfig.filter === MAP.currentFilter;
     });
 
-    // Sorteer nieuwste eerst
     filtered.sort(function(a, b){
       return new Date(b.date) - new Date(a.date);
     });
@@ -205,7 +195,6 @@
     }).join("");
   }
 
-  /* ===== HELPERS ===== */
   function escapeHtml(s){
     return (s || "").replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
@@ -222,7 +211,6 @@
     return Math.floor(diff / 86400) + " d";
   }
 
-  /* ===== KAART ===== */
   function initMap(){
     if(MAP.instance || typeof L === "undefined") return;
     var mapEl = $("map");
@@ -257,7 +245,6 @@
     LOG("Kaart geïnitialiseerd");
   }
 
-  /* ===== CONTROLS ===== */
   function bindControls(){
     var zi = $("mapZoomIn");
     var zo = $("mapZoomOut");
@@ -281,7 +268,6 @@
     });
   }
 
-  /* ===== FILTERS ===== */
   function bindFilters(){
     document.querySelectorAll(".live-filter").forEach(function(btn){
       btn.addEventListener("click", function(){
@@ -294,7 +280,6 @@
     });
   }
 
-  /* ===== REFRESH ===== */
   window.__mapRefresh = function(){
     LOG("Handmatige refresh");
     fetchEvents();
@@ -304,32 +289,32 @@
   };
 
   /* ===== VIEW SWITCH ===== */
+  function activateMapView(){
+    initMap();
+    if(MAP.instance) setTimeout(function(){ MAP.instance.invalidateSize(); }, 100);
+    if(!MAP.events.length) fetchEvents();
+    else { renderMarkers(); renderLegend(); renderLiveList(); }
+  }
+
   function hookViewSwitch(){
     document.querySelectorAll(".bottom-tabs .tab").forEach(function(tab){
       tab.addEventListener("click", function(){
         if(tab.dataset.view === "map"){
-          setTimeout(function(){
-            initMap();
-            if(MAP.instance) MAP.instance.invalidateSize();
-            if(!MAP.events.length) fetchEvents();
-            else { renderMarkers(); renderLegend(); renderLiveList(); }
-          }, 200);
+          setTimeout(activateMapView, 200);
         }
       });
     });
   }
 
-  /* ===== AUTO REFRESH ===== */
   function startAutoRefresh(){
     clearInterval(MAP.refreshTimer);
     MAP.refreshTimer = setInterval(function(){
       if(document.hidden) return;
-      // Alleen verversen als kaart-tab actief is
       var mapTab = document.querySelector('.tab[data-view="map"]');
       if(mapTab && mapTab.classList.contains("active")){
         fetchEvents();
       }
-    }, 300000); // 5 minuten
+    }, 300000);
   }
 
   /* ===== START ===== */
@@ -339,8 +324,30 @@
       bindFilters();
       hookViewSwitch();
       startAutoRefresh();
+
+      /* Fix: als de kaart-tab al actief is (na herladen), initialiseer dan direct */
+      var mapTab = document.querySelector('.tab[data-view="map"]');
+      var viewMap = document.getElementById("viewMap");
+      var isMapActive = (mapTab && mapTab.classList.contains("active")) || (viewMap && !viewMap.hidden);
+
+      if(isMapActive){
+        LOG("Kaart-tab al actief — direct initialiseren");
+        setTimeout(activateMapView, 400);
+      }
+
       LOG("Klaar");
     }, 600);
+  });
+
+  /* Extra vangnet: check nog een keer na 1500ms */
+  window.addEventListener("load", function(){
+    setTimeout(function(){
+      var mapTab = document.querySelector('.tab[data-view="map"]');
+      if(mapTab && mapTab.classList.contains("active") && !MAP.instance){
+        LOG("Tweede check — kaart nog niet geïnitialiseerd");
+        activateMapView();
+      }
+    }, 1500);
   });
 
   window.MAPAPI = {

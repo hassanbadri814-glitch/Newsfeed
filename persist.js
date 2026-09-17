@@ -1,13 +1,15 @@
 /* ============================================================
-   WAR DESK v19.0 — State persistentie (v2)
-   Onthoudt categorie, sortering en weergave na herladen
+   WAR DESK v2.7 — State persistentie (v3)
+   Onthoudt categorie, sortering, weergave EN actieve tab
    ============================================================ */
 
 (function(){
   "use strict";
 
   var KEY = "wardesk_ui_state_v1";
+  var VIEW_KEY = "wardesk_active_view_v1";
 
+  /* ===== STATE OPSLAAN ===== */
   function save(){
     try{
       if(!window.State) return;
@@ -26,6 +28,16 @@
     }catch(e){ return null; }
   }
 
+  /* ===== VIEW (actieve tab) OPSLAAN ===== */
+  function saveView(viewName){
+    try{ localStorage.setItem(VIEW_KEY, viewName); }catch(e){}
+  }
+
+  function loadView(){
+    try{ return localStorage.getItem(VIEW_KEY) || "news"; }catch(e){ return "news"; }
+  }
+
+  /* ===== UI HERSTELLEN ===== */
   function applyToUI(saved){
     if(!saved) return;
     var $ = function(id){ return document.getElementById(id); };
@@ -34,18 +46,10 @@
       b.classList.toggle("active", b.dataset.cat === (saved.cat || "all"));
     });
     
-    if($("sortImportance")){
-      $("sortImportance").classList.toggle("active", (saved.sort || "importance") === "importance");
-    }
-    if($("sortNewest")){
-      $("sortNewest").classList.toggle("active", (saved.sort || "importance") === "newest");
-    }
-    if($("viewCards")){
-      $("viewCards").classList.toggle("active", (saved.view || "cards") === "cards");
-    }
-    if($("viewList")){
-      $("viewList").classList.toggle("active", (saved.view || "cards") === "list");
-    }
+    if($("sortImportance")) $("sortImportance").classList.toggle("active", (saved.sort || "importance") === "importance");
+    if($("sortNewest")) $("sortNewest").classList.toggle("active", (saved.sort || "importance") === "newest");
+    if($("viewCards")) $("viewCards").classList.toggle("active", (saved.view || "cards") === "cards");
+    if($("viewList")) $("viewList").classList.toggle("active", (saved.view || "cards") === "list");
   }
 
   function restore(){
@@ -60,32 +64,41 @@
     return false;
   }
 
+  /* ===== ACTIEVE TAB HERSTELLEN ===== */
+  function restoreActiveView(){
+    var savedView = loadView();
+    if(!savedView || savedView === "news") return;
+    var tab = document.querySelector('.bottom-tabs .tab[data-view="' + savedView + '"]');
+    if(!tab) return;
+    tab.click();
+  }
+
+  /* ===== INIT ===== */
   window.addEventListener("DOMContentLoaded", function(){
     var saved = load();
-    
-    // Herstel state direct
-    if(saved){
-      restore();
-      applyToUI(saved);
-    }
+    if(saved){ restore(); applyToUI(saved); }
 
-    // BELANGRIJK: capture phase — vuurt VOOR stopPropagation
+    /* State opslaan bij UI-klikken (capture phase → omzeilt stopPropagation) */
     document.addEventListener("click", function(e){
-      // Alleen reageren op UI-klikken
       var target = e.target.closest("[data-cat], #sortImportance, #sortNewest, #viewCards, #viewList");
-      if(target){
-        setTimeout(save, 200);
-      }
-    }, true); // ← true = capture phase, omzeilt stopPropagation
+      if(target){ setTimeout(save, 200); }
+    }, true);
 
-    // Extra vangnetten
+    /* Actieve tab opslaan bij tab-klikken */
+    document.querySelectorAll(".bottom-tabs .tab").forEach(function(tab){
+      tab.addEventListener("click", function(){
+        if(tab.dataset.view) saveView(tab.dataset.view);
+      });
+    });
+
+    /* Vangnetten */
     window.addEventListener("pagehide", save);
     window.addEventListener("beforeunload", save);
     document.addEventListener("visibilitychange", function(){
       if(document.hidden) save();
     });
 
-    // Wacht tot NewsAPI klaar is, dan re-renderen met herstelde state
+    /* Wacht tot NewsAPI klaar is, dan state + view herstellen */
     var attempts = 0;
     var waitInterval = setInterval(function(){
       attempts++;
@@ -94,11 +107,13 @@
         restore();
         applyToUI(load());
         try{ if(NewsAPI.render) NewsAPI.render(); }catch(e){}
-        console.log("[WAR DESK] State hersteld");
+        /* Wacht 200ms zodat app.js's tab-listeners zeker gebonden zijn */
+        setTimeout(restoreActiveView, 200);
+        console.log("[WAR DESK] State + view hersteld");
       }
       if(attempts > 100) clearInterval(waitInterval);
     }, 100);
   });
 
-  console.log("[WAR DESK] persist.js v2 geladen");
+  console.log("[WAR DESK] persist.js v3 geladen — view persistence");
 })();

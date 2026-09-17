@@ -1,8 +1,8 @@
 /* ============================================================
-   WAR DESK v19.3 — Nieuws logica (Fase 1, 2 & 3 geïntegreerd)
-   Robuuste parser + proxy fallback + Tag-gebaseerde filtering
+   WAR DESK v19.4 — Nieuws logica
+   Robuuste parser + proxy cooldown + tag-gebaseerde filtering
    ============================================================ */
-window.__newsVersion = "v19.3-tags-fallback-proxy";
+window.__newsVersion = "v19.4-proxy-cooldown";
 
 /* ===== STATE ===== */
 window.State = {
@@ -25,7 +25,7 @@ window.State = {
   lastBreakingItem: null,
   loadSession: 0,
   db: null,
-  _lastRenderHash: "" // Fase 3: Voorkomt onnodige DOM updates
+  _lastRenderHash: ""
 };
 
 /* ===== INDEXEDDB ===== */
@@ -80,8 +80,6 @@ var NewsDB = (function(){
       }catch(e){ res([]); }
     });
   }
-  
-  // Fase 3: Slimmere opslag — behoud tags en vermijd onnodige clear
   function saveItems(items){
     if(!db) return Promise.resolve();
     return new Promise(function(res){
@@ -93,14 +91,13 @@ var NewsDB = (function(){
           store.put({
             link: it.link, title: it.title, desc: it.desc, img: it.img,
             date: it.date, source: it.source, cat: it.cat, lang: it.lang,
-            sources: it.sources, tags: it.tags || [] // Behoud tags
+            sources: it.sources, tags: it.tags || []
           });
         });
         tx.oncomplete = function(){ res(); };
       }catch(e){ res(); }
     });
   }
-  
   return {
     open: open,
     put: put,
@@ -147,19 +144,17 @@ function esc(s){
   });
 }
 
-/* ===== FASE 1: TAGS EXTRACTIE =====
+/* ===== TAGS EXTRACTIE =====
    Overschrijft NIET de bron-categorie. Voegt alleen tags toe. */
 function extractTags(title, desc, fallback){
   var tags = [];
   var t = ((title || "") + " " + (desc || "")).toLowerCase();
 
-  // Sport tags
   var sportSignal = /\b(voetbal|football|soccer|eredivisie|eerste divisie|knvb|ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|n\.e\.c\.|sparta|willem ii|go ahead|pec zwolle|rkc|fortuna sittard|excelsior|almere city|heracles|voetbalzone|voetbalnieuws|voetbalprimeur|match|wedstrijd|goal|doelpunt|keeper|doelman|coach|trainer|speler|selectie|toernooi|competitie|champions league|europa league|conference league|knvb beker|johan cruijff schaal|fifa|uefa|wk|ek|kickboxing|glory|mma|ufc|boksen|boks|vechtsport|formule 1|f1|grand prix|motogp|olympische|tennis|wimbledon|roland garros|us open|australian open|basketbal|nba|nfl|nhl|mlb|wielrennen|tour de france|giro|vuelta|darts|schaatsen|zwemmen|atletiek|hockey|handbal|volleybal|honkbal|rugby|cricket|golf|surfen|ski|snowboard)\b/.test(t);
   if(sportSignal && !/\b(airstrike|missile strike|invasion|massacre|shelling)\b/.test(t)){
     tags.push("sport");
   }
 
-  // Regio / Conflict tags
   if(/\b(gaza|rafah|khan younis|hamas|palestin|netanyahu|tel aviv|jerusalem|idf|hebron|jenin|nablus|ramallah|west bank)\b/.test(t)) tags.push("gaza", "mideast", "war");
   if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah|sidon|tripoli|tyre)\b/.test(t)) tags.push("lebanon", "mideast", "war");
   if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf|pezeshkian)\b/.test(t)) tags.push("iran", "mideast", "war");
@@ -169,12 +164,10 @@ function extractTags(title, desc, fallback){
   if(/\b(sudan|sudanese|khartoum|darfur|rsf|omdurman)\b/.test(t)) tags.push("sudan", "war");
   if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara)\b/.test(t)) tags.push("maroc");
 
-  // Algemene oorlog tags
   if(/\b(airstrike|air strike|missile|invasion|invaded|ceasefire|cease-fire|military|soldier|troops|combat|offensive|bombing|shelling|artillery|tank|drone strike|hostage|massacre|war crime)\b/.test(t)){
     if(tags.indexOf("war") === -1) tags.push("war");
   }
 
-  // Unieke tags retourneren
   return tags.filter(function(v, i, a){ return a.indexOf(v) === i; });
 }
 
@@ -192,7 +185,7 @@ function scoreArticle(it){
   return score;
 }
 
-/* ===== DEDUPE (Fase 1: Tags samenvoegen) ===== */
+/* ===== DEDUPE ===== */
 function titleKey(title){
   return (title || "").toLowerCase().replace(/[^\w\s]/g, "")
     .split(/\s+/).filter(function(w){ return w.length > 3; })
@@ -211,7 +204,6 @@ function dedupe(items){
     } else {
       var e = map.get(key);
       if(e.sources.indexOf(it.source) < 0) e.sources.push(it.source);
-      // Voeg unieke tags samen
       if(it.tags){
         it.tags.forEach(function(t){
           if(e.tags.indexOf(t) === -1) e.tags.push(t);
@@ -283,23 +275,30 @@ function normalizeItem(it){
 }
 
 /* ============================================================
-   PROXY FALLBACK (Fase 2)
+   PROXY FALLBACK — met cooldown i.p.v. permanente disable
    ============================================================ */
 window.__proxyHealth = {};
+
+var PROXY_COOLDOWN_MS = 30000;
+var PROXY_FAIL_THRESHOLD = 5;
 
 function proxyHost(p){
   try{ return p.split("/")[2]; }catch(e){ return p; }
 }
 
 function markProxyFail(p){
-  if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabled: false };
+  if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabledUntil: 0 };
   window.__proxyHealth[p].fails++;
-  if(window.__proxyHealth[p].fails >= 5) window.__proxyHealth[p].disabled = true;
+  if(window.__proxyHealth[p].fails >= PROXY_FAIL_THRESHOLD){
+    window.__proxyHealth[p].disabledUntil = Date.now() + PROXY_COOLDOWN_MS;
+    window.__proxyHealth[p].fails = 0;
+  }
 }
 
 function markProxyOk(p){
-  if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabled: false };
+  if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabledUntil: 0 };
   window.__proxyHealth[p].fails = 0;
+  window.__proxyHealth[p].disabledUntil = 0;
 }
 
 function parseResponse(txt){
@@ -327,7 +326,7 @@ async function fetchFeedWithFallback(feedUrl){
   for(var i = 0; i < proxies.length; i++){
     var p = proxies[i];
     var health = window.__proxyHealth[p];
-    if(health && health.disabled) continue;
+    if(health && health.disabledUntil && Date.now() < health.disabledUntil) continue;
 
     try{
       var ctrl = new AbortController();
@@ -348,7 +347,7 @@ async function fetchFeedWithFallback(feedUrl){
   throw lastErr || new Error("alle proxies faalden");
 }
 
-/* ===== LOAD FEEDS (Fase 1 & 2 geïntegreerd) ===== */
+/* ===== LOAD FEEDS ===== */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
@@ -359,8 +358,10 @@ async function loadAllFeeds(){
   var collectedLinks = {};
   var tried = 0;
   var bar = document.getElementById("progressBar");
-  bar.classList.add("show");
-  bar.style.width = "10%";
+  if(bar){
+    bar.classList.add("show");
+    bar.style.width = "10%";
+  }
 
   window.__wdDiagCount = 0;
 
@@ -381,7 +382,6 @@ async function loadAllFeeds(){
         var key = String(it.link || titleClean).toLowerCase().trim();
         if(key && !collectedLinks[key]){
           collectedLinks[key] = 1;
-          // FASE 1 FIX: Behoud de bron-categorie, voeg tags toe
           var detectedTags = extractTags(titleClean, descClean, f.cat);
           collected.push({
             title: titleClean,
@@ -390,7 +390,7 @@ async function loadAllFeeds(){
             img: it.thumbnail || "",
             date: it.pubDate || "",
             source: f.n,
-            cat: f.cat, // <-- Dit is de fix! Nooit meer overschrijven.
+            cat: f.cat,
             tags: detectedTags,
             lang: f.lang
           });
@@ -407,9 +407,9 @@ async function loadAllFeeds(){
       State.loadedSources++;
       if(State.health[f.n]) State.health[f.n].fails = 0;
 
-      if(session === State.loadSession){
-        document.getElementById("statSources").textContent =
-          State.loadedSources + "/" + State.totalSources;
+      var srcEl = document.getElementById("statSources");
+      if(srcEl && session === State.loadSession){
+        srcEl.textContent = State.loadedSources + "/" + State.totalSources;
       }
     }catch(e){
       State.failedSources.push(f.n);
@@ -421,7 +421,7 @@ async function loadAllFeeds(){
       }
     }
 
-    if(session === State.loadSession){
+    if(bar && session === State.loadSession){
       bar.style.width = (10 + Math.round((tried / active.length) * 85)) + "%";
     }
   }
@@ -443,14 +443,18 @@ async function loadAllFeeds(){
   var deduped = dedupe(collected);
   State.items = deduped.sort(function(a, b){ return tm(b.date) - tm(a.date); });
 
-  document.getElementById("statSources").textContent = State.loadedSources + "/" + State.totalSources;
-  document.getElementById("statItems").textContent = State.items.length;
+  var srcEl = document.getElementById("statSources");
+  if(srcEl) srcEl.textContent = State.loadedSources + "/" + State.totalSources;
+  var itemsEl = document.getElementById("statItems");
+  if(itemsEl) itemsEl.textContent = State.items.length;
 
   NewsDB.saveItems(State.items);
   NewsDB.saveHealth(State.health);
 
-  bar.style.width = "100%";
-  setTimeout(function(){ bar.classList.remove("show"); bar.style.width = "0%"; }, 400);
+  if(bar){
+    bar.style.width = "100%";
+    setTimeout(function(){ bar.classList.remove("show"); bar.style.width = "0%"; }, 400);
+  }
 
   detectBreaking();
   renderNews();
@@ -501,24 +505,28 @@ function detectBreaking(){
   State.breakingShownAt = Date.now();
   State.lastBreakingItem = g.items[0];
 
-  document.getElementById("breakingCount").textContent = g.sources.length;
-  document.getElementById("breakingTitle").textContent = g.items[0].title.slice(0, 180);
-  document.getElementById("breakingMeta").textContent = g.sources.slice(0, 4).join(" · ");
+  var bcEl = document.getElementById("breakingCount");
+  var btEl = document.getElementById("breakingTitle");
+  var bmEl = document.getElementById("breakingMeta");
+  if(bcEl) bcEl.textContent = g.sources.length;
+  if(btEl) btEl.textContent = g.items[0].title.slice(0, 180);
+  if(bmEl) bmEl.textContent = g.sources.slice(0, 4).join(" · ");
 
   var banner = document.getElementById("breakingBanner");
-  banner.classList.add("show");
-  clearTimeout(banner._timer);
-  banner._timer = setTimeout(function(){ banner.classList.remove("show"); }, 30000);
+  if(banner){
+    banner.classList.add("show");
+    clearTimeout(banner._timer);
+    banner._timer = setTimeout(function(){ banner.classList.remove("show"); }, 30000);
+  }
 }
 
-/* ===== FILTER + RENDER (Fase 1 & 3 geïntegreerd) ===== */
+/* ===== FILTER + RENDER ===== */
 function filterItems(){
   var list = State.items.slice();
 
   if(State.currentCat !== "all"){
     var cats = CAT_GROUPS[State.currentCat] || [State.currentCat];
     list = list.filter(function(it){
-      // Match op de bron-categorie OF op een van de tags
       var matchCat = cats.indexOf(it.cat) >= 0;
       var matchTags = it.tags && it.tags.some(function(t){ return cats.indexOf(t) >= 0; });
       return matchCat || matchTags;
@@ -548,7 +556,6 @@ function renderNews(){
   var title = document.getElementById("newsTitle");
   var count = document.getElementById("newsCount");
 
-  // FASE 3: Voorkom onnodige DOM updates als de lijst niet is veranderd
   var hash = State.currentCat + "|" + State.currentSort + "|" + State.currentSearch + "|" + State.viewMode + "|" + list.length + "|" + list.slice(0, 5).map(function(x){ return x.link; }).join(",");
   if(hash === State._lastRenderHash){
     return;
@@ -563,8 +570,10 @@ function renderNews(){
     nl: "Nederland",
     sport: "Sport"
   };
-  title.textContent = titles[State.currentCat] || "Laatste berichten";
-  count.textContent = list.length + " artikelen";
+  if(title) title.textContent = titles[State.currentCat] || "Laatste berichten";
+  if(count) count.textContent = list.length + " artikelen";
+
+  if(!grid) return;
 
   if(!list.length){
     if(State.items.length === 0){
@@ -676,7 +685,8 @@ async function initNews(){
   var cached = await NewsDB.loadItems();
   if(cached.length){
     State.items = cached;
-    document.getElementById("statItems").textContent = cached.length;
+    var itemsEl = document.getElementById("statItems");
+    if(itemsEl) itemsEl.textContent = cached.length;
     renderNews();
   }
 

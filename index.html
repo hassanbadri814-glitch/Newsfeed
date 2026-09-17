@@ -268,62 +268,60 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
     add("err", "Promise: "+msg);
   });
 
-  /* === FETCH WRAPPER === */
+  function shortUrl(u){ return u.length > 100 ? u.slice(0,100) + "…" : u; }
+
+  /* === FETCH WRAPPER — logt ALLE fetches === */
   var _origFetch = window.fetch;
   var _fetchCount = 0;
+  var _fetchErrCount = 0;
   window.fetch = function(input, init){
     var url = (typeof input === "string") ? input : (input && input.url) || "?";
-    var short = url.length > 110 ? url.slice(0, 110) + "…" : url;
-    var isFeed = /rss|feed|xml|allorigins|corsproxy|rss2json|api\./i.test(url);
+    var short = shortUrl(url);
     var t0 = Date.now();
     return _origFetch.apply(this, arguments).then(function(res){
-      if(isFeed && _fetchCount < 25){
+      if(_fetchCount < 25){
         _fetchCount++;
         add(res.ok ? "ok" : "warn", "FETCH " + res.status + " (" + (Date.now()-t0) + "ms) " + short);
       }
       return res;
     }).catch(function(err){
-      if(isFeed && _fetchCount < 40){
-        _fetchCount++;
-        add("err", "FETCH FAIL " + short + " — " + (err.message || err));
+      if(_fetchErrCount < 15){
+        _fetchErrCount++;
+        add("err", "FETCH FAIL (" + (Date.now()-t0) + "ms) " + short + " — " + (err.message || err));
       }
       throw err;
     });
   };
 
-  /* === DOMContentLoaded === */
   document.addEventListener("DOMContentLoaded", function(){
     logEl = document.getElementById("wdDebugLog");
     panel = document.getElementById("wdDebugPanel");
 
     document.getElementById("wdDebugBtn").addEventListener("click", function(){ panel.classList.toggle("show"); render(); });
     document.getElementById("wdDebugClose").addEventListener("click", function(){ panel.classList.remove("show"); });
-    document.getElementById("wdDebugClear").addEventListener("click", function(){ window.__wdLog=[]; _fetchCount=0; render(); });
+    document.getElementById("wdDebugClear").addEventListener("click", function(){ window.__wdLog=[]; _fetchCount=0; _fetchErrCount=0; render(); });
     document.getElementById("wdDebugReload").addEventListener("click", function(){ location.reload(); });
 
-    /* Systeem-info + test één feed direct */
     document.getElementById("wdDebugInfo").addEventListener("click", function(){
       add("info", "URL: " + location.href);
       add("info", "Online: " + navigator.onLine);
       add("info", "Items: " + (window.State && window.State.items ? window.State.items.length : "?"));
       add("info", "Sources: " + (window.State ? window.State.loadedSources + "/" + window.State.totalSources : "?"));
       add("info", "Failed: " + (window.State && window.State.failedSources ? window.State.failedSources.length : "?"));
-      /* Test bekende feed via dezelfde proxy die de app gebruikt */
-      add("info", "--- Test fetch ---");
-      var testUrl = (window.CONFIG && window.CONFIG.proxy) ? window.CONFIG.proxy + encodeURIComponent("https://feeds.bbci.co.uk/news/world/rss.xml") : "https://feeds.bbci.co.uk/news/world/rss.xml";
+      add("info", "CONFIG.proxy: " + (window.CONFIG && window.CONFIG.proxy ? window.CONFIG.proxy : "geen"));
+      add("info", "--- Test BBC via proxy ---");
+      var testUrl = (window.CONFIG && window.CONFIG.proxy)
+        ? window.CONFIG.proxy + encodeURIComponent("https://feeds.bbci.co.uk/news/world/rss.xml")
+        : "https://feeds.bbci.co.uk/news/world/rss.xml";
+      add("info", "Test URL: " + shortUrl(testUrl));
       _origFetch(testUrl, {cache:"no-store"}).then(function(r){
         add(r.ok ? "ok" : "warn", "Test HTTP " + r.status);
         return r.text();
       }).then(function(txt){
         add("info", "Body bytes: " + txt.length);
-        add("info", "Head: " + txt.slice(0, 120).replace(/\s+/g," "));
-        var doc = new DOMParser().parseFromString(txt, "text/xml");
-        var err = doc.querySelector("parsererror");
-        var items = doc.querySelectorAll("item");
-        add(err ? "err" : "ok", "DOMParser: " + (err ? "PARSE ERROR: " + err.textContent.slice(0,80) : "OK"));
-        add(items.length ? "ok" : "warn", "XML <item> count: " + items.length);
+        add("info", "Head: " + txt.slice(0, 140).replace(/\s+/g," "));
       }).catch(function(e){
-        add("err", "Test fetch crash: " + (e.message||e));
+        add("err", "Test crash: " + (e.message||e));
       });
     });
 
@@ -335,7 +333,6 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
       if(window.State){
         add("info", "State.items: " + (window.State.items ? window.State.items.length : 0));
         add("info", "loadedSources: " + window.State.loadedSources + "/" + window.State.totalSources);
-        add("info", "failedSources: " + (window.State.failedSources ? window.State.failedSources.length : "?"));
       }
     }, 3000);
 
@@ -358,7 +355,7 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script src="config.js?v=14"></script>
-<script src="news.js?v=14"></script>
+<script src="news.js?v=15"></script>
 <script src="app.js?v=14"></script>
 <script src="persist.js?v=14"></script>
 <script src="refresh.js?v=14"></script>
@@ -381,7 +378,6 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
     if(t){t.classList.remove("show");t._shownAt=0}
   });
 
-  /* Log na alle modules geladen zijn */
   setTimeout(function(){
     if(window.wdLog){
       window.wdLog.info("--- Modules status ---");

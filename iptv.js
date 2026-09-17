@@ -1,16 +1,17 @@
 /* ============================================================
-   WAR DESK v19.0 — IPTV (Xtream Codes)
+   WAR DESK v19.0 — IPTV (Xtream Codes) v2
    ============================================================ */
 
 (function(){
   "use strict";
 
   var $ = function(id){ return document.getElementById(id); };
+  var LOG = function(){ try{ console.log.apply(console, ["[IPTV]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
+
+  LOG("Script geladen");
 
   var IPTV = {
-    server: "",
-    user: "",
-    pass: "",
+    server: "", user: "", pass: "",
     channels: [],
     currentGroup: "all",
     hlsInstance: null,
@@ -18,7 +19,7 @@
     db: null
   };
 
-  /* ===== INDEXEDDB ===== */
+  /* ===== DB ===== */
   function openDB(){
     return new Promise(function(resolve){
       if(!("indexedDB" in window)){ resolve(null); return; }
@@ -65,7 +66,7 @@
     });
   }
 
-  /* ===== TAAL-KLEUR ===== */
+  /* ===== KLEUR ===== */
   function langColor(group, name){
     var t = ((group || "") + " " + (name || "")).toLowerCase();
     if(/\b(nl|nederland|netherlands|dutch|holland)\b/.test(t)) return "#fb923c";
@@ -78,6 +79,12 @@
     if(/\b(es|spain|spanish)\b/.test(t)) return "#ef4444";
     if(/\b(it|italy|italian|italiano)\b/.test(t)) return "#22c55e";
     return "#6b7a93";
+  }
+
+  function esc(s){
+    return (s || "").replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
   }
 
   /* ===== API ===== */
@@ -117,22 +124,20 @@
     el.textContent = msg || "";
   }
 
-  function esc(s){
-    return (s || "").replace(/[&<>"']/g, function(c){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
-    });
-  }
-
   function bindUI(){
-    // Wachtwoord toggle
-    var pwToggle = $("iptvPwToggle");
-    if(pwToggle) pwToggle.addEventListener("click", function(){
-      var p = $("iptvPass");
-      if(p.type === "password"){ p.type = "text"; this.textContent = "🙈"; }
-      else { p.type = "password"; this.textContent = "👁"; }
-    });
+    LOG("bindUI start");
+    var ok = 0;
 
-    // Auto-save credentials
+    var pwToggle = $("iptvPwToggle");
+    if(pwToggle){
+      pwToggle.addEventListener("click", function(){
+        var p = $("iptvPass");
+        if(p.type === "password"){ p.type = "text"; this.textContent = "🙈"; }
+        else { p.type = "password"; this.textContent = "👁"; }
+      });
+      ok++;
+    }
+
     ["iptvServer","iptvUser","iptvPass"].forEach(function(id){
       var el = $(id);
       if(!el) return;
@@ -140,109 +145,126 @@
       el.addEventListener("input", function(){
         clearTimeout(t);
         t = setTimeout(function(){
-          IPTV.server = $("iptvServer").value.trim();
-          IPTV.user = $("iptvUser").value.trim();
-          IPTV.pass = $("iptvPass").value;
+          IPTV.server = ($("iptvServer") || {}).value || "";
+          IPTV.user = ($("iptvUser") || {}).value || "";
+          IPTV.pass = ($("iptvPass") || {}).value || "";
+          IPTV.server = IPTV.server.trim();
+          IPTV.user = IPTV.user.trim();
           dbPut("creds", {server:IPTV.server, user:IPTV.user, pass:IPTV.pass});
+          LOG("Creds auto-saved");
         }, 500);
       });
+      ok++;
     });
 
-    // Test
     var testBtn = $("iptvTestBtn");
-    if(testBtn) testBtn.addEventListener("click", async function(){
-      IPTV.server = $("iptvServer").value.trim();
-      IPTV.user = $("iptvUser").value.trim();
-      IPTV.pass = $("iptvPass").value;
-      if(!IPTV.server || !IPTV.user || !IPTV.pass){ setStatus("✗ Vul alle velden in", "err"); return; }
-      setStatus("Testen...", "loading");
-      var t0 = performance.now();
-      try{
-        var cats = await fetchJson(buildUrl("get_live_categories"));
-        if(!Array.isArray(cats)) throw new Error("Geen categorieën");
-        var ms = Math.round(performance.now() - t0);
-        setStatus("✓ Verbinding OK — " + cats.length + " categorieën (" + ms + "ms)", "ok");
-        await dbPut("creds", {server:IPTV.server, user:IPTV.user, pass:IPTV.pass});
-      }catch(e){
-        setStatus("✗ " + (e.message || "fout"), "err");
-      }
-    });
+    if(testBtn){
+      testBtn.addEventListener("click", async function(){
+        LOG("Test klik");
+        IPTV.server = ($("iptvServer") || {}).value || "";
+        IPTV.user = ($("iptvUser") || {}).value || "";
+        IPTV.pass = ($("iptvPass") || {}).value || "";
+        IPTV.server = IPTV.server.trim();
+        IPTV.user = IPTV.user.trim();
+        if(!IPTV.server || !IPTV.user || !IPTV.pass){ setStatus("✗ Vul alle velden in", "err"); return; }
+        setStatus("Testen...", "loading");
+        var t0 = performance.now();
+        try{
+          var cats = await fetchJson(buildUrl("get_live_categories"));
+          if(!Array.isArray(cats)) throw new Error("Geen categorieën");
+          var ms = Math.round(performance.now() - t0);
+          setStatus("✓ Verbinding OK — " + cats.length + " categorieën (" + ms + "ms)", "ok");
+          await dbPut("creds", {server:IPTV.server, user:IPTV.user, pass:IPTV.pass});
+        }catch(e){
+          LOG("Test fout:", e);
+          setStatus("✗ " + (e.message || "fout"), "err");
+        }
+      });
+      ok++;
+    }
 
-    // Laad kanalen
     var loadBtn = $("iptvLoadBtn");
-    if(loadBtn) loadBtn.addEventListener("click", async function(){
-      IPTV.server = $("iptvServer").value.trim();
-      IPTV.user = $("iptvUser").value.trim();
-      IPTV.pass = $("iptvPass").value;
+    if(loadBtn){
+      loadBtn.addEventListener("click", async function(){
+        LOG("Load klik");
+        IPTV.server = ($("iptvServer") || {}).value || "";
+        IPTV.user = ($("iptvUser") || {}).value || "";
+        IPTV.pass = ($("iptvPass") || {}).value || "";
+        IPTV.server = IPTV.server.trim();
+        IPTV.user = IPTV.user.trim();
 
-      if(!IPTV.server || !IPTV.user || !IPTV.pass){ setStatus("✗ Vul alle velden in", "err"); return; }
+        if(!IPTV.server || !IPTV.user || !IPTV.pass){ setStatus("✗ Vul alle velden in", "err"); return; }
 
-      setStatus("Categorieën laden...", "loading");
-      await dbPut("creds", {server:IPTV.server, user:IPTV.user, pass:IPTV.pass});
+        setStatus("Categorieën laden...", "loading");
+        await dbPut("creds", {server:IPTV.server, user:IPTV.user, pass:IPTV.pass});
 
-      try{
-        var cats = await fetchJson(buildUrl("get_live_categories"));
-        if(!Array.isArray(cats)) throw new Error("Geen categorieën");
+        try{
+          var cats = await fetchJson(buildUrl("get_live_categories"));
+          if(!Array.isArray(cats)) throw new Error("Geen categorieën");
 
-        var catMap = {};
-        cats.forEach(function(c){ catMap[String(c.category_id)] = c.category_name || "Overig"; });
+          var catMap = {};
+          cats.forEach(function(c){ catMap[String(c.category_id)] = c.category_name || "Overig"; });
 
-        setStatus("Kanalen laden (" + cats.length + " categorieën)...", "loading");
-        var streams = await fetchJson(buildUrl("get_live_streams"));
-        if(!Array.isArray(streams)) throw new Error("Geen kanalen");
+          setStatus("Kanalen laden (" + cats.length + " categorieën)...", "loading");
+          var streams = await fetchJson(buildUrl("get_live_streams"));
+          if(!Array.isArray(streams)) throw new Error("Geen kanalen");
 
-        var base = IPTV.server.replace(/\/$/, "");
-        IPTV.channels = streams.map(function(s){
-          return {
-            id: String(s.stream_id),
-            name: s.name || ("Kanaal " + s.stream_id),
-            url: base + "/live/" + encodeURIComponent(IPTV.user) + "/" + encodeURIComponent(IPTV.pass) + "/" + s.stream_id + ".m3u8",
-            logo: s.stream_icon || "",
-            group: catMap[String(s.category_id)] || "Overig"
-          };
-        }).filter(function(c){ return c.name && c.url; });
+          var base = IPTV.server.replace(/\/$/, "");
+          IPTV.channels = streams.map(function(s){
+            return {
+              id: String(s.stream_id),
+              name: s.name || ("Kanaal " + s.stream_id),
+              url: base + "/live/" + encodeURIComponent(IPTV.user) + "/" + encodeURIComponent(IPTV.pass) + "/" + s.stream_id + ".m3u8",
+              logo: s.stream_icon || "",
+              group: catMap[String(s.category_id)] || "Overig"
+            };
+          }).filter(function(c){ return c.name && c.url; });
 
-        await dbPut("channels", IPTV.channels);
-        setStatus("✓ " + IPTV.channels.length + " kanalen geladen", "ok");
-        IPTV.currentGroup = "all";
+          await dbPut("channels", IPTV.channels);
+          setStatus("✓ " + IPTV.channels.length + " kanalen geladen", "ok");
+          IPTV.currentGroup = "all";
 
-        var setup = $("iptvSetup");
-        if(setup) setup.hidden = true;
-        renderChannels();
+          var setup = $("iptvSetup");
+          if(setup) setup.hidden = true;
+          renderChannels();
+          LOG("Kanalen gerenderd");
+        }catch(e){
+          LOG("Load fout:", e);
+          setStatus("✗ " + (e.message || "fout"), "err");
+        }
+      });
+      ok++;
+    }
 
-        if(window.showToast) window.showToast(IPTV.channels.length + " kanalen");
-      }catch(e){
-        setStatus("✗ " + (e.message || "fout"), "err");
-      }
-    });
-
-    // Wissen
     var clearBtn = $("iptvClearBtn");
-    if(clearBtn) clearBtn.addEventListener("click", async function(){
-      if(!confirm("Weet je zeker dat je alle IPTV-gegevens wilt wissen?")) return;
-      await dbDelete("creds");
-      await dbDelete("channels");
-      IPTV.server = ""; IPTV.user = ""; IPTV.pass = ""; IPTV.channels = [];
-      $("iptvServer").value = ""; $("iptvUser").value = ""; $("iptvPass").value = "";
-      setStatus("✓ Gegevens gewist", "ok");
-      var setup = $("iptvSetup");
-      if(setup) setup.hidden = false;
-      var filter = $("iptvFilter");
-      if(filter) filter.hidden = true;
-      var grid = $("iptvGrid");
-      if(grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-msg">Vul je Xtream gegevens in</div></div>';
-      var cnt = $("iptvCount");
-      if(cnt) cnt.textContent = "0 kanalen";
-    });
+    if(clearBtn){
+      clearBtn.addEventListener("click", async function(){
+        if(!confirm("Alle IPTV gegevens wissen?")) return;
+        await dbDelete("creds");
+        await dbDelete("channels");
+        IPTV.server = ""; IPTV.user = ""; IPTV.pass = ""; IPTV.channels = [];
+        var sEl = $("iptvServer"); if(sEl) sEl.value = "";
+        var uEl = $("iptvUser"); if(uEl) uEl.value = "";
+        var pEl = $("iptvPass"); if(pEl) pEl.value = "";
+        setStatus("✓ Gegevens gewist", "ok");
+        var setup = $("iptvSetup"); if(setup) setup.hidden = false;
+        var filter = $("iptvFilter"); if(filter) filter.hidden = true;
+        var grid = $("iptvGrid");
+        if(grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📡</div><div class="empty-msg">Vul je Xtream gegevens in</div></div>';
+        var cnt = $("iptvCount"); if(cnt) cnt.textContent = "0 kanalen";
+      });
+      ok++;
+    }
 
-    // Groep filter
     var groupFilter = $("iptvGroupFilter");
-    if(groupFilter) groupFilter.addEventListener("change", function(){
-      IPTV.currentGroup = this.value;
-      renderChannels();
-    });
+    if(groupFilter){
+      groupFilter.addEventListener("change", function(){
+        IPTV.currentGroup = this.value;
+        renderChannels();
+      });
+      ok++;
+    }
 
-    // Speler sluiten
     var playerClose = $("iptvPlayerClose");
     if(playerClose) playerClose.addEventListener("click", closePlayer);
 
@@ -251,12 +273,7 @@
       if(e.target.id === "iptvPlayer") closePlayer();
     });
 
-    document.addEventListener("keydown", function(e){
-      if(e.key === "Escape"){
-        var p = $("iptvPlayer");
-        if(p && p.classList.contains("show")) closePlayer();
-      }
-    });
+    LOG("bindUI klaar — " + ok + " elementen gebonden");
   }
 
   function renderChannels(){
@@ -274,9 +291,7 @@
 
     if(filter) filter.hidden = false;
 
-    // Groepen in provider-volgorde
-    var groups = [];
-    var seen = {};
+    var groups = [], seen = {};
     IPTV.channels.forEach(function(c){
       if(!seen[c.group]){ seen[c.group] = 1; groups.push(c.group); }
     });
@@ -311,7 +326,7 @@
       var logoHtml = c.logo
         ? '<img src="' + esc(c.logo) + '" loading="lazy" alt="" onerror="this.parentNode.textContent=\'' + initial + '\'">'
         : initial;
-      html += '<button class="iptv-ch" data-idx="' + i + '" style="--ch-color:' + color + '" aria-label="Speel ' + esc(c.name) + '">';
+      html += '<button class="iptv-ch" data-idx="' + i + '" style="--ch-color:' + color + '">';
       html += '<div class="iptv-ch-logo">' + logoHtml + '</div>';
       html += '<div class="iptv-ch-name">' + esc(c.name) + '</div>';
       html += '</button>';
@@ -323,7 +338,7 @@
     });
   }
 
-  /* ===== SPELER ===== */
+  /* ===== PLAYER ===== */
   function closePlayer(){
     var p = $("iptvPlayer");
     if(p) p.classList.remove("show");
@@ -345,8 +360,7 @@
 
   function vlcOpen(url){
     try{
-      var intentUrl = "intent:" + url + "#Intent;package=org.videolan.vlc;type=video/*;end";
-      window.location.href = intentUrl;
+      window.location.href = "intent:" + url + "#Intent;package=org.videolan.vlc;type=video/*;end";
     }catch(e){
       if(window.showToast) window.showToast("VLC niet gevonden");
     }
@@ -368,7 +382,6 @@
     var isHttp = /^http:\/\//i.test(url);
     var isHttpsPage = location.protocol === "https:";
 
-    // HTTP stream op HTTPS pagina → VLC
     if(isHttp && isHttpsPage){
       status.innerHTML = '⚠ HTTP-stream kan niet direct in HTTPS-browser.<br>' +
         '<div class="iptv-action-row">' +
@@ -418,8 +431,8 @@
             '<div class="iptv-action-row">' +
             '<button class="iptv-btn primary" id="iptvOpenVlc">📺 Open in VLC</button>' +
             '</div>';
-          var b = $("iptvOpenVlc");
-          if(b) b.onclick = function(){ vlcOpen(url); };
+          var b2 = $("iptvOpenVlc");
+          if(b2) b2.onclick = function(){ vlcOpen(url); };
         }
       });
     } else {
@@ -432,7 +445,9 @@
   /* ===== INIT ===== */
   async function init(){
     try{
+      LOG("init start");
       await openDB();
+      LOG("DB geopend");
 
       var creds = await dbGet("creds");
       if(creds){
@@ -442,6 +457,7 @@
         var sEl = $("iptvServer"); if(sEl) sEl.value = IPTV.server;
         var uEl = $("iptvUser"); if(uEl) uEl.value = IPTV.user;
         var pEl = $("iptvPass"); if(pEl) pEl.value = IPTV.pass;
+        LOG("Creds geladen");
       }
 
       var channels = await dbGet("channels");
@@ -450,24 +466,28 @@
         var setup = $("iptvSetup");
         if(setup) setup.hidden = true;
         renderChannels();
+        LOG("Kanalen geladen:", channels.length);
       }
 
       bindUI();
-      console.log("[WAR DESK] iptv.js geladen —", IPTV.channels.length, "kanalen uit cache");
+      LOG("init klaar");
     }catch(e){
-      console.error("[WAR DESK] IPTV init fout:", e);
+      LOG("init FOUT:", e);
     }
   }
 
-  window.IPTVAPI = {
-    init: init,
-    state: IPTV
-  };
+  window.IPTVAPI = { init: init, state: IPTV };
 
-  /* Start IPTV als DOM klaar is */
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    setTimeout(init, 100);
+  /* Meerdere vangnetten voor init */
+  function start(){
+    LOG("start() — readyState:", document.readyState);
+    init();
   }
+
+  if(document.readyState === "complete" || document.readyState === "interactive"){
+    setTimeout(start, 200);
+  } else {
+    document.addEventListener("DOMContentLoaded", function(){ setTimeout(start, 200); });
+  }
+  window.addEventListener("load", function(){ setTimeout(start, 500); });
 })();

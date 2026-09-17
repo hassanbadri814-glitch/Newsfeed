@@ -1,7 +1,7 @@
 /* ============================================================
-   WAR DESK v19.1 — Nieuws logica (robust parser)
+   WAR DESK v19.2 — Nieuws logica (robust parser + proxy fallback)
    ============================================================ */
-window.__newsVersion = "v19.1-robust-parser";
+window.__newsVersion = "v19.2-fallback-proxy";
 
 /* ===== STATE ===== */
 window.State = {
@@ -266,6 +266,73 @@ function normalizeItem(it){
   };
 }
 
+/* ============================================================
+   PROXY FALLBACK
+   ============================================================ */
+window.__proxyHealth = {};
+
+function proxyHost(p){
+  try{ return p.split("/")[2]; }catch(e){ return p; }
+}
+
+function markProxyFail(p){
+  if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabled: false };
+  window.__proxyHealth[p].fails++;
+  /* Na 5 opeenvolgende fails → proxy voor deze sessie uitzetten */
+  if(window.__proxyHealth[p].fails >= 5) window.__proxyHealth[p].disabled = true;
+}
+
+function markProxyOk(p){
+  if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabled: false };
+  window.__proxyHealth[p].fails = 0;
+}
+
+function parseResponse(txt){
+  var trimmed = txt.replace(/^\uFEFF/, "").replace(/^\s+/, "");
+  if(trimmed.charAt(0) === "<"){
+    return { shape: "xml", items: parseRssXml(txt) };
+  }
+  try{
+    var data = JSON.parse(txt);
+    var items = [];
+    if(data.items && data.items.length) items = data.items;
+    else if(data.entries && data.entries.length) items = data.entries;
+    else if(data.data && data.data.items && data.data.items.length) items = data.data.items;
+    else if(Array.isArray(data)) items = data;
+    return { shape: "json", items: items };
+  }catch(e){
+    return { shape: "?", items: [] };
+  }
+}
+
+async function fetchFeedWithFallback(feedUrl){
+  var proxies = (CONFIG.proxies && CONFIG.proxies.length) ? CONFIG.proxies : [CONFIG.proxy];
+  var lastErr = null;
+
+  for(var i = 0; i < proxies.length; i++){
+    var p = proxies[i];
+    var health = window.__proxyHealth[p];
+    if(health && health.disabled) continue;
+
+    try{
+      var ctrl = new AbortController();
+      var timer = setTimeout(function(){ ctrl.abort(); }, CONFIG.fetchTimeoutMs);
+      var r = await fetch(p + encodeURIComponent(feedUrl), {signal: ctrl.signal});
+      clearTimeout(timer);
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      var txt = await r.text();
+      var parsed = parseResponse(txt);
+      if(!parsed.items.length) throw new Error("0 items");
+      markProxyOk(p);
+      return { items: parsed.items, shape: parsed.shape, proxyIdx: i };
+    }catch(e){
+      lastErr = e;
+      markProxyFail(p);
+    }
+  }
+  throw lastErr || new Error("alle proxies faalden");
+}
+
 /* ===== LOAD FEEDS ===== */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
@@ -286,33 +353,10 @@ async function loadAllFeeds(){
     if(session !== State.loadSession) return;
     tried++;
     try{
-      var ctrl = new AbortController();
-      var timer = setTimeout(function(){ ctrl.abort(); }, CONFIG.fetchTimeoutMs);
-      var r = await fetch(CONFIG.proxy + encodeURIComponent(f.url), {signal: ctrl.signal});
-      clearTimeout(timer);
-      if(!r.ok) throw new Error("HTTP " + r.status);
-
-      var txt = await r.text();
-      var items = [];
-      var shape = "?";
-
-      var trimmed = txt.replace(/^\uFEFF/, "").replace(/^\s+/, "");
-      if(trimmed.charAt(0) === "<"){
-        shape = "xml";
-        items = parseRssXml(txt);
-      } else {
-        shape = "json";
-        var data;
-        try{ data = JSON.parse(txt); }
-        catch(e){ throw new Error("geen JSON/XML"); }
-        if(data.items && data.items.length) items = data.items;
-        else if(data.entries && data.entries.length) items = data.entries;
-        else if(data.data && data.data.items && data.data.items.length) items = data.data.items;
-        else if(Array.isArray(data)) items = data;
-        else throw new Error("geen items-veld");
-      }
-
-      if(!items.length) throw new Error("leeg");
+      var result = await fetchFeedWithFallback(f.url);
+      var items = result.items;
+      var shape = result.shape;
+      var proxyIdx = result.proxyIdx;
 
       var added = 0;
       items.slice(0, CONFIG.perFeed).forEach(function(rawIt){
@@ -336,14 +380,11 @@ async function loadAllFeeds(){
         }
       });
 
-      if(window.__wdDiagCount < 5 && window.wdLog){
+      /* Diagnostiek — alleen in debug modus */
+      if(window.__wdDebug && window.__wdDiagCount < 5 && window.wdLog){
         window.__wdDiagCount++;
-        window.wdLog.info("✓ " + f.n + " [" + shape + "] items=" + items.length + " nieuw=" + added);
-        if(window.__wdDiagCount <= 2 && items[0]){
-          try{
-            window.wdLog.info("  vb: " + JSON.stringify(normalizeItem(items[0])).slice(0, 220));
-          }catch(e){}
-        }
+        var pTag = proxyIdx === 0 ? "p1" : ("p" + (proxyIdx + 1));
+        window.wdLog.info("✓ " + f.n + " [" + shape + "/" + pTag + "] items=" + items.length + " nieuw=" + added);
       }
 
       State.loadedSources++;
@@ -399,7 +440,7 @@ async function loadAllFeeds(){
   detectBreaking();
   renderNews();
 
-  if(window.wdLog){
+  if(window.__wdDebug && window.wdLog){
     window.wdLog[State.items.length ? "ok" : "warn"](
       "loadAllFeeds klaar — " + State.items.length + " items uit " + State.loadedSources + "/" + State.totalSources + " bronnen"
     );

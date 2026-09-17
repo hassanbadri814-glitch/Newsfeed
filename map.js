@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v3.8 — Conflictkaart (Esri Dark + kleine clusters)
+   WAR DESK v3.9 — Conflictkaart (Esri + labels, subtiele modal)
    ============================================================ */
 
 (function(){
@@ -8,12 +8,13 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v3.8 geladen");
+  LOG("v3.9 geladen");
 
   var MAP = {
     instance: null,
     cluster: null,
     tileLayer: null,
+    labelLayer: null,
     events: [],
     currentFilter: "all",
     refreshTimer: null,
@@ -70,7 +71,7 @@
         "animation:wdMarkerPulse 2.6s ease-out infinite}" +
       "@keyframes wdMarkerPulse{0%{transform:scale(.5);opacity:.35}100%{transform:scale(2.2);opacity:0}}" +
 
-      /* --- Cluster nog kleiner (18/22/26) --- */
+      /* --- Cluster klein (18/22/26) --- */
       ".marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:transparent!important}" +
       ".marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{" +
         "background:linear-gradient(135deg,#8a5c26,#e2a857)!important;" +
@@ -86,7 +87,56 @@
       ".marker-cluster-medium{margin-left:-11px!important;margin-top:-11px!important}" +
       ".marker-cluster-large, .marker-cluster-large div{width:26px!important;height:26px!important}" +
       ".marker-cluster-large{margin-left:-13px!important;margin-top:-13px!important}" +
-      ".marker-cluster div span{font-size:.56rem!important;line-height:1!important;letter-spacing:-.02em!important}";
+      ".marker-cluster div span{font-size:.56rem!important;line-height:1!important;letter-spacing:-.02em!important}" +
+
+      /* --- Detail modal: subtieler --- */
+      ".wd-detail-box{" +
+        "background:linear-gradient(180deg,#0f1728,#0a101c)!important;" +
+        "border:1px solid rgba(255,255,255,.06)!important;" +
+        "box-shadow:0 30px 80px -30px rgba(0,0,0,.95)!important;" +
+      "}" +
+      ".wd-detail-head{" +
+        "border-bottom:1px solid rgba(255,255,255,.05)!important;" +
+      "}" +
+      ".wd-detail-type{" +
+        "box-shadow:0 0 12px rgba(0,0,0,.4);" +
+      "}" +
+      ".wd-detail-close{" +
+        "background:rgba(255,255,255,.04)!important;" +
+        "border:1px solid rgba(255,255,255,.08)!important;" +
+      "}" +
+      ".wd-detail-meta{" +
+        "color:#8a94a8!important;" +
+        "border-bottom:1px solid rgba(255,255,255,.05)!important;" +
+      "}" +
+      ".wd-detail-text{" +
+        "color:#e6ebf5!important;" +
+        "font-size:.9rem!important;" +
+        "line-height:1.65!important;" +
+      "}" +
+      ".wd-detail-foot{" +
+        "border-top:1px solid rgba(255,255,255,.05)!important;" +
+        "background:rgba(0,0,0,.2)!important;" +
+      "}" +
+      ".wd-detail-btn{" +
+        "background:transparent!important;" +
+        "border:1px solid rgba(255,255,255,.08)!important;" +
+        "color:#8a94a8!important;" +
+        "font-weight:600!important;" +
+      "}" +
+      ".wd-detail-btn:hover{" +
+        "border-color:rgba(255,255,255,.15)!important;" +
+        "color:#e6ebf5!important;" +
+      "}" +
+      ".wd-detail-btn.primary{" +
+        "background:rgba(226,168,87,.1)!important;" +
+        "border:1px solid rgba(226,168,87,.28)!important;" +
+        "color:#e2a857!important;" +
+      "}" +
+      ".wd-detail-btn.primary:hover{" +
+        "background:rgba(226,168,87,.16)!important;" +
+        "border-color:rgba(226,168,87,.45)!important;" +
+      "}";
     document.head.appendChild(s);
   }
 
@@ -98,6 +148,7 @@
     var modal = document.createElement("div");
     modal.id = "wdDetailModal";
     modal.className = "wd-detail-modal";
+    /* Geen "Open bron"-knop meer — alleen Sluiten */
     modal.innerHTML =
       '<div class="wd-detail-box">' +
         '<div class="wd-detail-head">' +
@@ -110,7 +161,6 @@
         '</div>' +
         '<div class="wd-detail-foot">' +
           '<button class="wd-detail-btn primary" id="wdDetailCloseBtn">Sluiten</button>' +
-          '<button class="wd-detail-btn" id="wdDetailOpen">Open op war-tracker.com →</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(modal);
@@ -137,14 +187,6 @@
     var textEl = $("wdDetailText");
     textEl.textContent = event.fullDescription || event.title || "(geen beschrijving)";
     textEl.style.transition = "opacity .2s";
-
-    var openBtn = $("wdDetailOpen");
-    if(event.url){
-      openBtn.style.display = "inline-flex";
-      openBtn.onclick = function(){ window.open(event.url, "_blank", "noopener,noreferrer"); };
-    } else {
-      openBtn.style.display = "none";
-    }
 
     modal.classList.add("show");
     loadFullText(event, textEl);
@@ -411,13 +453,16 @@
       preferCanvas: true
     });
 
-    /* Esri Dark Gray Canvas — geen API key, donker, wereldwijd */
+    /* Esri Dark Gray Base — donkere ondergrond */
     MAP.tileLayer = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-      {
-        maxZoom: 16,
-        crossOrigin: true
-      }
+      { maxZoom: 16, crossOrigin: true }
+    ).addTo(MAP.instance);
+
+    /* Esri Dark Gray Reference — labels van steden/landen/wegen OVER de base */
+    MAP.labelLayer = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+      { maxZoom: 16, crossOrigin: true, opacity: 0.85 }
     ).addTo(MAP.instance);
 
     MAP.cluster = L.markerClusterGroup({

@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v19.0 — Fase 1 styling
+   WAR DESK v19.0 — Alle styling
    ============================================================ */
 
 /* ===== VARIABELEN ===== */
@@ -124,7 +124,6 @@ body.light .header{
   flex-wrap:wrap;
 }
 
-/* Brand */
 .brand{
   display:flex;
   align-items:center;
@@ -164,7 +163,6 @@ body.light .header{
   margin-top:3px;
 }
 
-/* Stats */
 .header-stats{
   margin-left:auto;
   display:flex;
@@ -189,8 +187,8 @@ body.light .header{
 .hstat.amber .hstat-value{ color:var(--amber); text-shadow:0 0 12px rgba(226,168,87,.4); }
 .hstat.coral .hstat-value{ color:var(--coral-2); text-shadow:0 0 12px rgba(230,57,80,.4); }
 .hstat.green .hstat-value{ color:var(--green); text-shadow:0 0 12px rgba(16,185,129,.4); }
+.hstat.teal .hstat-value{ color:#5eead4; text-shadow:0 0 12px rgba(94,234,212,.4); }
 
-/* Header actions */
 .header-actions{
   display:flex;
   gap:.4rem;
@@ -230,7 +228,6 @@ body.light .header{
   to{ opacity:1; transform:translateY(0); }
 }
 
-/* Section header */
 .section-head{
   display:flex;
   align-items:baseline;
@@ -261,7 +258,7 @@ body.light .header{
   font-weight:500;
 }
 
-/* ===== FEED GRID ===== */
+/* ===== FEED GRID + NEWS CARDS ===== */
 .feed-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
@@ -271,6 +268,146 @@ body.light .header{
   grid-template-columns:1fr;
   gap:.6rem;
 }
+
+.news-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  cursor:pointer;
+  transition:transform .2s, box-shadow .2s, background .2s;
+  box-shadow:var(--shadow-card);
+  position:relative;
+}
+.news-card:hover{
+  transform:translateY(-3px);
+  background:var(--card-hover);
+  box-shadow:0 16px 40px -18px rgba(226,168,87,.45);
+  border-color:rgba(226,168,87,.3);
+}
+.news-card.war{ border-left:3px solid var(--coral); }
+.news-card.read{ opacity:.55; }
+.news-card.read:hover{ opacity:1; }
+
+.card-thumb{
+  width:100%;
+  aspect-ratio:16/9;
+  background:var(--bg-3);
+  overflow:hidden;
+}
+.card-thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  transition:transform .5s;
+}
+.news-card:hover .card-thumb img{ transform:scale(1.04); }
+
+.card-body{
+  padding:1rem 1.1rem 1.1rem;
+  display:flex;
+  flex-direction:column;
+  gap:.55rem;
+  flex:1;
+}
+
+.card-meta{
+  display:flex;
+  gap:.45rem;
+  align-items:center;
+  font-size:.7rem;
+  color:var(--ink-3);
+  flex-wrap:wrap;
+}
+.card-source{
+  color:var(--amber);
+  font-weight:700;
+}
+.card-sep{ opacity:.4; }
+.card-multi{
+  background:rgba(230,57,80,.12);
+  color:var(--coral-2);
+  padding:.1rem .5rem;
+  border-radius:5px;
+  font-size:.62rem;
+  font-weight:700;
+  border:1px solid rgba(230,57,80,.25);
+  cursor:pointer;
+}
+
+.card-title{
+  font-family:"Playfair Display",serif;
+  font-size:1.05rem;
+  font-weight:700;
+  line-height:1.32;
+  color:var(--ink);
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.card-title[dir="rtl"]{ text-align:right; }
+
+.card-desc{
+  font-size:.84rem;
+  color:var(--ink-2);
+  line-height:1.55;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  flex:1;
+}
+.card-desc[dir="rtl"]{ text-align:right; }
+
+.card-footer{
+  padding-top:.75rem;
+  margin-top:auto;
+  border-top:1px solid var(--line);
+  font-size:.7rem;
+  color:var(--ink-3);
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+.card-action{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:var(--bg-3);
+  border:1px solid var(--line-2);
+  color:var(--ink-2);
+  font-size:.85rem;
+  display:grid;
+  place-items:center;
+  margin-left:auto;
+  transition:all .15s;
+}
+.card-action:hover{
+  border-color:var(--amber);
+  color:var(--amber);
+}
+
+.feed-grid.list-mode .news-card{
+  flex-direction:row;
+  min-height:0;
+}
+.feed-grid.list-mode .card-thumb{
+  width:110px;
+  min-width:110px;
+  aspect-ratio:1;
+}
+.feed-grid.list-mode .card-body{
+  padding:.75rem .9rem;
+}
+.feed-grid.list-mode .card-title{
+  font-size:.95rem;
+  -webkit-line-clamp:2;
+}
+.feed-grid.list-mode .card-desc{ display:none; }
 
 /* ===== EMPTY STATE ===== */
 .empty-state{
@@ -288,7 +425,6 @@ body.light .header{
 .empty-msg{
   font-size:.9rem;
   font-weight:600;
-  letter-spacing:.05em;
   color:var(--ink-2);
 }
 .empty-hint{
@@ -417,10 +553,7 @@ body.light .bottom-tabs{
   transform:rotate(90deg);
 }
 
-.sheet-content{
-  padding:1.1rem 1.25rem 1.5rem;
-}
-
+.sheet-content{ padding:1.1rem 1.25rem 1.5rem; }
 .sheet-section{ margin-bottom:1.4rem; }
 .sheet-section:last-child{ margin-bottom:0; }
 
@@ -478,6 +611,22 @@ body.light .bottom-tabs{
   font-weight:700;
 }
 
+.sheet-search{
+  width:100%;
+  padding:.75rem .9rem;
+  background:var(--bg-3);
+  border:1px solid var(--line-2);
+  color:var(--ink);
+  border-radius:10px;
+  font-size:.9rem;
+  outline:none;
+  transition:border-color .18s;
+}
+.sheet-search:focus{
+  border-color:var(--amber);
+  box-shadow:0 0 0 3px rgba(226,168,87,.15);
+}
+
 .sheet-about{
   font-size:.75rem;
   color:var(--ink-3);
@@ -490,76 +639,6 @@ body.light .bottom-tabs{
   font-weight:700;
   letter-spacing:.05em;
 }
-
-/* ===== TOAST ===== */
-.toast{
-  position:fixed;
-  bottom:calc(90px + env(safe-area-inset-bottom,0));
-  left:50%;
-  transform:translateX(-50%) translateY(150%);
-  background:linear-gradient(135deg,var(--card),var(--card-hover));
-  color:var(--ink);
-  border:1px solid rgba(226,168,87,.4);
-  padding:.75rem 1.2rem;
-  border-radius:12px;
-  font-size:.8rem;
-  font-weight:500;
-  z-index:10000;
-  max-width:90vw;
-  transition:transform .3s cubic-bezier(.2,.9,.3,1);
-  box-shadow:var(--shadow-deep);
-  pointer-events:none;
-}
-.toast.show{ transform:translateX(-50%) translateY(0); }
-
-/* ===== RESPONSIVE ===== */
-@media(max-width:640px){
-  body{ font-size:14px; }
-
-  .header-inner{
-    padding:.75rem .9rem;
-    gap:.6rem;
-  }
-  .brand-mark{ width:36px; height:36px; }
-  .brand-mark svg{ width:20px; height:20px; }
-  .brand-text .name{ font-size:1.05rem; }
-
-  .header-stats{
-    gap:.9rem;
-    width:100%;
-    margin-left:0;
-    margin-top:.15rem;
-    order:3;
-  }
-  .hstat:nth-child(4){ display:none; }
-  .hstat-value{ font-size:.78rem; }
-
-  .btn-mini{ width:36px; height:36px; font-size:.95rem; }
-
-  .main{ padding:1rem .85rem; padding-bottom:calc(80px + env(safe-area-inset-bottom,0)); }
-
-  .section-head h2{ font-size:1rem; }
-  .section-head{ margin-bottom:1rem; padding-bottom:.7rem; }
-
-  .feed-grid{ grid-template-columns:1fr; gap:1rem; }
-
-  .sheet-content{ padding:1rem 1rem 1.5rem; }
-  .sheet-grid{ grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); }
-  .sheet-item{ padding:.6rem .75rem; font-size:.74rem; }
-
-  .tab-label{ font-size:.6rem; }
-  .tab-icon{ font-size:1.15rem; }
-}
-
-/* ===== REDUCED MOTION ===== */
-@media (prefers-reduced-motion: reduce){
-  *, *::before, *::after{
-    animation-duration:.01ms !important;
-    transition-duration:.01ms !important;
-  }
-}/* ============================================================
-   WAR DESK v19.0 — Fase 2 toevoegingen
-   ============================================================ */
 
 /* ===== BREAKING BANNER ===== */
 .breaking{
@@ -630,196 +709,28 @@ body.light .bottom-tabs{
   transform:rotate(90deg);
 }
 
-/* ===== NEWS CARD ===== */
-.news-card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  cursor:pointer;
-  transition:transform .2s, box-shadow .2s, background .2s;
-  box-shadow:var(--shadow-card);
-  position:relative;
-}
-.news-card:hover{
-  transform:translateY(-3px);
-  background:var(--card-hover);
-  box-shadow:0 16px 40px -18px rgba(226,168,87,.45);
-  border-color:rgba(226,168,87,.3);
-}
-.news-card.war{
-  border-left:3px solid var(--coral);
-}
-.news-card.read{
-  opacity:.55;
-}
-.news-card.read:hover{ opacity:1; }
-
-.card-thumb{
-  width:100%;
-  aspect-ratio:16/9;
-  background:var(--bg-3);
-  overflow:hidden;
-}
-.card-thumb img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-  transition:transform .5s;
-}
-.news-card:hover .card-thumb img{ transform:scale(1.04); }
-
-.card-body{
-  padding:1rem 1.1rem 1.1rem;
-  display:flex;
-  flex-direction:column;
-  gap:.55rem;
-  flex:1;
-}
-
-.card-meta{
-  display:flex;
-  gap:.45rem;
-  align-items:center;
-  font-size:.7rem;
-  color:var(--ink-3);
-  flex-wrap:wrap;
-}
-.card-source{
-  color:var(--amber);
-  font-weight:700;
-}
-.card-sep{ opacity:.4; }
-.card-multi{
-  background:rgba(230,57,80,.12);
-  color:var(--coral-2);
-  padding:.1rem .5rem;
-  border-radius:5px;
-  font-size:.62rem;
-  font-weight:700;
-  border:1px solid rgba(230,57,80,.25);
-}
-
-.card-title{
-  font-family:"Playfair Display",serif;
-  font-size:1.05rem;
-  font-weight:700;
-  line-height:1.32;
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;
+  bottom:calc(90px + env(safe-area-inset-bottom,0));
+  left:50%;
+  transform:translateX(-50%) translateY(150%);
+  background:linear-gradient(135deg,var(--card),var(--card-hover));
   color:var(--ink);
-  display:-webkit-box;
-  -webkit-line-clamp:3;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-  transition:color .15s;
+  border:1px solid rgba(226,168,87,.4);
+  padding:.75rem 1.2rem;
+  border-radius:12px;
+  font-size:.8rem;
+  font-weight:500;
+  z-index:10000;
+  max-width:90vw;
+  transition:transform .3s cubic-bezier(.2,.9,.3,1);
+  box-shadow:var(--shadow-deep);
+  pointer-events:none;
 }
-.card-title[dir="rtl"]{
-  font-family:"Inter",sans-serif;
-  text-align:right;
-}
-.news-card:hover .card-title{ color:var(--amber-2); }
+.toast.show{ transform:translateX(-50%) translateY(0); }
 
-.card-desc{
-  font-size:.84rem;
-  color:var(--ink-2);
-  line-height:1.55;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-  flex:1;
-}
-.card-desc[dir="rtl"]{
-  text-align:right;
-}
-
-.card-footer{
-  padding-top:.75rem;
-  margin-top:auto;
-  border-top:1px solid var(--line);
-  font-size:.7rem;
-  color:var(--ink-3);
-  display:flex;
-  align-items:center;
-  gap:.5rem;
-}
-.card-action{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  background:var(--bg-3);
-  border:1px solid var(--line-2);
-  color:var(--ink-2);
-  font-size:.85rem;
-  display:grid;
-  place-items:center;
-  margin-left:auto;
-  transition:all .15s;
-}
-.card-action:hover{
-  border-color:var(--amber);
-  color:var(--amber);
-}
-
-/* ===== LIST MODE ===== */
-.feed-grid.list-mode .news-card{
-  flex-direction:row;
-  min-height:0;
-}
-.feed-grid.list-mode .card-thumb{
-  width:120px;
-  min-width:120px;
-  aspect-ratio:1;
-}
-.feed-grid.list-mode .card-body{
-  padding:.85rem 1rem;
-}
-.feed-grid.list-mode .card-title{
-  font-size:.95rem;
-  -webkit-line-clamp:2;
-}
-.feed-grid.list-mode .card-desc{
-  display:none;
-}
-.feed-grid.list-mode .card-footer{
-  padding-top:.5rem;
-  margin-top:.4rem;
-}
-
-/* ===== SHEET SEARCH ===== */
-.sheet-search{
-  width:100%;
-  padding:.75rem .9rem;
-  background:var(--bg-3);
-  border:1px solid var(--line-2);
-  color:var(--ink);
-  border-radius:10px;
-  font-size:.9rem;
-  outline:none;
-  transition:border-color .18s;
-}
-.sheet-search:focus{
-  border-color:var(--amber);
-  box-shadow:0 0 0 3px rgba(226,168,87,.15);
-}
-
-@media(max-width:640px){
-  .feed-grid.list-mode .card-thumb{
-    width:90px;
-    min-width:90px;
-  }
-  .card-body{ padding:.9rem 1rem 1rem; }
-  .card-title{ font-size:1rem; }
-}/* Update indicator (header) */
-.hstat.teal .hstat-value{
-  color:#5eead4;
-  text-shadow:0 0 12px rgba(94,234,212,.4);
-}
-@media(max-width:640px){
-  .hstat.teal{ display:none; }
-}/* ============================================================
+/* ============================================================
    IPTV styling
    ============================================================ */
 
@@ -937,27 +848,30 @@ body.light .bottom-tabs{
   outline:none;
 }
 
+/* ===== KANAAL-TEGELS (verbeterd) ===== */
 .iptv-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:.5rem;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:.55rem;
 }
 .iptv-ch{
   background:var(--card);
   border:1px solid var(--line);
   border-left:3px solid var(--ch-color, var(--line-2));
   border-radius:10px;
-  padding:.6rem .65rem;
+  padding:.75rem .7rem;
   display:flex;
   flex-direction:column;
   align-items:center;
   text-align:center;
-  gap:.4rem;
+  gap:.55rem;
   cursor:pointer;
   transition:transform .18s, background .18s, border-color .18s;
-  min-height:80px;
   color:var(--ink);
   font-family:inherit;
+  overflow:hidden;
+  min-height:96px;
+  justify-content:flex-start;
 }
 .iptv-ch:hover{
   transform:translateY(-2px);
@@ -965,17 +879,19 @@ body.light .bottom-tabs{
   border-color:var(--ch-color, var(--amber));
 }
 .iptv-ch:active{ transform:scale(.96); }
+
 .iptv-ch-logo{
-  width:100%;
+  width:44px;
   height:44px;
   display:grid;
   place-items:center;
   background:var(--bg-3);
-  border-radius:6px;
+  border-radius:10px;
   overflow:hidden;
-  font-size:1.2rem;
-  font-weight:700;
+  font-size:1.1rem;
+  font-weight:800;
   color:var(--ch-color, var(--ink));
+  flex-shrink:0;
 }
 .iptv-ch-logo img{
   max-width:100%;
@@ -984,14 +900,18 @@ body.light .bottom-tabs{
 }
 .iptv-ch-name{
   width:100%;
-  font-size:.7rem;
+  font-size:.74rem;
   font-weight:600;
-  white-space:nowrap;
+  line-height:1.28;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
   overflow:hidden;
-  text-overflow:ellipsis;
-  line-height:1.3;
+  word-break:break-word;
+  color:var(--ink);
 }
 
+/* ===== IPTV PLAYER ===== */
 .iptv-player{
   position:fixed;
   inset:0;
@@ -1076,6 +996,72 @@ body.light .bottom-tabs{
 }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 
+/* ===== RESPONSIVE ===== */
+@media(max-width:640px){
+  body{ font-size:14px; }
+
+  .header-inner{
+    padding:.75rem .9rem;
+    gap:.6rem;
+  }
+  .brand-mark{ width:36px; height:36px; }
+  .brand-mark svg{ width:20px; height:20px; }
+  .brand-text .name{ font-size:1.05rem; }
+
+  .header-stats{
+    gap:.9rem;
+    width:100%;
+    margin-left:0;
+    margin-top:.15rem;
+    order:3;
+  }
+  .hstat:nth-child(4){ display:none; }
+  .hstat.teal{ display:none; }
+  .hstat-value{ font-size:.78rem; }
+
+  .btn-mini{ width:36px; height:36px; font-size:.95rem; }
+
+  .main{
+    padding:1rem .85rem;
+    padding-bottom:calc(80px + env(safe-area-inset-bottom,0));
+  }
+
+  .section-head h2{ font-size:1rem; }
+  .section-head{ margin-bottom:1rem; padding-bottom:.7rem; }
+
+  .feed-grid{ grid-template-columns:1fr; gap:1rem; }
+  .feed-grid.list-mode .card-thumb{ width:90px; min-width:90px; }
+
+  .sheet-content{ padding:1rem 1rem 1.5rem; }
+  .sheet-grid{ grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); }
+  .sheet-item{ padding:.6rem .75rem; font-size:.74rem; }
+
+  .tab-label{ font-size:.6rem; }
+  .tab-icon{ font-size:1.15rem; }
+
+  .iptv-grid{
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:.5rem;
+  }
+  .iptv-ch{
+    padding:.65rem .55rem;
+    min-height:90px;
+  }
+  .iptv-ch-logo{
+    width:38px;
+    height:38px;
+    font-size:1rem;
+  }
+  .iptv-ch-name{ font-size:.7rem; }
+}
+
 @media(max-width:380px){
-  .iptv-grid{ grid-template-columns:1fr; }
+  .iptv-grid{ grid-template-columns:repeat(2,1fr); }
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    transition-duration:.01ms!important;
+  }
 }

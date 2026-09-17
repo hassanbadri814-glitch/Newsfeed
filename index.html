@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v3.5</title>
+<title>WAR DESK v3.6</title>
 <script>
 try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches)){document.documentElement.classList.add("light")}}catch(e){}
 </script>
@@ -57,7 +57,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v3.5</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v3.6</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
@@ -198,7 +198,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     </div>
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v3.5</span><br>Live nieuws + IPTV + Conflictkaart</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v3.6</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
   </div>
 </div>
@@ -233,7 +233,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 (function(){
   "use strict";
 
-  /* Debug actief? Alleen via ?debug=1 in URL of localStorage.wardesk_debug=1 */
   var DEBUG = /[?&]debug=1/.test(location.search);
   try{ if(localStorage.getItem("wardesk_debug") === "1") DEBUG = true; }catch(e){}
   window.__wdDebug = DEBUG;
@@ -269,7 +268,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 
   window.wdLog = { info:function(m){add("info",m)}, ok:function(m){add("ok",m)}, warn:function(m){add("warn",m)}, err:function(m){add("err",m)} };
 
-  /* Foutopvang — altijd actief (goedkoop) */
   window.addEventListener("error", function(e){
     var msg = (e.error && e.error.message) || e.message || "onbekende fout";
     var src = e.filename ? " (" + e.filename.split("/").pop() + ":" + e.lineno + ")" : "";
@@ -283,7 +281,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 
   function shortUrl(u){ return u.length > 100 ? u.slice(0,100) + "…" : u; }
 
-  /* Fetch logging — alleen in debug modus */
   if(DEBUG){
     var _origFetch = window.fetch;
     var _fetchCount = 0;
@@ -333,7 +330,11 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
           var h = ph[p];
           var host = "";
           try{ host = p.split("/")[2]; }catch(e){ host = p; }
-          add(h.disabled ? "err" : "info", "  " + host + " → fails=" + h.fails + (h.disabled ? " DISABLED" : ""));
+          var status = "fails=" + h.fails;
+          if(h.disabledUntil && Date.now() < h.disabledUntil){
+            status += " (cooldown " + Math.ceil((h.disabledUntil - Date.now())/1000) + "s)";
+          }
+          add(h.disabledUntil && Date.now() < h.disabledUntil ? "warn" : "info", "  " + host + " → " + status);
         });
       });
 
@@ -369,7 +370,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script src="config.js?v=15"></script>
-<script src="news.js?v=16"></script>
+<script src="news.js?v=17"></script>
 <script src="app.js?v=14"></script>
 <script src="persist.js?v=14"></script>
 <script src="refresh.js?v=14"></script>
@@ -398,13 +399,15 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       window.wdLog[window.CONFIG ? "ok" : "err"]("CONFIG: " + (window.CONFIG ? "✓" : "✗"));
       window.wdLog[window.FEEDS ? "ok" : "err"]("FEEDS: " + (window.FEEDS ? "✓" : "✗"));
       window.wdLog[window.NewsAPI ? "ok" : "err"]("NewsAPI: " + (window.NewsAPI ? "✓" : "✗"));
-      window.wdLog[window.__newsVersion === "v19.2-fallback-proxy" ? "ok" : "err"]("news.js versie: " + (window.__newsVersion || "ONBEKEND"));
+      /* FIX: Flexibele versie-check — accepteert elke v19.x */
+      var okVer = window.__newsVersion && /^v19\./.test(window.__newsVersion);
+      window.wdLog[okVer ? "ok" : "err"]("news.js versie: " + (window.__newsVersion || "ONBEKEND"));
       window.wdLog[window.IPTVAPI ? "ok" : "err"]("IPTVAPI: " + (window.IPTVAPI ? "✓" : "✗"));
       window.wdLog[window.MAPAPI ? "ok" : "err"]("MAPAPI: " + (window.MAPAPI ? "✓" : "✗"));
     }
   }, 1000);
 })();
-console.log("%c WAR DESK %c v3.5 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v3.6 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

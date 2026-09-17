@@ -207,6 +207,70 @@ function dedupe(items){
   return Array.from(map.values());
 }
 
+/* ============================================================
+   ROBUUSTE PARSER — XML / rss2json / genestelde JSON
+   ============================================================ */
+
+/* Parse raw RSS/Atom XML → array van item-objecten */
+function parseRssXml(xmlText){
+  try{
+    var doc = new DOMParser().parseFromString(xmlText, "text/xml");
+    if(doc.getElementsByTagName("parsererror").length) return [];
+    var nodes = doc.getElementsByTagName("item");
+    if(!nodes.length) nodes = doc.getElementsByTagName("entry");
+    var out = [];
+    for(var i = 0; i < nodes.length; i++){
+      var node = nodes[i];
+      var gtxt = function(tag){
+        var els = node.getElementsByTagName(tag);
+        return els.length ? (els[0].textContent || "").trim() : "";
+      };
+      var title = gtxt("title");
+      var linkEl = node.getElementsByTagName("link")[0];
+      var link = linkEl ? ((linkEl.textContent || "") || linkEl.getAttribute("href") || "").trim() : "";
+      var desc = gtxt("description") || gtxt("content") || gtxt("summary") || gtxt("encoded");
+      var date = gtxt("pubDate") || gtxt("published") || gtxt("updated") || gtxt("date");
+      var encEl = node.getElementsByTagName("enclosure")[0];
+      var encLink = encEl ? (encEl.getAttribute("url") || encEl.getAttribute("href") || "") : "";
+      var mediaEl = node.getElementsByTagName("media:content")[0] || node.getElementsByTagName("media:thumbnail")[0];
+      var thumb = mediaEl ? (mediaEl.getAttribute("url") || "") : "";
+      out.push({
+        title: title, link: link, description: desc, pubDate: date,
+        thumbnail: thumb, enclosure: encLink ? {link: encLink} : null
+      });
+    }
+    return out;
+  }catch(e){ return []; }
+}
+
+/* Normaliseer een item naar {title, link, description, pubDate, thumbnail}
+   Ondersteunt: platte objecten, {fields:{}}, {_source:{}}, strings */
+function normalizeItem(it){
+  if(it == null) return {title:"", link:"", description:"", pubDate:"", thumbnail:""};
+  if(typeof it === "string") return {title: it, link:"", description:"", pubDate:"", thumbnail:""};
+  if(typeof it !== "object") return {title: String(it), link:"", description:"", pubDate:"", thumbnail:""};
+
+  if(it.fields) it = Object.assign({}, it, it.fields);
+  if(it._source) it = Object.assign({}, it, it._source);
+
+  var raw = it.description || it.content || it.summary || it["content:encoded"] || it.contentSnippet || "";
+  var enc = it.enclosure && (it.enclosure.link || it.enclosure.url);
+  var thumb = it.thumbnail || enc || it.image || "";
+  if(!thumb && typeof raw === "string"){
+    var m = raw.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if(m) thumb = m[1];
+  }
+  var link = it.link || it.url || it.id || (it.guid && (it.guid.$t || it.guid._ || it.guid)) || "";
+
+  return {
+    title: String(it.title || it.name || it.headline || ""),
+    link: String(link),
+    description: String(raw),
+    pubDate: it.pubDate || it.published || it.updated || it.date || it.created || it.pubdate || "",
+    thumbnail: String(thumb)
+  };
+}
+
 /* ===== LOAD FEEDS ===== */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
@@ -221,6 +285,9 @@ async function loadAllFeeds(){
   bar.classList.add("show");
   bar.style.width = "10%";
 
+  /* reset diagnostiek-teller per laadsessie */
+  window.__wdDiagCount = 0;
+
   async function processOne(f){
     if(session !== State.loadSession) return;
     tried++;
@@ -230,29 +297,61 @@ async function loadAllFeeds(){
       var r = await fetch(CONFIG.proxy + encodeURIComponent(f.url), {signal: ctrl.signal});
       clearTimeout(timer);
       if(!r.ok) throw new Error("HTTP " + r.status);
-      var data = await r.json();
-      if(!data.items || !data.items.length) throw new Error("leeg");
 
-      data.items.slice(0, CONFIG.perFeed).forEach(function(it){
-        var raw = it.description || it.content || "";
-        var img = it.thumbnail || (it.enclosure && it.enclosure.link) || (raw.match(/<img[^>]+src="([^"]+)"/i) || [])[1] || "";
+      var txt = await r.text();
+      var items = [];
+      var shape = "?";
+
+      var trimmed = txt.replace(/^\uFEFF/, "").replace(/^\s+/, "");
+      if(trimmed.charAt(0) === "<"){
+        shape = "xml";
+        items = parseRssXml(txt);
+      } else {
+        shape = "json";
+        var data;
+        try{ data = JSON.parse(txt); }
+        catch(e){ throw new Error("geen JSON/XML"); }
+        if(data.items && data.items.length) items = data.items;
+        else if(data.entries && data.entries.length) items = data.entries;
+        else if(data.data && data.data.items && data.data.items.length) items = data.data.items;
+        else if(Array.isArray(data)) items = data;
+        else throw new Error("geen items-veld");
+      }
+
+      if(!items.length) throw new Error("leeg");
+
+      var added = 0;
+      items.slice(0, CONFIG.perFeed).forEach(function(rawIt){
+        var it = normalizeItem(rawIt);
         var titleClean = strip(it.title || "");
-        var descClean = strip(raw).slice(0, 300);
-        var key = (it.link || it.title || "").toLowerCase().trim();
+        var descClean = strip(it.description || "").slice(0, 300);
+        var key = String(it.link || titleClean).toLowerCase().trim();
         if(key && !collectedLinks[key]){
           collectedLinks[key] = 1;
           collected.push({
             title: titleClean,
             link: it.link || "#",
             desc: descClean,
-            img: img,
+            img: it.thumbnail || "",
             date: it.pubDate || "",
             source: f.n,
             cat: detectTopic(titleClean, descClean, f.cat),
             lang: f.lang
           });
+          added++;
         }
       });
+
+      /* Diagnostiek — eerste 5 succes-feeds naar debug-paneel */
+      if(window.__wdDiagCount < 5 && window.wdLog){
+        window.__wdDiagCount++;
+        window.wdLog.info("✓ " + f.n + " [" + shape + "] items=" + items.length + " nieuw=" + added);
+        if(window.__wdDiagCount <= 2 && items[0]){
+          try{
+            window.wdLog.info("  vb: " + JSON.stringify(normalizeItem(items[0])).slice(0, 220));
+          }catch(e){}
+        }
+      }
 
       State.loadedSources++;
       if(State.health[f.n]) State.health[f.n].fails = 0;
@@ -295,7 +394,8 @@ async function loadAllFeeds(){
 
   document.getElementById("statSources").textContent = State.loadedSources + "/" + State.totalSources;
   document.getElementById("statItems").textContent = State.items.length;
-  document.getElementById("statWar").textContent = State.items.filter(function(x){ return x.cat === "war"; }).length;
+  var statWar = document.getElementById("statWar");
+  if(statWar) statWar.textContent = State.items.filter(function(x){ return x.cat === "war"; }).length;
 
   NewsDB.saveItems(State.items);
   NewsDB.saveHealth(State.health);
@@ -305,6 +405,12 @@ async function loadAllFeeds(){
 
   detectBreaking();
   renderNews();
+
+  if(window.wdLog){
+    window.wdLog[State.items.length ? "ok" : "warn"](
+      "loadAllFeeds klaar — " + State.items.length + " items uit " + State.loadedSources + "/" + State.totalSources + " bronnen"
+    );
+  }
 }
 
 /* ===== BREAKING ===== */
@@ -400,7 +506,6 @@ function renderNews(){
   count.textContent = list.length + " artikelen";
 
   if(!list.length){
-    // Onderscheid tussen "nog aan het laden" en "echt geen artikelen"
     if(State.items.length === 0){
       grid.innerHTML = '<div class="empty-state">' +
         '<div class="empty-icon">◌</div>' +
@@ -446,7 +551,6 @@ function renderNews(){
   }
   grid.innerHTML = html;
 
-  // Handlers
   Array.prototype.forEach.call(grid.querySelectorAll("article"), function(art, i){
     var it = toShow[i];
     if(!it) return;

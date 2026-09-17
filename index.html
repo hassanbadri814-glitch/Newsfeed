@@ -18,6 +18,24 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="stylesheet" href="styles.css?v=14">
+<style>
+/* Debug overlay */
+#wdDebugBtn{position:fixed;bottom:100px;right:15px;z-index:20000;width:44px;height:44px;border-radius:50%;background:#e63950;color:#fff;border:2px solid #fff;font-size:1.2rem;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.6);cursor:pointer;display:grid;place-items:center;font-family:monospace}
+#wdDebugPanel{position:fixed;inset:0;z-index:19999;background:rgba(0,0,0,.95);color:#0f0;font-family:monospace;font-size:11px;padding:1rem;overflow-y:auto;display:none;line-height:1.5}
+#wdDebugPanel.show{display:block}
+#wdDebugPanel .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid #333;position:sticky;top:0;background:rgba(0,0,0,.95);z-index:1}
+#wdDebugPanel h2{color:#e2a857;font-size:14px;margin:0}
+#wdDebugPanel .close{background:#e63950;color:#fff;border:none;padding:.4rem .8rem;border-radius:6px;font-family:monospace;font-weight:700;cursor:pointer}
+#wdDebugPanel .entry{padding:.5rem;margin-bottom:.4rem;border-left:3px solid #0f0;background:rgba(255,255,255,.03);word-break:break-all;white-space:pre-wrap}
+#wdDebugPanel .entry.err{border-left-color:#e63950;color:#ff7b8b}
+#wdDebugPanel .entry.warn{border-left-color:#f59e0b;color:#f0c78a}
+#wdDebugPanel .entry.info{border-left-color:#3b82f6;color:#8ab4f8}
+#wdDebugPanel .entry.ok{border-left-color:#10b981;color:#5eead4}
+#wdDebugPanel .time{color:#666;font-size:10px;display:block;margin-bottom:.2rem}
+#wdDebugPanel .empty{color:#666;text-align:center;padding:2rem 1rem}
+#wdDebugPanel .actions{padding:.5rem;background:#111;border-radius:6px;margin-bottom:.8rem;display:flex;gap:.5rem;flex-wrap:wrap}
+#wdDebugPanel .actions button{background:#333;color:#fff;border:none;padding:.4rem .7rem;border-radius:4px;font-family:monospace;font-size:10px;cursor:pointer}
+</style>
 </head>
 <body>
 
@@ -195,6 +213,163 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 
 <div class="toast" id="toast">Klaar</div>
 
+<!-- DEBUG KNOP + PANEEL -->
+<button id="wdDebugBtn" title="Debug">🐞</button>
+<div id="wdDebugPanel">
+  <div class="head">
+    <h2>🐞 Debug Log</h2>
+    <button class="close" id="wdDebugClose">Sluiten</button>
+  </div>
+  <div class="actions">
+    <button id="wdDebugClear">🗑 Clear</button>
+    <button id="wdDebugReload">↻ Herlaad</button>
+    <button id="wdDebugInfo">ℹ Systeem info</button>
+  </div>
+  <div id="wdDebugLog"></div>
+</div>
+
+<!-- DEBUG SCRIPT (eerst!) -->
+<script>
+(function(){
+  "use strict";
+  window.__wdLog = [];
+  var logEl, panel;
+
+  function fmtTime(){
+    var d = new Date();
+    return d.toTimeString().slice(0,8);
+  }
+
+  function add(type, msg){
+    var entry = {
+      time: fmtTime(),
+      type: type,
+      msg: typeof msg === "string" ? msg : JSON.stringify(msg)
+    };
+    window.__wdLog.push(entry);
+    if(logEl){
+      render();
+    }
+    /* Ook naar console */
+    try{
+      if(type === "err") console.error("[WD]", msg);
+      else if(type === "warn") console.warn("[WD]", msg);
+      else console.log("[WD]", msg);
+    }catch(e){}
+  }
+
+  function render(){
+    if(!logEl) return;
+    if(!window.__wdLog.length){
+      logEl.innerHTML = '<div class="empty">Nog geen logs</div>';
+      return;
+    }
+    var html = "";
+    for(var i = window.__wdLog.length - 1; i >= 0; i--){
+      var e = window.__wdLog[i];
+      html += '<div class="entry ' + e.type + '">' +
+        '<span class="time">' + e.time + ' [' + e.type + ']</span>' +
+        escapeHtml(e.msg) +
+        '</div>';
+    }
+    logEl.innerHTML = html;
+  }
+
+  function escapeHtml(s){
+    return (s || "").replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  window.wdLog = {
+    info: function(m){ add("info", m); },
+    ok: function(m){ add("ok", m); },
+    warn: function(m){ add("warn", m); },
+    err: function(m){ add("err", m); }
+  };
+
+  /* Opvang alle fouten */
+  window.addEventListener("error", function(e){
+    var msg = (e.error && e.error.message) || e.message || "onbekende fout";
+    var src = e.filename ? " (" + e.filename.split("/").pop() + ":" + e.lineno + ")" : "";
+    add("err", msg + src);
+  });
+
+  window.addEventListener("unhandledrejection", function(e){
+    var r = e.reason;
+    var msg = (r && r.message) ? r.message : String(r || "onbekende promise-fout");
+    add("err", "Promise: " + msg);
+  });
+
+  /* Init paneel + knop */
+  document.addEventListener("DOMContentLoaded", function(){
+    logEl = document.getElementById("wdDebugLog");
+    panel = document.getElementById("wdDebugPanel");
+
+    document.getElementById("wdDebugBtn").addEventListener("click", function(){
+      panel.classList.toggle("show");
+      render();
+    });
+    document.getElementById("wdDebugClose").addEventListener("click", function(){
+      panel.classList.remove("show");
+    });
+    document.getElementById("wdDebugClear").addEventListener("click", function(){
+      window.__wdLog = [];
+      render();
+    });
+    document.getElementById("wdDebugReload").addEventListener("click", function(){
+      location.reload();
+    });
+    document.getElementById("wdDebugInfo").addEventListener("click", function(){
+      add("info", "App: " + (document.getElementById("appVersion") ? document.getElementById("appVersion").textContent : "?"));
+      add("info", "URL: " + location.href);
+      add("info", "UA: " + navigator.userAgent.slice(0, 80));
+      add("info", "Online: " + navigator.onLine);
+      add("info", "Config: " + (typeof window.CONFIG));
+      add("info", "Feeds: " + (window.FEEDS ? window.FEEDS.length : "niet geladen"));
+      add("info", "NewsAPI: " + (typeof window.NewsAPI));
+      add("info", "State: " + (window.State ? "ok, " + (window.State.items ? window.State.items.length : 0) + " items" : "niet geladen"));
+      add("info", "IPTVAPI: " + (typeof window.IPTVAPI));
+      add("info", "MAPAPI: " + (typeof window.MAPAPI));
+    });
+
+    /* Log het starten */
+    add("info", "WAR DESK start");
+    add("info", "URL: " + location.href);
+
+    /* Test na 3 sec: zijn alle modules geladen? */
+    setTimeout(function(){
+      add("info", "--- Status na 3s ---");
+      add(window.CONFIG ? "ok" : "err", "CONFIG: " + (window.CONFIG ? "OK" : "ONTBREEKT"));
+      add(window.FEEDS ? "ok" : "err", "FEEDS: " + (window.FEEDS ? window.FEEDS.length + " feeds" : "ONTBREEKT"));
+      add(window.NewsAPI ? "ok" : "err", "NewsAPI: " + (window.NewsAPI ? "OK" : "ONTBREEKT"));
+      add(window.IPTVAPI ? "ok" : "err", "IPTVAPI: " + (window.IPTVAPI ? "OK" : "ONTBREEKT"));
+      add(window.MAPAPI ? "ok" : "err", "MAPAPI: " + (window.MAPAPI ? "OK" : "ONTBREEKT"));
+      if(window.State){
+        add("info", "State.items: " + (window.State.items ? window.State.items.length : 0));
+        add("info", "State.loadedSources: " + window.State.loadedSources + "/" + window.State.totalSources);
+      }
+    }, 3000);
+
+    /* Test na 10 sec: zijn er items? */
+    setTimeout(function(){
+      add("info", "--- Status na 10s ---");
+      if(window.State){
+        add("info", "Items: " + (window.State.items ? window.State.items.length : 0));
+        add("info", "Sources: " + window.State.loadedSources + "/" + window.State.totalSources);
+        add("info", "Failed sources: " + (window.State.failedSources ? window.State.failedSources.length : 0));
+      }
+      var grid = document.getElementById("feedGrid");
+      if(grid){
+        var cards = grid.querySelectorAll("article");
+        add("info", "Kaarten in DOM: " + cards.length);
+      }
+    }, 10000);
+  });
+})();
+</script>
+
+<!-- ECHTE APPS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
@@ -221,8 +396,20 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
     var t=document.getElementById("toast");
     if(t){t.classList.remove("show");t._shownAt=0}
   });
+
+  /* Log na alle modules geladen zijn */
+  setTimeout(function(){
+    if(window.wdLog){
+      window.wdLog.info("--- Modules status ---");
+      window.wdLog[window.CONFIG ? "ok" : "err"]("CONFIG: " + (window.CONFIG ? "✓" : "✗"));
+      window.wdLog[window.FEEDS ? "ok" : "err"]("FEEDS: " + (window.FEEDS ? "✓" : "✗"));
+      window.wdLog[window.NewsAPI ? "ok" : "err"]("NewsAPI: " + (window.NewsAPI ? "✓" : "✗"));
+      window.wdLog[window.IPTVAPI ? "ok" : "err"]("IPTVAPI: " + (window.IPTVAPI ? "✓" : "✗"));
+      window.wdLog[window.MAPAPI ? "ok" : "err"]("MAPAPI: " + (window.MAPAPI ? "✓" : "✗"));
+    }
+  }, 1000);
 })();
-console.log("%c WAR DESK %c v3.5 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v3.5-debug ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

@@ -10,8 +10,19 @@ window.CONFIG = {
   failThreshold: 3,
   retryAfterMs: 3600000,
   maxCacheItems: 200,
+
+  /* Primaire proxy (backward compat) */
   proxy: "https://nieuwsproxy.hassanbadri814.workers.dev/?url=",
-  fetchTimeoutMs: 8000,
+
+  /* Fallback-keten: in deze volgorde geprobeerd */
+  proxies: [
+    "https://nieuwsproxy.hassanbadri814.workers.dev/?url=",
+    "https://api.allorigins.win/raw?url=",
+    "https://corsproxy.io/?url=",
+    "https://api.codetabs.com/v1/proxy?quest="
+  ],
+
+  fetchTimeoutMs: 6000,
   parallelWorkers: 10
 };
 
@@ -217,4 +228,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js geladen —", window.FEEDS.length, "feeds");
+console.log("[WAR DESK] config.js geladen —", window.FEEDS.length, "feeds,", window.CONFIG.proxies.length, "proxies");

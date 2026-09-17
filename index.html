@@ -7,14 +7,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v2.7</title>
+<title>WAR DESK v3.2</title>
 <script>
 try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches)){document.documentElement.classList.add("light")}}catch(e){}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=11">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
 
@@ -36,12 +39,12 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v2.7</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v3.2</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
       <div class="hstat amber"><span class="hstat-label">Bronnen</span><span class="hstat-value" id="statSources">0/0</span></div>
-      <div class="hstat coral"><span class="hstat-label">Oorlog</span><span class="hstat-value" id="statWar">0</span></div>
+      <div class="hstat coral"><span class="hstat-label">Events</span><span class="hstat-value" id="statEvents">0</span></div>
       <div class="hstat green"><span class="hstat-label">Items</span><span class="hstat-value" id="statItems">0</span></div>
     </div>
     <div class="header-actions">
@@ -52,9 +55,45 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 </header>
 
 <main class="main">
+
   <section class="view" id="viewNews">
     <div class="section-head"><h2 id="newsTitle">Laatste berichten</h2><span class="section-count" id="newsCount">—</span></div>
     <div class="feed-grid" id="feedGrid"><div class="empty-state"><div class="empty-icon">◌</div><div class="empty-msg">Nieuws wordt geladen...</div><div class="empty-hint">Eerste keer kan 20-30 seconden duren</div></div></div>
+  </section>
+
+  <section class="view" id="viewMap" hidden>
+    <div class="map-page">
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div class="map-controls">
+          <button class="map-ctrl" id="mapZoomIn">＋</button>
+          <button class="map-ctrl" id="mapZoomOut">－</button>
+          <button class="map-ctrl" id="mapLocate">◎</button>
+          <button class="map-ctrl" id="mapFull">⛶</button>
+        </div>
+        <div class="map-legend" id="mapLegend">
+          <div class="legend-title">Event types</div>
+          <div id="legendItems"></div>
+        </div>
+      </div>
+
+      <div class="live-feed">
+        <div class="live-head">
+          <div class="live-title"><span class="live-dot"></span>LIVE EVENTS</div>
+          <div class="live-count" id="liveCount">0</div>
+        </div>
+        <div class="live-filters" id="liveFilters">
+          <button class="live-filter active" data-cat="all">Alles</button>
+          <button class="live-filter" data-cat="strike">Aanvallen</button>
+          <button class="live-filter" data-cat="clash">Gevechten</button>
+          <button class="live-filter" data-cat="security">Incidenten</button>
+          <button class="live-filter" data-cat="political">Politiek</button>
+        </div>
+        <div class="live-list" id="liveList">
+          <div class="live-empty">Events worden geladen...</div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="view" id="viewIptv" hidden>
@@ -82,10 +121,12 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
     <div class="iptv-filter-row" id="iptvFilter" hidden><select id="iptvGroupFilter"><option value="all">Alle groepen</option></select></div>
     <div class="iptv-grid" id="iptvGrid"><div class="empty-state"><div class="empty-icon">📡</div><div class="empty-msg">Vul je Xtream gegevens in</div></div></div>
   </section>
+
 </main>
 
 <nav class="bottom-tabs">
   <button class="tab active" data-view="news"><span class="tab-icon">📰</span><span class="tab-label">Nieuws</span></button>
+  <button class="tab" data-view="map"><span class="tab-icon">🗺️</span><span class="tab-label">Kaart</span></button>
   <button class="tab" data-view="iptv"><span class="tab-icon">📡</span><span class="tab-label">IPTV</span></button>
 </nav>
 
@@ -100,6 +141,13 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
         <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){var s=document.getElementById('iptvSetup');if(s){s.hidden=false;setTimeout(function(){s.scrollIntoView({behavior:'smooth',block:'start'})},200)}},350)">⚙ Wijzig inlog</button>
         <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){if(window.__iptvLoadChannels)window.__iptvLoadChannels()},400)">↻ Herlaad kanalen</button>
         <button class="sheet-item" onclick="if(!confirm('Kanalen verwijderen?'))return;document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';if(window.__iptvClearChannels)window.__iptvClearChannels()">🗑 Verwijder kanalen</button>
+      </div>
+    </div>
+    <div class="sheet-section">
+      <div class="sheet-title">🗺️ Kaart</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapRefresh)window.__mapRefresh()},400)">↻ Herlaad events</button>
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapResetView)window.__mapResetView()},400)">🌍 Wereldbeeld</button>
       </div>
     </div>
     <div class="sheet-section">
@@ -133,7 +181,7 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
     </div>
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v2.7</span><br>Live nieuws + IPTV monitor</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v3.2</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
   </div>
 </div>
@@ -148,12 +196,16 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 
 <div class="toast" id="toast">Klaar</div>
 
-<script src="config.js?v=11"></script>
-<script src="news.js?v=11"></script>
-<script src="app.js?v=11"></script>
-<script src="persist.js?v=11"></script>
-<script src="refresh.js?v=11"></script>
-<script src="iptv.js?v=11"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<script src="config.js?v=12"></script>
+<script src="news.js?v=12"></script>
+<script src="app.js?v=12"></script>
+<script src="persist.js?v=12"></script>
+<script src="refresh.js?v=12"></script>
+<script src="iptv.js?v=12"></script>
+<script src="map.js?v=12"></script>
 
 <script>
 (function(){
@@ -171,7 +223,7 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
     if(t){t.classList.remove("show");t._shownAt=0}
   });
 })();
-console.log("%c WAR DESK %c v2.7 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v3.2 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

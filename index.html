@@ -270,7 +270,6 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 
   function shortUrl(u){ return u.length > 100 ? u.slice(0,100) + "…" : u; }
 
-  /* === FETCH WRAPPER — logt ALLE fetches === */
   var _origFetch = window.fetch;
   var _fetchCount = 0;
   var _fetchErrCount = 0;
@@ -305,6 +304,7 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
     document.getElementById("wdDebugInfo").addEventListener("click", function(){
       add("info", "URL: " + location.href);
       add("info", "Online: " + navigator.onLine);
+      add("info", "news.js versie: " + (window.__newsVersion || "ONBEKEND"));
       add("info", "Items: " + (window.State && window.State.items ? window.State.items.length : "?"));
       add("info", "Sources: " + (window.State ? window.State.loadedSources + "/" + window.State.totalSources : "?"));
       add("info", "Failed: " + (window.State && window.State.failedSources ? window.State.failedSources.length : "?"));
@@ -384,6 +384,7 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
       window.wdLog[window.CONFIG ? "ok" : "err"]("CONFIG: " + (window.CONFIG ? "✓" : "✗"));
       window.wdLog[window.FEEDS ? "ok" : "err"]("FEEDS: " + (window.FEEDS ? "✓" : "✗"));
       window.wdLog[window.NewsAPI ? "ok" : "err"]("NewsAPI: " + (window.NewsAPI ? "✓" : "✗"));
+      window.wdLog[window.__newsVersion === "v19.1-robust-parser" ? "ok" : "err"]("news.js versie: " + (window.__newsVersion || "ONBEKEND — OUD"));
       window.wdLog[window.IPTVAPI ? "ok" : "err"]("IPTVAPI: " + (window.IPTVAPI ? "✓" : "✗"));
       window.wdLog[window.MAPAPI ? "ok" : "err"]("MAPAPI: " + (window.MAPAPI ? "✓" : "✗"));
     }

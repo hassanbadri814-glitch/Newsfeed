@@ -1,10 +1,9 @@
 /* ============================================================
-   WAR DESK v19.7 — Nieuws logica
-   Robuuste parser + proxy cooldown + tag-gebaseerde filtering
-   Fix: Google News krijgt allorigins eerst (Cloudflare Workers falen)
-   Fix: loadedSources wordt gereset per refresh-cyclus
+   WAR DESK v19.8 — Nieuws logica
+   Fix: health reset per sessie (geen valse disable)
+   Fix: Google News semaphore (max 2 gelijktijdig, geen 408)
    ============================================================ */
-window.__newsVersion = "v19.7-smart-proxy-routing";
+window.__newsVersion = "v19.8-health-reset-semaphore";
 
 window.State = {
   items: [],
@@ -264,12 +263,36 @@ function normalizeItem(it){
 }
 
 /* ============================================================
-   PROXY FALLBACK — met cooldown + slimme Google News routing
+   PROXY FALLBACK
    ============================================================ */
 window.__proxyHealth = {};
 
 var PROXY_COOLDOWN_MS = 30000;
 var PROXY_FAIL_THRESHOLD = 5;
+
+/* ===== GOOGLE NEWS SEMAPHORE =====
+   Max 2 gelijktijdige Google News requests om 408 rate-limits te vermijden */
+var googleNewsSem = { active: 0, max: 2, queue: [] };
+
+function googleNewsAcquire(){
+  return new Promise(function(resolve){
+    if(googleNewsSem.active < googleNewsSem.max){
+      googleNewsSem.active++;
+      resolve();
+    } else {
+      googleNewsSem.queue.push(resolve);
+    }
+  });
+}
+
+function googleNewsRelease(){
+  if(googleNewsSem.queue.length > 0){
+    var next = googleNewsSem.queue.shift();
+    next();
+  } else {
+    googleNewsSem.active--;
+  }
+}
 
 function proxyHost(p){
   try{ return p.split("/")[2]; }catch(e){ return p; }
@@ -308,46 +331,49 @@ function parseResponse(txt){
   }
 }
 
-/* ===== SLIMME PROXY ROUTING =====
-   Google News URL's → allorigins eerst (Cloudflare Workers falen)
-   Andere URL's → Cloudflare Workers eerst (snel)
-   ============================================================ */
 async function fetchFeedWithFallback(feedUrl){
   var isGoogleNews = /news\.google\.com/.test(feedUrl);
-  var proxies;
 
-  if(isGoogleNews && CONFIG.googleNewsProxies && CONFIG.googleNewsProxies.length){
-    proxies = CONFIG.googleNewsProxies;
-  } else if(CONFIG.proxies && CONFIG.proxies.length){
-    proxies = CONFIG.proxies;
-  } else {
-    proxies = [CONFIG.proxy];
-  }
+  /* Semaphore alleen voor Google News */
+  if(isGoogleNews) await googleNewsAcquire();
 
-  var lastErr = null;
-
-  for(var i = 0; i < proxies.length; i++){
-    var p = proxies[i];
-    var health = window.__proxyHealth[p];
-    if(health && health.disabledUntil && Date.now() < health.disabledUntil) continue;
-
-    try{
-      var ctrl = new AbortController();
-      var timer = setTimeout(function(){ ctrl.abort(); }, CONFIG.fetchTimeoutMs);
-      var r = await fetch(p + encodeURIComponent(feedUrl), {signal: ctrl.signal});
-      clearTimeout(timer);
-      if(!r.ok) throw new Error("HTTP " + r.status);
-      var txt = await r.text();
-      var parsed = parseResponse(txt);
-      if(!parsed.items.length) throw new Error("0 items");
-      markProxyOk(p);
-      return { items: parsed.items, shape: parsed.shape, proxyIdx: i, viaGoogleNews: isGoogleNews };
-    }catch(e){
-      lastErr = e;
-      markProxyFail(p);
+  try {
+    var proxies;
+    if(isGoogleNews && CONFIG.googleNewsProxies && CONFIG.googleNewsProxies.length){
+      proxies = CONFIG.googleNewsProxies;
+    } else if(CONFIG.proxies && CONFIG.proxies.length){
+      proxies = CONFIG.proxies;
+    } else {
+      proxies = [CONFIG.proxy];
     }
+
+    var lastErr = null;
+
+    for(var i = 0; i < proxies.length; i++){
+      var p = proxies[i];
+      var health = window.__proxyHealth[p];
+      if(health && health.disabledUntil && Date.now() < health.disabledUntil) continue;
+
+      try{
+        var ctrl = new AbortController();
+        var timer = setTimeout(function(){ ctrl.abort(); }, CONFIG.fetchTimeoutMs);
+        var r = await fetch(p + encodeURIComponent(feedUrl), {signal: ctrl.signal});
+        clearTimeout(timer);
+        if(!r.ok) throw new Error("HTTP " + r.status);
+        var txt = await r.text();
+        var parsed = parseResponse(txt);
+        if(!parsed.items.length) throw new Error("0 items");
+        markProxyOk(p);
+        return { items: parsed.items, shape: parsed.shape, proxyIdx: i, viaGoogleNews: isGoogleNews };
+      }catch(e){
+        lastErr = e;
+        markProxyFail(p);
+      }
+    }
+    throw lastErr || new Error("alle proxies faalden");
+  } finally {
+    if(isGoogleNews) googleNewsRelease();
   }
-  throw lastErr || new Error("alle proxies faalden");
 }
 
 /* ===== LOAD FEEDS ===== */
@@ -356,7 +382,7 @@ async function loadAllFeeds(){
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
   State.totalSources = active.length;
   State.failedSources = [];
-  State.loadedSources = 0;  /* FIX: was nooit gereset */
+  State.loadedSources = 0;
 
   var collected = [];
   var collectedLinks = {};
@@ -654,6 +680,8 @@ function startAutoRefresh(){
     var atTop = window.scrollY < 200;
     if(idle < CONFIG.pauseOnScrollMs && !atTop) return;
     if(State.isScrolling) return;
+    /* Reset disabled per refresh-cyclus: elke bron krijgt weer een kans */
+    State.disabled = {};
     loadAllFeeds();
   }, CONFIG.autoRefreshMs);
 }
@@ -661,7 +689,9 @@ function startAutoRefresh(){
 async function initNews(){
   await NewsDB.open();
 
-  State.health = await NewsDB.loadHealth();
+  /* FIX: health wordt NIET geladen uit DB — elke sessie begint schoon.
+     Dit voorkomt dat bronnen onterecht uitgeschakeld blijven door oude fails. */
+  State.health = {};
   State.disabled = {};
 
   State.readMap = await NewsDB.loadReadMap();

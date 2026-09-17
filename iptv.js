@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v19.0 — IPTV (Xtream Codes) v2
+   WAR DESK v19.0 — IPTV (Xtream Codes) v3
    ============================================================ */
 
 (function(){
@@ -145,11 +145,9 @@
       el.addEventListener("input", function(){
         clearTimeout(t);
         t = setTimeout(function(){
-          IPTV.server = ($("iptvServer") || {}).value || "";
-          IPTV.user = ($("iptvUser") || {}).value || "";
+          IPTV.server = (($("iptvServer") || {}).value || "").trim();
+          IPTV.user = (($("iptvUser") || {}).value || "").trim();
           IPTV.pass = ($("iptvPass") || {}).value || "";
-          IPTV.server = IPTV.server.trim();
-          IPTV.user = IPTV.user.trim();
           dbPut("creds", {server:IPTV.server, user:IPTV.user, pass:IPTV.pass});
           LOG("Creds auto-saved");
         }, 500);
@@ -161,11 +159,9 @@
     if(testBtn){
       testBtn.addEventListener("click", async function(){
         LOG("Test klik");
-        IPTV.server = ($("iptvServer") || {}).value || "";
-        IPTV.user = ($("iptvUser") || {}).value || "";
+        IPTV.server = (($("iptvServer") || {}).value || "").trim();
+        IPTV.user = (($("iptvUser") || {}).value || "").trim();
         IPTV.pass = ($("iptvPass") || {}).value || "";
-        IPTV.server = IPTV.server.trim();
-        IPTV.user = IPTV.user.trim();
         if(!IPTV.server || !IPTV.user || !IPTV.pass){ setStatus("✗ Vul alle velden in", "err"); return; }
         setStatus("Testen...", "loading");
         var t0 = performance.now();
@@ -187,11 +183,9 @@
     if(loadBtn){
       loadBtn.addEventListener("click", async function(){
         LOG("Load klik");
-        IPTV.server = ($("iptvServer") || {}).value || "";
-        IPTV.user = ($("iptvUser") || {}).value || "";
+        IPTV.server = (($("iptvServer") || {}).value || "").trim();
+        IPTV.user = (($("iptvUser") || {}).value || "").trim();
         IPTV.pass = ($("iptvPass") || {}).value || "";
-        IPTV.server = IPTV.server.trim();
-        IPTV.user = IPTV.user.trim();
 
         if(!IPTV.server || !IPTV.user || !IPTV.pass){ setStatus("✗ Vul alle velden in", "err"); return; }
 
@@ -326,7 +320,7 @@
       var logoHtml = c.logo
         ? '<img src="' + esc(c.logo) + '" loading="lazy" alt="" onerror="this.parentNode.textContent=\'' + initial + '\'">'
         : initial;
-      html += '<button class="iptv-ch" data-idx="' + i + '" style="--ch-color:' + color + '">';
+      html += '<button class="iptv-ch" data-idx="' + i + '" style="--ch-color:' + color + '" aria-label="' + esc(c.name) + '">';
       html += '<div class="iptv-ch-logo">' + logoHtml + '</div>';
       html += '<div class="iptv-ch-name">' + esc(c.name) + '</div>';
       html += '</button>';
@@ -389,7 +383,11 @@
         '<button class="iptv-btn" id="iptvCopyUrl">📋 Kopieer URL</button>' +
         '</div>';
       var vlcBtn = $("iptvOpenVlc");
-      if(vlcBtn) vlcBtn.onclick = function(){ vlcOpen(url); };
+      if(vlcBtn) vlcBtn.onclick = function(){
+        closePlayer();
+        if(window.showToast) window.showToast("Openen in VLC...");
+        vlcOpen(url);
+      };
       var copyBtn = $("iptvCopyUrl");
       if(copyBtn) copyBtn.onclick = function(){
         navigator.clipboard.writeText(url).then(function(){
@@ -423,7 +421,7 @@
                 '<button class="iptv-btn primary" id="iptvOpenVlc">📺 Open in VLC</button>' +
                 '</div>';
               var b = $("iptvOpenVlc");
-              if(b) b.onclick = function(){ vlcOpen(url); };
+              if(b) b.onclick = function(){ closePlayer(); vlcOpen(url); };
             }
           });
         } else {
@@ -432,7 +430,7 @@
             '<button class="iptv-btn primary" id="iptvOpenVlc">📺 Open in VLC</button>' +
             '</div>';
           var b2 = $("iptvOpenVlc");
-          if(b2) b2.onclick = function(){ vlcOpen(url); };
+          if(b2) b2.onclick = function(){ closePlayer(); vlcOpen(url); };
         }
       });
     } else {
@@ -478,7 +476,6 @@
 
   window.IPTVAPI = { init: init, state: IPTV };
 
-  /* Meerdere vangnetten voor init */
   function start(){
     LOG("start() — readyState:", document.readyState);
     init();

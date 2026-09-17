@@ -1,6 +1,6 @@
 /* ============================================================
-   WAR DESK v19.5 — Configuratie
-   Google News fallback voor IP-geblokkeerde bronnen
+   WAR DESK v19.6 — Configuratie
+   Google News fallback + langere client timeout (10s)
    ============================================================ */
 
 window.CONFIG = {
@@ -20,11 +20,10 @@ window.CONFIG = {
     "https://corsproxy.io/?url="
   ],
 
-  fetchTimeoutMs: 5000,
+  fetchTimeoutMs: 10000,       // Gewijzigd: 5000 → 10000
   parallelWorkers: 5
 };
 
-/* Categorie-groepen */
 window.CAT_GROUPS = {
   war:     ["war"],
   mideast: ["mideast","il","gaza","lebanon","syria","yemen","iran","tr","eg","sa","ae","qa"],
@@ -48,28 +47,23 @@ window.KEYWORDS_MED = [
   "crash","collapse","wounded","injured"
 ];
 
-/* ============================================================
-   NIEUWSBRONNEN
-   Bronnen met "→ GN" zijn omgezet naar Google News vanwege
-   Cloudflare IP-blokkade op de originele domeinen.
-   ============================================================ */
 window.FEEDS = [
   // ===== NEDERLAND =====
   {n:"NOS",lang:"nl",cat:"nl",url:"https://feeds.nos.nl/nosnieuwsalgemeen"},
   {n:"De Telegraaf",lang:"nl",cat:"nl",url:"https://www.telegraaf.nl/rss"},
   {n:"AD.nl",lang:"nl",cat:"nl",url:"https://www.ad.nl/rss.xml"},
-  {n:"De Volkskrant",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:volkskrant.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"De Volkskrant",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:volkskrant.nl&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"NRC",lang:"nl",cat:"nl",url:"https://www.nrc.nl/rss"},
-  {n:"Het Parool",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:parool.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
-  {n:"Trouw",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:trouw.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
-  {n:"RTL Nieuws",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"Het Parool",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:parool.nl&hl=nl&gl=NL&ceid=NL:nl"},
+  {n:"Trouw",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:trouw.nl&hl=nl&gl=NL&ceid=NL:nl"},
+  {n:"RTL Nieuws",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"Nu.nl",lang:"nl",cat:"nl",url:"https://www.nu.nl/rss/Algemeen"},
   {n:"Omroep Brabant",lang:"nl",cat:"nl",url:"https://www.omroepbrabant.nl/rss"},
-  {n:"Omroep Flevoland",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:omroepflevoland.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
-  {n:"NH Nieuws",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:nhnieuws.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
-  {n:"RTV Utrecht",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:rtvutrecht.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"Omroep Flevoland",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:omroepflevoland.nl&hl=nl&gl=NL&ceid=NL:nl"},
+  {n:"NH Nieuws",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:nhnieuws.nl&hl=nl&gl=NL&ceid=NL:nl"},
+  {n:"RTV Utrecht",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:rtvutrecht.nl&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"Omroep Gelderland",lang:"nl",cat:"nl",url:"https://www.omroepgelderland.nl/rss"},
-  {n:"L1",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:l1.nl&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"L1",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:l1.nl&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"RTV Oost",lang:"nl",cat:"nl",url:"https://www.rtvoost.nl/rss"},
   {n:"Omroep West",lang:"nl",cat:"nl",url:"https://www.omroepwest.nl/rss"},
 
@@ -84,14 +78,14 @@ window.FEEDS = [
   {n:"Soccernews",lang:"nl",cat:"sport",url:"https://www.soccernews.nl/rss"},
   {n:"NUsport",lang:"nl",cat:"sport",url:"https://www.nu.nl/rss/Sport"},
   {n:"Sportnieuws.nl",lang:"nl",cat:"sport",url:"https://sportnieuws.nl/feed/"},
-  {n:"RTL Sport",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl+sport&hl=nl&gl=NL&ceid=NL:nl"}, // → GN
+  {n:"RTL Sport",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl+sport&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"Glory Kickboxing",lang:"en",cat:"sport",url:"https://glorykickboxing.com/rss"},
   {n:"Wielerflits",lang:"nl",cat:"sport",url:"https://www.wielerflits.nl/feed/"},
   {n:"GPUpdate",lang:"nl",cat:"sport",url:"https://www.gpupdate.net/nl/rss"},
   {n:"Racexpress",lang:"nl",cat:"sport",url:"https://www.racexpress.nl/rss.php"},
   {n:"MMA DNA",lang:"nl",cat:"sport",url:"https://mmadna.nl/feed/"},
 
-  // ===== BELGIË — allemaal → GN =====
+  // ===== BELGIË =====
   {n:"HLN",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:hln.be&hl=nl&gl=BE&ceid=BE:nl"},
   {n:"Nieuwsblad",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:nieuwsblad.be&hl=nl&gl=BE&ceid=BE:nl"},
   {n:"De Standaard",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:standaard.be&hl=nl&gl=BE&ceid=BE:nl"},
@@ -101,7 +95,7 @@ window.FEEDS = [
   {n:"Gazet van Antwerpen",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:gva.be&hl=nl&gl=BE&ceid=BE:nl"},
   {n:"Het Belang van Limburg",lang:"nl",cat:"be",url:"https://news.google.com/rss/search?q=site:hbvl.be&hl=nl&gl=BE&ceid=BE:nl"},
 
-  // ===== DUITSLAND — allemaal → GN =====
+  // ===== DUITSLAND =====
   {n:"Spiegel",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:spiegel.de&hl=de&gl=DE&ceid=DE:de"},
   {n:"Bild",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:bild.de&hl=de&gl=DE&ceid=DE:de"},
   {n:"Zeit",lang:"de",cat:"de",url:"https://news.google.com/rss/search?q=site:zeit.de&hl=de&gl=DE&ceid=DE:de"},
@@ -226,4 +220,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v19.5 geladen —", window.FEEDS.length, "feeds (Google News fallback actief)");
+console.log("[WAR DESK] config.js v19.6 geladen —", window.FEEDS.length, "feeds, timeout 10s");

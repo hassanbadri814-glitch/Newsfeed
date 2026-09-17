@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v2.7</title>
+<title>WAR DESK v3.1</title>
 
 <script>
 try{
@@ -21,7 +21,10 @@ try{
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
 
@@ -51,13 +54,13 @@ try{
       </div>
       <div class="brand-text">
         <span class="name">WAR DESK</span>
-        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v2.7</span></span>
+        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v3.1</span></span>
       </div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
       <div class="hstat amber"><span class="hstat-label">Bronnen</span><span class="hstat-value" id="statSources">0/0</span></div>
-      <div class="hstat coral"><span class="hstat-label">Oorlog</span><span class="hstat-value" id="statWar">0</span></div>
+      <div class="hstat coral"><span class="hstat-label">Events</span><span class="hstat-value" id="statEvents">0</span></div>
       <div class="hstat green"><span class="hstat-label">Items</span><span class="hstat-value" id="statItems">0</span></div>
     </div>
     <div class="header-actions">
@@ -87,26 +90,18 @@ try{
     <div class="section-head">
       <h2>📡 IPTV</h2>
       <span class="section-count" id="iptvCount">0 kanalen</span>
-      <button class="btn-mini" id="iptvToggleSetup" aria-label="Wijzig inloggegevens" title="Wijzig inloggegevens"
-        onclick="
-          var s=document.getElementById('iptvSetup');
-          if(!s) return;
-          s.hidden = !s.hidden;
-          if(!s.hidden){
-            setTimeout(function(){ s.scrollIntoView({behavior:'smooth', block:'start'}); }, 60);
-          }
-        ">⚙</button>
+      <button class="btn-mini" id="iptvToggleSetup"
+        onclick="var s=document.getElementById('iptvSetup');if(s){s.hidden=!s.hidden;if(!s.hidden)setTimeout(function(){s.scrollIntoView({behavior:'smooth',block:'start'})},60)}">⚙</button>
     </div>
-
     <div class="iptv-setup" id="iptvSetup">
       <div class="iptv-row">
-        <input type="url" id="iptvServer" placeholder="Server (http://provider.com:80)" autocomplete="off" autocorrect="off" spellcheck="false">
+        <input type="url" id="iptvServer" placeholder="Server (http://provider.com:80)" autocomplete="off">
       </div>
       <div class="iptv-row">
-        <input type="text" id="iptvUser" placeholder="Username" autocomplete="off" autocorrect="off" spellcheck="false">
+        <input type="text" id="iptvUser" placeholder="Username" autocomplete="off">
         <div class="pw-wrap">
-          <input type="password" id="iptvPass" placeholder="Password" autocomplete="current-password" spellcheck="false">
-          <button type="button" class="pw-toggle" id="iptvPwToggle" aria-label="Toon wachtwoord">👁</button>
+          <input type="password" id="iptvPass" placeholder="Password" autocomplete="current-password">
+          <button type="button" class="pw-toggle" id="iptvPwToggle">👁</button>
         </div>
       </div>
       <div class="iptv-row">
@@ -116,27 +111,51 @@ try{
       </div>
       <div class="iptv-status" id="iptvStatus"></div>
     </div>
-
     <div class="iptv-filter-row" id="iptvFilter" hidden>
-      <select id="iptvGroupFilter">
-        <option value="all">Alle groepen</option>
-      </select>
+      <select id="iptvGroupFilter"><option value="all">Alle groepen</option></select>
     </div>
-
     <div class="iptv-grid" id="iptvGrid">
-      <div class="empty-state">
-        <div class="empty-icon">📡</div>
-        <div class="empty-msg">Vul je Xtream gegevens in</div>
-        <div class="empty-hint">Server · Username · Password</div>
-      </div>
+      <div class="empty-state"><div class="empty-icon">📡</div><div class="empty-msg">Vul je Xtream gegevens in</div></div>
     </div>
   </section>
 
   <section class="view" id="viewMap" hidden>
-    <div class="section-head"><h2>Conflictkaart</h2><span class="section-count">Fase 4</span></div>
-    <div class="empty-state">
-      <div class="empty-icon">◉</div>
-      <div class="empty-msg">Kaart komt in fase 4</div>
+    <div class="map-page">
+      <!-- Kaart -->
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div class="map-controls">
+          <button class="map-ctrl" id="mapZoomIn" aria-label="Inzoomen">＋</button>
+          <button class="map-ctrl" id="mapZoomOut" aria-label="Uitzoomen">－</button>
+          <button class="map-ctrl" id="mapLocate" aria-label="Mijn locatie">◎</button>
+          <button class="map-ctrl" id="mapFull" aria-label="Volledig scherm">⛶</button>
+        </div>
+        <div class="map-legend" id="mapLegend">
+          <div class="legend-title">Categorieën</div>
+          <div id="legendItems"></div>
+        </div>
+      </div>
+
+      <!-- Live feed -->
+      <div class="live-feed" id="liveFeed">
+        <div class="live-head">
+          <div class="live-title">
+            <span class="live-dot"></span>
+            LIVE EVENTS
+          </div>
+          <div class="live-count" id="liveCount">0</div>
+        </div>
+        <div class="live-filters" id="liveFilters">
+          <button class="live-filter active" data-cat="all">Alles</button>
+          <button class="live-filter" data-cat="mideast">Midden-Oosten</button>
+          <button class="live-filter" data-cat="ukraine">Oekraïne</button>
+          <button class="live-filter" data-cat="africa">Afrika</button>
+          <button class="live-filter" data-cat="world">Wereld</button>
+        </div>
+        <div class="live-list" id="liveList">
+          <div class="live-empty">Live events worden geladen...</div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -144,8 +163,8 @@ try{
 
 <nav class="bottom-tabs">
   <button class="tab active" data-view="news"><span class="tab-icon">📰</span><span class="tab-label">Nieuws</span></button>
+  <button class="tab" data-view="map"><span class="tab-icon">🗺️</span><span class="tab-label">Kaart</span></button>
   <button class="tab" data-view="iptv"><span class="tab-icon">📡</span><span class="tab-label">IPTV</span></button>
-  <button class="tab" data-view="map"><span class="tab-icon">◉</span><span class="tab-label">Kaart</span></button>
 </nav>
 
 <div class="sheet-overlay" id="sheetOverlay"></div>
@@ -153,57 +172,28 @@ try{
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <h3>Menu</h3>
-    <button class="sheet-close" id="sheetClose" aria-label="Sluiten">✕</button>
+    <button class="sheet-close" id="sheetClose">✕</button>
   </div>
   <div class="sheet-content">
-
     <div class="sheet-section">
       <div class="sheet-title">📡 IPTV Account</div>
       <div class="sheet-grid">
-        <button class="sheet-item" onclick="
-          document.getElementById('sheet').classList.remove('open');
-          document.getElementById('sheetOverlay').classList.remove('open');
-          document.body.style.overflow='';
-          var t=document.querySelector('.tab[data-view=\'iptv\']'); if(t) t.click();
-          setTimeout(function(){
-            var s=document.getElementById('iptvSetup');
-            if(s){ s.hidden=false; setTimeout(function(){ s.scrollIntoView({behavior:'smooth',block:'start'}); }, 200); }
-          }, 350);
-        ">⚙ Wijzig inlog</button>
-
-        <button class="sheet-item" onclick="
-          document.getElementById('sheet').classList.remove('open');
-          document.getElementById('sheetOverlay').classList.remove('open');
-          document.body.style.overflow='';
-          var t=document.querySelector('.tab[data-view=\'iptv\']'); if(t) t.click();
-          setTimeout(function(){
-            if(window.__iptvLoadChannels) window.__iptvLoadChannels();
-          }, 400);
-        ">↻ Herlaad kanalen</button>
-
-        <button class="sheet-item" onclick="
-          if(!confirm('Kanalen verwijderen? Inlog blijft bewaard.')) return;
-          document.getElementById('sheet').classList.remove('open');
-          document.getElementById('sheetOverlay').classList.remove('open');
-          document.body.style.overflow='';
-          if(window.__iptvClearChannels) window.__iptvClearChannels();
-        ">🗑 Verwijder kanalen</button>
-
-        <button class="sheet-item" onclick="
-          if(!confirm('ALLES wissen? Inlog + kanalen.')) return;
-          document.getElementById('sheet').classList.remove('open');
-          document.getElementById('sheetOverlay').classList.remove('open');
-          document.body.style.overflow='';
-          if(window.__iptvClearAll) window.__iptvClearAll();
-        ">⚠ Alles wissen</button>
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){var s=document.getElementById('iptvSetup');if(s){s.hidden=false;setTimeout(function(){s.scrollIntoView({behavior:'smooth',block:'start'})},200)}},350)">⚙ Wijzig inlog</button>
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){if(window.__iptvLoadChannels)window.__iptvLoadChannels()},400)">↻ Herlaad kanalen</button>
+        <button class="sheet-item" onclick="if(!confirm('Kanalen verwijderen?'))return;document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';if(window.__iptvClearChannels)window.__iptvClearChannels()">🗑 Verwijder kanalen</button>
       </div>
     </div>
-
+    <div class="sheet-section">
+      <div class="sheet-title">🗺️ Kaart</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapRefresh)window.__mapRefresh()},400)">↻ Herlaad events</button>
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapResetView)window.__mapResetView()},400)">🌍 Wereldbeeld</button>
+      </div>
+    </div>
     <div class="sheet-section">
       <div class="sheet-title">Zoeken</div>
       <input class="sheet-search" type="search" id="searchInput" placeholder="Zoek in artikelen..." autocomplete="off">
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Categorieën</div>
       <div class="sheet-grid">
@@ -215,7 +205,6 @@ try{
         <button class="sheet-item" data-cat="sport">⚽ Sport</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Sortering</div>
       <div class="sheet-grid">
@@ -223,7 +212,6 @@ try{
         <button class="sheet-item" id="sortNewest">🕒 Nieuwste eerst</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Weergave</div>
       <div class="sheet-grid">
@@ -231,13 +219,9 @@ try{
         <button class="sheet-item" id="viewList">☰ Lijst</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">
-        WAR DESK <span class="version" id="appVersionMenu">v2.7</span><br>
-        Live nieuws + IPTV monitor
-      </div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v3.1</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
   </div>
 </div>
@@ -246,7 +230,7 @@ try{
   <div class="iptv-player-box">
     <div class="iptv-player-head">
       <span id="iptvPlayerTitle">—</span>
-      <button class="iptv-close" id="iptvPlayerClose" aria-label="Sluiten">✕</button>
+      <button class="iptv-close" id="iptvPlayerClose">✕</button>
     </div>
     <video id="iptvVideo" controls playsinline></video>
     <div class="iptv-player-foot" id="iptvPlayerStatus">—</div>
@@ -255,12 +239,16 @@ try{
 
 <div class="toast" id="toast">Klaar</div>
 
-<script src="config.js?v=8"></script>
-<script src="news.js?v=8"></script>
-<script src="app.js?v=8"></script>
-<script src="persist.js?v=8"></script>
-<script src="refresh.js?v=8"></script>
-<script src="iptv.js?v=8"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<script src="config.js?v=9"></script>
+<script src="news.js?v=9"></script>
+<script src="app.js?v=9"></script>
+<script src="persist.js?v=9"></script>
+<script src="refresh.js?v=9"></script>
+<script src="iptv.js?v=9"></script>
+<script src="map.js?v=9"></script>
 
 <script>
 (function(){
@@ -271,25 +259,17 @@ try{
       var shownAt = t._shownAt || 0;
       var now = Date.now();
       if(!shownAt) t._shownAt = now;
-      else if(now - shownAt > 3000){
-        t.classList.remove("show");
-        t._shownAt = 0;
-      }
-    } else {
-      t._shownAt = 0;
-    }
+      else if(now - shownAt > 3000){ t.classList.remove("show"); t._shownAt = 0; }
+    } else t._shownAt = 0;
   }, 500);
-
   document.addEventListener("visibilitychange", function(){
     var t = document.getElementById("toast");
     if(t){ t.classList.remove("show"); t._shownAt = 0; }
   });
 })();
-
-console.log("%c WAR DESK %c v2.7 ", 
+console.log("%c WAR DESK %c v3.1 ", 
   "background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;",
-  "background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;"
-);
+  "background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 
 </body>

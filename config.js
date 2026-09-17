@@ -1,6 +1,6 @@
 /* ============================================================
-   WAR DESK v19.7 — Configuratie
-   Google News fallback + slimme proxy routing
+   WAR DESK v19.8 — Configuratie
+   Google News: alleen allorigins (Cloudflare faalt voor Google)
    ============================================================ */
 
 window.CONFIG = {
@@ -13,18 +13,16 @@ window.CONFIG = {
 
   proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
-  /* Werkende proxies — corsproxy.io verwijderd (401) */
+  /* Normale proxies — Cloudflare eerst (snel) */
   proxies: [
     "https://newsfeed2.hassanbadri814.workers.dev/?url=",
     "https://nieuwsproxy.hassanbadri814.workers.dev/?url=",
     "https://api.allorigins.win/raw?url="
   ],
 
-  /* Speciale volgorde voor Google News — allorigins eerst */
+  /* Google News — alleen allorigins (Cloudflare Workers falen) */
   googleNewsProxies: [
-    "https://api.allorigins.win/raw?url=",
-    "https://newsfeed2.hassanbadri814.workers.dev/?url=",
-    "https://nieuwsproxy.hassanbadri814.workers.dev/?url="
+    "https://api.allorigins.win/raw?url="
   ],
 
   fetchTimeoutMs: 10000,
@@ -54,9 +52,6 @@ window.KEYWORDS_MED = [
   "crash","collapse","wounded","injured"
 ];
 
-/* ============================================================
-   NIEUWSBRONNEN
-   ============================================================ */
 window.FEEDS = [
   // ===== NEDERLAND =====
   {n:"NOS",lang:"nl",cat:"nl",url:"https://feeds.nos.nl/nosnieuwsalgemeen"},
@@ -230,4 +225,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v19.7 geladen —", window.FEEDS.length, "feeds, Google News routing actief");
+console.log("[WAR DESK] config.js v19.8 geladen —", window.FEEDS.length, "feeds");

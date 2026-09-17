@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v3.9 — Conflictkaart (Esri + labels, subtiele modal)
+   WAR DESK v4.0 — Conflictkaart (auto-fullscreen + subtiele modal)
    ============================================================ */
 
 (function(){
@@ -8,7 +8,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v3.9 geladen");
+  LOG("v4.0 geladen");
 
   var MAP = {
     instance: null,
@@ -18,6 +18,7 @@
     events: [],
     currentFilter: "all",
     refreshTimer: null,
+    isFullscreen: false,
     worker: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
     api: "https://war-tracker.com/api/v1/events?limit=100",
     detailCache: {}
@@ -56,7 +57,7 @@
     var s = document.createElement("style");
     s.id = "wdMapStyles";
     s.textContent =
-      /* --- Leaflet attribution onzichtbaar --- */
+      /* --- Leaflet basis --- */
       ".leaflet-control-attribution{display:none!important}" +
       ".leaflet-container{background:#0a101c!important}" +
 
@@ -71,7 +72,7 @@
         "animation:wdMarkerPulse 2.6s ease-out infinite}" +
       "@keyframes wdMarkerPulse{0%{transform:scale(.5);opacity:.35}100%{transform:scale(2.2);opacity:0}}" +
 
-      /* --- Cluster klein (18/22/26) --- */
+      /* --- Clusters (18/22/26) --- */
       ".marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:transparent!important}" +
       ".marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{" +
         "background:linear-gradient(135deg,#8a5c26,#e2a857)!important;" +
@@ -89,45 +90,44 @@
       ".marker-cluster-large{margin-left:-13px!important;margin-top:-13px!important}" +
       ".marker-cluster div span{font-size:.56rem!important;line-height:1!important;letter-spacing:-.02em!important}" +
 
-      /* --- Detail modal: subtieler --- */
+      /* --- Fullscreen: verberg de originele ⛶ knop, verberg legend --- */
+      ".map-wrap.fullscreen .map-legend{display:none!important}" +
+      ".map-wrap.fullscreen .map-controls .map-ctrl[data-role='full']{display:none!important}" +
+
+      /* --- Fullscreen sluit-knop (kruisje rechtsboven) --- */
+      ".wd-map-close{display:none;position:absolute;top:.8rem;right:.8rem;z-index:600;" +
+        "width:42px;height:42px;border-radius:50%;" +
+        "background:rgba(10,16,28,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);" +
+        "border:1px solid rgba(255,255,255,.12);color:#e6ebf5;" +
+        "font-size:1.15rem;font-weight:400;line-height:1;" +
+        "display:grid;place-items:center;cursor:pointer;" +
+        "box-shadow:0 4px 16px rgba(0,0,0,.6);transition:all .18s}" +
+      ".wd-map-close:hover{background:rgba(20,28,44,.95);border-color:rgba(255,255,255,.25);transform:rotate(90deg)}" +
+      ".map-wrap.fullscreen .wd-map-close{display:grid!important}" +
+
+      /* --- Fullscreen: controls naar LINKSBOVEN (kruisje zit rechts) --- */
+      ".map-wrap.fullscreen .map-controls{top:.8rem;left:.8rem;right:auto}" +
+
+      /* --- Detail modal subtiel --- */
+      ".wd-detail-modal{z-index:10050!important}" +
       ".wd-detail-box{" +
         "background:linear-gradient(180deg,#0f1728,#0a101c)!important;" +
         "border:1px solid rgba(255,255,255,.06)!important;" +
         "box-shadow:0 30px 80px -30px rgba(0,0,0,.95)!important;" +
       "}" +
-      ".wd-detail-head{" +
-        "border-bottom:1px solid rgba(255,255,255,.05)!important;" +
-      "}" +
-      ".wd-detail-type{" +
-        "box-shadow:0 0 12px rgba(0,0,0,.4);" +
-      "}" +
-      ".wd-detail-close{" +
-        "background:rgba(255,255,255,.04)!important;" +
-        "border:1px solid rgba(255,255,255,.08)!important;" +
-      "}" +
-      ".wd-detail-meta{" +
-        "color:#8a94a8!important;" +
-        "border-bottom:1px solid rgba(255,255,255,.05)!important;" +
-      "}" +
-      ".wd-detail-text{" +
-        "color:#e6ebf5!important;" +
-        "font-size:.9rem!important;" +
-        "line-height:1.65!important;" +
-      "}" +
-      ".wd-detail-foot{" +
-        "border-top:1px solid rgba(255,255,255,.05)!important;" +
-        "background:rgba(0,0,0,.2)!important;" +
-      "}" +
+      ".wd-detail-head{border-bottom:1px solid rgba(255,255,255,.05)!important}" +
+      ".wd-detail-type{box-shadow:0 0 12px rgba(0,0,0,.4)}" +
+      ".wd-detail-close{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important}" +
+      ".wd-detail-meta{color:#8a94a8!important;border-bottom:1px solid rgba(255,255,255,.05)!important}" +
+      ".wd-detail-text{color:#e6ebf5!important;font-size:.9rem!important;line-height:1.65!important}" +
+      ".wd-detail-foot{border-top:1px solid rgba(255,255,255,.05)!important;background:rgba(0,0,0,.2)!important}" +
       ".wd-detail-btn{" +
         "background:transparent!important;" +
         "border:1px solid rgba(255,255,255,.08)!important;" +
         "color:#8a94a8!important;" +
         "font-weight:600!important;" +
       "}" +
-      ".wd-detail-btn:hover{" +
-        "border-color:rgba(255,255,255,.15)!important;" +
-        "color:#e6ebf5!important;" +
-      "}" +
+      ".wd-detail-btn:hover{border-color:rgba(255,255,255,.15)!important;color:#e6ebf5!important}" +
       ".wd-detail-btn.primary{" +
         "background:rgba(226,168,87,.1)!important;" +
         "border:1px solid rgba(226,168,87,.28)!important;" +
@@ -140,6 +140,40 @@
     document.head.appendChild(s);
   }
 
+  /* ===== FULLSCREEN ===== */
+  function enterFullscreen(){
+    var wrap = document.querySelector(".map-wrap");
+    if(!wrap || wrap.classList.contains("fullscreen")) return;
+    wrap.classList.add("fullscreen");
+    MAP.isFullscreen = true;
+    document.body.style.overflow = "hidden";
+    if(MAP.instance) setTimeout(function(){ MAP.instance.invalidateSize(); }, 250);
+  }
+
+  function exitFullscreen(){
+    var wrap = document.querySelector(".map-wrap");
+    if(!wrap) return;
+    wrap.classList.remove("fullscreen");
+    MAP.isFullscreen = false;
+    document.body.style.overflow = "";
+    if(MAP.instance) setTimeout(function(){ MAP.instance.invalidateSize(); }, 250);
+  }
+
+  function ensureFullscreenClose(){
+    var wrap = document.querySelector(".map-wrap");
+    if(!wrap) return;
+    if(wrap.querySelector(".wd-map-close")) return;
+    var btn = document.createElement("button");
+    btn.className = "wd-map-close";
+    btn.setAttribute("aria-label", "Sluiten");
+    btn.textContent = "✕";
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      exitFullscreen();
+    });
+    wrap.appendChild(btn);
+  }
+
   /* ===== DETAIL MODAL ===== */
   function ensureDetailModal(){
     var existing = $("wdDetailModal");
@@ -148,7 +182,6 @@
     var modal = document.createElement("div");
     modal.id = "wdDetailModal";
     modal.className = "wd-detail-modal";
-    /* Geen "Open bron"-knop meer — alleen Sluiten */
     modal.innerHTML =
       '<div class="wd-detail-box">' +
         '<div class="wd-detail-head">' +
@@ -230,6 +263,7 @@
   function closeDetail(){
     var modal = $("wdDetailModal");
     if(modal) modal.classList.remove("show");
+    /* Kaart blijft fullscreen — bewust niet terugzetten */
   }
 
   /* ===== DATA ===== */
@@ -453,16 +487,16 @@
       preferCanvas: true
     });
 
-    /* Esri Dark Gray Base — donkere ondergrond */
+    /* Base: donkere ondergrond */
     MAP.tileLayer = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
       { maxZoom: 16, crossOrigin: true }
     ).addTo(MAP.instance);
 
-    /* Esri Dark Gray Reference — labels van steden/landen/wegen OVER de base */
+    /* Reference: steden/landen/wegen labels */
     MAP.labelLayer = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 16, crossOrigin: true, opacity: 0.85 }
+      { maxZoom: 16, crossOrigin: true, opacity: 0.9 }
     ).addTo(MAP.instance);
 
     MAP.cluster = L.markerClusterGroup({
@@ -482,11 +516,14 @@
     var zi = $("mapZoomIn"), zo = $("mapZoomOut"), loc = $("mapLocate"), full = $("mapFull");
     if(zi) zi.addEventListener("click", function(){ MAP.instance && MAP.instance.zoomIn(); });
     if(zo) zo.addEventListener("click", function(){ MAP.instance && MAP.instance.zoomOut(); });
-    if(full) full.addEventListener("click", function(){
-      var wrap = document.querySelector(".map-wrap");
-      if(wrap) wrap.classList.toggle("fullscreen");
-      if(MAP.instance) setTimeout(function(){ if(MAP.instance) MAP.instance.invalidateSize(); }, 250);
-    });
+    /* De ⛶ knop is nu een toggle: fullscreen aan/uit */
+    if(full){
+      full.setAttribute("data-role", "full");
+      full.addEventListener("click", function(){
+        if(MAP.isFullscreen) exitFullscreen();
+        else enterFullscreen();
+      });
+    }
     if(loc) loc.addEventListener("click", function(){
       if(!navigator.geolocation){ if(window.showToast) window.showToast("Locatie niet ondersteund"); return; }
       navigator.geolocation.getCurrentPosition(function(p){
@@ -514,7 +551,10 @@
 
   function activateMapView(){
     initMap();
-    if(MAP.instance) setTimeout(function(){ if(MAP.instance) MAP.instance.invalidateSize(); }, 150);
+    ensureFullscreenClose();
+    /* Automatisch fullscreen bij openen van Kaart-tab */
+    setTimeout(enterFullscreen, 100);
+    if(MAP.instance) setTimeout(function(){ if(MAP.instance) MAP.instance.invalidateSize(); }, 350);
     if(!MAP.events.length) fetchEvents();
     else { renderMarkers(); renderLegend(); renderLiveList(); }
   }
@@ -522,7 +562,12 @@
   function hookViewSwitch(){
     document.querySelectorAll(".bottom-tabs .tab").forEach(function(tab){
       tab.addEventListener("click", function(){
-        if(tab.dataset.view === "map") setTimeout(activateMapView, 200);
+        if(tab.dataset.view === "map"){
+          setTimeout(activateMapView, 200);
+        } else {
+          /* Verlaat de kaart-tab → sluit fullscreen als 'ie open is */
+          if(MAP.isFullscreen) exitFullscreen();
+        }
       });
     });
   }
@@ -540,6 +585,7 @@
     setTimeout(function(){
       injectMapStyles();
       ensureDetailModal();
+      ensureFullscreenClose();
       bindControls();
       bindFilters();
       hookViewSwitch();
@@ -560,7 +606,14 @@
   });
 
   document.addEventListener("keydown", function(e){
-    if(e.key === "Escape") closeDetail();
+    if(e.key === "Escape"){
+      var modal = $("wdDetailModal");
+      if(modal && modal.classList.contains("show")){
+        closeDetail();
+      } else if(MAP.isFullscreen){
+        exitFullscreen();
+      }
+    }
   });
 
   window.MAPAPI = { refresh: fetchEvents, state: MAP };

@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v3.6 — Conflictkaart (CARTO Dark + SVG iconen)
+   WAR DESK v3.7 — Conflictkaart (CARTO Dark + kleine clusters)
    ============================================================ */
 
 (function(){
@@ -8,7 +8,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v3.6 geladen");
+  LOG("v3.7 geladen");
 
   var MAP = {
     instance: null,
@@ -31,7 +31,6 @@
     "na":                    { color: "#6b7a93", filter: "other",     label: "Onbekend" }
   };
 
-  /* SVG-iconen per categorie — 24x24 viewBox, fill = currentColor */
   var ICONS = {
     conflict:  '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 21 L2 21 Z"/></svg>',
     political: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 8 L22 10 L2 10 L2 8 Z M4 12 L4 20 L8 20 L8 12 Z M10 12 L10 20 L14 20 L14 12 Z M16 12 L16 20 L20 20 L20 12 Z M2 20 L22 20 L22 22 L2 22 Z"/></svg>',
@@ -50,13 +49,17 @@
     return ICONS.other;
   }
 
-  /* ===== INJECT MARKER + CLUSTER STYLES ===== */
+  /* ===== INJECT STYLES ===== */
   function injectMapStyles(){
     if(document.getElementById("wdMapStyles")) return;
     var s = document.createElement("style");
     s.id = "wdMapStyles";
     s.textContent =
-      /* --- Marker container --- */
+      /* --- Leaflet attribution onzichtbaar --- */
+      ".leaflet-control-attribution{display:none!important}" +
+      ".leaflet-container{background:#0a101c!important}" +
+
+      /* --- Marker --- */
       ".wd-marker{background:transparent!important;border:none!important}" +
       ".wd-marker-inner{position:relative;width:16px;height:16px;display:grid;place-items:center}" +
       ".wd-marker-icon{width:14px;height:14px;display:grid;place-items:center;position:relative;z-index:2;" +
@@ -66,23 +69,24 @@
       ".wd-marker-pulse{position:absolute;inset:0;border-radius:50%;background:currentColor;opacity:.22;z-index:1;" +
         "animation:wdMarkerPulse 2.6s ease-out infinite}" +
       "@keyframes wdMarkerPulse{0%{transform:scale(.5);opacity:.35}100%{transform:scale(2.2);opacity:0}}" +
-      /* --- Cluster (gouden rondjes) verkleinen --- */
+
+      /* --- Cluster kleiner (22/26/32) --- */
       ".marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:transparent!important}" +
       ".marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{" +
         "background:linear-gradient(135deg,#8a5c26,#e2a857)!important;" +
         "color:#070c16!important;font-weight:800!important;" +
-        "border:1.5px solid rgba(255,255,255,.9)!important;" +
-        "box-shadow:0 2px 6px rgba(0,0,0,.5),0 0 12px rgba(226,168,87,.35)!important;" +
+        "border:1px solid rgba(255,255,255,.85)!important;" +
+        "box-shadow:0 1px 4px rgba(0,0,0,.55),0 0 8px rgba(226,168,87,.3)!important;" +
         "display:flex!important;align-items:center!important;justify-content:center!important;" +
         "font-family:Inter,sans-serif!important;" +
       "}" +
-      ".marker-cluster-small, .marker-cluster-small div{width:28px!important;height:28px!important}" +
-      ".marker-cluster-small{margin-left:-14px!important;margin-top:-14px!important}" +
-      ".marker-cluster-medium, .marker-cluster-medium div{width:34px!important;height:34px!important}" +
-      ".marker-cluster-medium{margin-left:-17px!important;margin-top:-17px!important}" +
-      ".marker-cluster-large, .marker-cluster-large div{width:42px!important;height:42px!important}" +
-      ".marker-cluster-large{margin-left:-21px!important;margin-top:-21px!important}" +
-      ".marker-cluster div span{font-size:.72rem!important;line-height:1!important}";
+      ".marker-cluster-small, .marker-cluster-small div{width:22px!important;height:22px!important}" +
+      ".marker-cluster-small{margin-left:-11px!important;margin-top:-11px!important}" +
+      ".marker-cluster-medium, .marker-cluster-medium div{width:26px!important;height:26px!important}" +
+      ".marker-cluster-medium{margin-left:-13px!important;margin-top:-13px!important}" +
+      ".marker-cluster-large, .marker-cluster-large div{width:32px!important;height:32px!important}" +
+      ".marker-cluster-large{margin-left:-16px!important;margin-top:-16px!important}" +
+      ".marker-cluster div span{font-size:.62rem!important;line-height:1!important}";
     document.head.appendChild(s);
   }
 
@@ -400,18 +404,19 @@
       center: [40, 30],
       zoom: 3,
       minZoom: 2,
-      maxZoom: 18,
+      maxZoom: 19,
       worldCopyJump: true,
       zoomControl: false,
-      attributionControl: true,
+      attributionControl: false,   /* ← geen attribution-veld meer */
       preferCanvas: true
     });
 
-    /* CARTO Dark Matter — donker, clean, geen key nodig */
-    MAP.tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    /* CARTO Dark Matter via Fastly mirror — wereldwijd betrouwbaar */
+    MAP.tileLayer = L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 20,
       subdomains: "abcd",
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
+      detectRetina: true,
+      crossOrigin: true
     }).addTo(MAP.instance);
 
     MAP.cluster = L.markerClusterGroup({

@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v3.7 — Conflictkaart (CARTO Dark + kleine clusters)
+   WAR DESK v3.8 — Conflictkaart (Esri Dark + kleine clusters)
    ============================================================ */
 
 (function(){
@@ -8,7 +8,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v3.7 geladen");
+  LOG("v3.8 geladen");
 
   var MAP = {
     instance: null,
@@ -70,23 +70,23 @@
         "animation:wdMarkerPulse 2.6s ease-out infinite}" +
       "@keyframes wdMarkerPulse{0%{transform:scale(.5);opacity:.35}100%{transform:scale(2.2);opacity:0}}" +
 
-      /* --- Cluster kleiner (22/26/32) --- */
+      /* --- Cluster nog kleiner (18/22/26) --- */
       ".marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:transparent!important}" +
       ".marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{" +
         "background:linear-gradient(135deg,#8a5c26,#e2a857)!important;" +
         "color:#070c16!important;font-weight:800!important;" +
         "border:1px solid rgba(255,255,255,.85)!important;" +
-        "box-shadow:0 1px 4px rgba(0,0,0,.55),0 0 8px rgba(226,168,87,.3)!important;" +
+        "box-shadow:0 1px 3px rgba(0,0,0,.55),0 0 6px rgba(226,168,87,.28)!important;" +
         "display:flex!important;align-items:center!important;justify-content:center!important;" +
         "font-family:Inter,sans-serif!important;" +
       "}" +
-      ".marker-cluster-small, .marker-cluster-small div{width:22px!important;height:22px!important}" +
-      ".marker-cluster-small{margin-left:-11px!important;margin-top:-11px!important}" +
-      ".marker-cluster-medium, .marker-cluster-medium div{width:26px!important;height:26px!important}" +
-      ".marker-cluster-medium{margin-left:-13px!important;margin-top:-13px!important}" +
-      ".marker-cluster-large, .marker-cluster-large div{width:32px!important;height:32px!important}" +
-      ".marker-cluster-large{margin-left:-16px!important;margin-top:-16px!important}" +
-      ".marker-cluster div span{font-size:.62rem!important;line-height:1!important}";
+      ".marker-cluster-small, .marker-cluster-small div{width:18px!important;height:18px!important}" +
+      ".marker-cluster-small{margin-left:-9px!important;margin-top:-9px!important}" +
+      ".marker-cluster-medium, .marker-cluster-medium div{width:22px!important;height:22px!important}" +
+      ".marker-cluster-medium{margin-left:-11px!important;margin-top:-11px!important}" +
+      ".marker-cluster-large, .marker-cluster-large div{width:26px!important;height:26px!important}" +
+      ".marker-cluster-large{margin-left:-13px!important;margin-top:-13px!important}" +
+      ".marker-cluster div span{font-size:.56rem!important;line-height:1!important;letter-spacing:-.02em!important}";
     document.head.appendChild(s);
   }
 
@@ -404,20 +404,21 @@
       center: [40, 30],
       zoom: 3,
       minZoom: 2,
-      maxZoom: 19,
+      maxZoom: 16,
       worldCopyJump: true,
       zoomControl: false,
-      attributionControl: false,   /* ← geen attribution-veld meer */
+      attributionControl: false,
       preferCanvas: true
     });
 
-    /* CARTO Dark Matter via Fastly mirror — wereldwijd betrouwbaar */
-    MAP.tileLayer = L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 20,
-      subdomains: "abcd",
-      detectRetina: true,
-      crossOrigin: true
-    }).addTo(MAP.instance);
+    /* Esri Dark Gray Canvas — geen API key, donker, wereldwijd */
+    MAP.tileLayer = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 16,
+        crossOrigin: true
+      }
+    ).addTo(MAP.instance);
 
     MAP.cluster = L.markerClusterGroup({
       maxClusterRadius: 45,

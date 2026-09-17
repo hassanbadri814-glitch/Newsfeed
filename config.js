@@ -1,6 +1,6 @@
 /* ============================================================
-   WAR DESK v19.6 — Configuratie
-   Google News fallback + langere client timeout (10s)
+   WAR DESK v19.7 — Configuratie
+   Google News fallback + slimme proxy routing
    ============================================================ */
 
 window.CONFIG = {
@@ -13,14 +13,21 @@ window.CONFIG = {
 
   proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
+  /* Werkende proxies — corsproxy.io verwijderd (401) */
   proxies: [
     "https://newsfeed2.hassanbadri814.workers.dev/?url=",
     "https://nieuwsproxy.hassanbadri814.workers.dev/?url=",
-    "https://api.allorigins.win/raw?url=",
-    "https://corsproxy.io/?url="
+    "https://api.allorigins.win/raw?url="
   ],
 
-  fetchTimeoutMs: 10000,       // Gewijzigd: 5000 → 10000
+  /* Speciale volgorde voor Google News — allorigins eerst */
+  googleNewsProxies: [
+    "https://api.allorigins.win/raw?url=",
+    "https://newsfeed2.hassanbadri814.workers.dev/?url=",
+    "https://nieuwsproxy.hassanbadri814.workers.dev/?url="
+  ],
+
+  fetchTimeoutMs: 10000,
   parallelWorkers: 5
 };
 
@@ -47,6 +54,9 @@ window.KEYWORDS_MED = [
   "crash","collapse","wounded","injured"
 ];
 
+/* ============================================================
+   NIEUWSBRONNEN
+   ============================================================ */
 window.FEEDS = [
   // ===== NEDERLAND =====
   {n:"NOS",lang:"nl",cat:"nl",url:"https://feeds.nos.nl/nosnieuwsalgemeen"},
@@ -220,4 +230,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v19.6 geladen —", window.FEEDS.length, "feeds, timeout 10s");
+console.log("[WAR DESK] config.js v19.7 geladen —", window.FEEDS.length, "feeds, Google News routing actief");

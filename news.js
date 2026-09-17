@@ -150,7 +150,6 @@ function detectTopic(title, desc, fallback){
     /\b(voetbal|football|soccer|eredivisie|eerste divisie|knvb|ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|n\.e\.c\.|sparta|willem ii|go ahead|pec zwolle|rkc|fortuna sittard|excelsior|almere city|heracles|voetbalzone|voetbalnieuws|voetbalprimeur|match|wedstrijd|goal|doelpunt|keeper|doelman|coach|trainer|speler|selectie|toernooi|competitie|champions league|europa league|conference league|knvb beker|johan cruijff schaal|fifa|uefa|wk|ek|kickboxing|glory|mma|ufc|boksen|boks|vechtsport|formule 1|f1|grand prix|motogp|olympische|tennis|wimbledon|roland garros|us open|australian open|basketbal|nba|nfl|nhl|mlb|wielrennen|tour de france|giro|vuelta|darts|schaatsen|zwemmen|atletiek|hockey|handbal|volleybal|honkbal|rugby|cricket|golf|surfen|ski|snowboard)\b/.test(t);
 
   if(sportSignal){
-    // Alleen echt oorlogsgeweld
     if(/\b(airstrike|missile strike|invasion|massacre|shelling)\b/.test(t)) return "war";
     return "sport";
   }
@@ -401,11 +400,20 @@ function renderNews(){
   count.textContent = list.length + " artikelen";
 
   if(!list.length){
-    grid.innerHTML = '<div class="empty-state">' +
-      '<div class="empty-icon">◌</div>' +
-      '<div class="empty-msg">Geen artikelen</div>' +
-      '<div class="empty-hint">Probeer een andere categorie of zoekterm</div>' +
-      '</div>';
+    // Onderscheid tussen "nog aan het laden" en "echt geen artikelen"
+    if(State.items.length === 0){
+      grid.innerHTML = '<div class="empty-state">' +
+        '<div class="empty-icon">◌</div>' +
+        '<div class="empty-msg">Nieuws wordt geladen...</div>' +
+        '<div class="empty-hint">Eerste keer kan 20-30 seconden duren</div>' +
+        '</div>';
+    } else {
+      grid.innerHTML = '<div class="empty-state">' +
+        '<div class="empty-icon">◌</div>' +
+        '<div class="empty-msg">Geen artikelen in deze categorie</div>' +
+        '<div class="empty-hint">Probeer een andere categorie of zoekterm</div>' +
+        '</div>';
+    }
     return;
   }
 

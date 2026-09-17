@@ -1,7 +1,8 @@
 /* ============================================================
-   WAR DESK v19.2 — Nieuws logica (robust parser + proxy fallback)
+   WAR DESK v19.3 — Nieuws logica (Fase 1, 2 & 3 geïntegreerd)
+   Robuuste parser + proxy fallback + Tag-gebaseerde filtering
    ============================================================ */
-window.__newsVersion = "v19.2-fallback-proxy";
+window.__newsVersion = "v19.3-tags-fallback-proxy";
 
 /* ===== STATE ===== */
 window.State = {
@@ -23,7 +24,8 @@ window.State = {
   breakingShownAt: 0,
   lastBreakingItem: null,
   loadSession: 0,
-  db: null
+  db: null,
+  _lastRenderHash: "" // Fase 3: Voorkomt onnodige DOM updates
 };
 
 /* ===== INDEXEDDB ===== */
@@ -78,6 +80,8 @@ var NewsDB = (function(){
       }catch(e){ res([]); }
     });
   }
+  
+  // Fase 3: Slimmere opslag — behoud tags en vermijd onnodige clear
   function saveItems(items){
     if(!db) return Promise.resolve();
     return new Promise(function(res){
@@ -89,13 +93,14 @@ var NewsDB = (function(){
           store.put({
             link: it.link, title: it.title, desc: it.desc, img: it.img,
             date: it.date, source: it.source, cat: it.cat, lang: it.lang,
-            sources: it.sources
+            sources: it.sources, tags: it.tags || [] // Behoud tags
           });
         });
         tx.oncomplete = function(){ res(); };
       }catch(e){ res(); }
     });
   }
+  
   return {
     open: open,
     put: put,
@@ -142,30 +147,35 @@ function esc(s){
   });
 }
 
-/* ===== TOPIC DETECTION — sport eerst ===== */
-function detectTopic(title, desc, fallback){
+/* ===== FASE 1: TAGS EXTRACTIE =====
+   Overschrijft NIET de bron-categorie. Voegt alleen tags toe. */
+function extractTags(title, desc, fallback){
+  var tags = [];
   var t = ((title || "") + " " + (desc || "")).toLowerCase();
 
-  var sportSignal = fallback === "sport" ||
-    /\b(voetbal|football|soccer|eredivisie|eerste divisie|knvb|ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|n\.e\.c\.|sparta|willem ii|go ahead|pec zwolle|rkc|fortuna sittard|excelsior|almere city|heracles|voetbalzone|voetbalnieuws|voetbalprimeur|match|wedstrijd|goal|doelpunt|keeper|doelman|coach|trainer|speler|selectie|toernooi|competitie|champions league|europa league|conference league|knvb beker|johan cruijff schaal|fifa|uefa|wk|ek|kickboxing|glory|mma|ufc|boksen|boks|vechtsport|formule 1|f1|grand prix|motogp|olympische|tennis|wimbledon|roland garros|us open|australian open|basketbal|nba|nfl|nhl|mlb|wielrennen|tour de france|giro|vuelta|darts|schaatsen|zwemmen|atletiek|hockey|handbal|volleybal|honkbal|rugby|cricket|golf|surfen|ski|snowboard)\b/.test(t);
-
-  if(sportSignal){
-    if(/\b(airstrike|missile strike|invasion|massacre|shelling)\b/.test(t)) return "war";
-    return "sport";
+  // Sport tags
+  var sportSignal = /\b(voetbal|football|soccer|eredivisie|eerste divisie|knvb|ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|n\.e\.c\.|sparta|willem ii|go ahead|pec zwolle|rkc|fortuna sittard|excelsior|almere city|heracles|voetbalzone|voetbalnieuws|voetbalprimeur|match|wedstrijd|goal|doelpunt|keeper|doelman|coach|trainer|speler|selectie|toernooi|competitie|champions league|europa league|conference league|knvb beker|johan cruijff schaal|fifa|uefa|wk|ek|kickboxing|glory|mma|ufc|boksen|boks|vechtsport|formule 1|f1|grand prix|motogp|olympische|tennis|wimbledon|roland garros|us open|australian open|basketbal|nba|nfl|nhl|mlb|wielrennen|tour de france|giro|vuelta|darts|schaatsen|zwemmen|atletiek|hockey|handbal|volleybal|honkbal|rugby|cricket|golf|surfen|ski|snowboard)\b/.test(t);
+  if(sportSignal && !/\b(airstrike|missile strike|invasion|massacre|shelling)\b/.test(t)){
+    tags.push("sport");
   }
 
-  if(/\b(gaza|rafah|khan younis|hamas|palestin|netanyahu|tel aviv|jerusalem|idf|hebron|jenin|nablus|ramallah|west bank)\b/.test(t)) return "gaza";
-  if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah|sidon|tripoli|tyre)\b/.test(t)) return "lebanon";
-  if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf|pezeshkian)\b/.test(t)) return "iran";
-  if(/\b(syria|syrian|damascus|assad|idlib|aleppo|homs|raqqa|sharaa)\b/.test(t)) return "syria";
-  if(/\b(yemen|yemeni|houthi|sanaa|aden|taiz|hodeidah)\b/.test(t)) return "yemen";
-  if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|kharkiv|odesa|donbas|crimea|donetsk|luhansk|mariupol|putin|kremlin|moscow|russia)\b/.test(t)) return "ukraine";
-  if(/\b(sudan|sudanese|khartoum|darfur|rsf|omdurman)\b/.test(t)) return "sudan";
-  if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara)\b/.test(t)) return "maroc";
+  // Regio / Conflict tags
+  if(/\b(gaza|rafah|khan younis|hamas|palestin|netanyahu|tel aviv|jerusalem|idf|hebron|jenin|nablus|ramallah|west bank)\b/.test(t)) tags.push("gaza", "mideast", "war");
+  if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah|sidon|tripoli|tyre)\b/.test(t)) tags.push("lebanon", "mideast", "war");
+  if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf|pezeshkian)\b/.test(t)) tags.push("iran", "mideast", "war");
+  if(/\b(syria|syrian|damascus|assad|idlib|aleppo|homs|raqqa|sharaa)\b/.test(t)) tags.push("syria", "mideast", "war");
+  if(/\b(yemen|yemeni|houthi|sanaa|aden|taiz|hodeidah)\b/.test(t)) tags.push("yemen", "mideast", "war");
+  if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|kharkiv|odesa|donbas|crimea|donetsk|luhansk|mariupol|putin|kremlin|moscow|russia)\b/.test(t)) tags.push("ukraine", "war");
+  if(/\b(sudan|sudanese|khartoum|darfur|rsf|omdurman)\b/.test(t)) tags.push("sudan", "war");
+  if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara)\b/.test(t)) tags.push("maroc");
 
-  if(/\b(airstrike|air strike|missile|invasion|invaded|ceasefire|cease-fire|military|soldier|troops|combat|offensive|bombing|shelling|artillery|tank|drone strike|hostage|massacre|war crime)\b/.test(t)) return "war";
+  // Algemene oorlog tags
+  if(/\b(airstrike|air strike|missile|invasion|invaded|ceasefire|cease-fire|military|soldier|troops|combat|offensive|bombing|shelling|artillery|tank|drone strike|hostage|massacre|war crime)\b/.test(t)){
+    if(tags.indexOf("war") === -1) tags.push("war");
+  }
 
-  return fallback || "algemeen";
+  // Unieke tags retourneren
+  return tags.filter(function(v, i, a){ return a.indexOf(v) === i; });
 }
 
 /* ===== SCORE ===== */
@@ -182,7 +192,7 @@ function scoreArticle(it){
   return score;
 }
 
-/* ===== DEDUPE ===== */
+/* ===== DEDUPE (Fase 1: Tags samenvoegen) ===== */
 function titleKey(title){
   return (title || "").toLowerCase().replace(/[^\w\s]/g, "")
     .split(/\s+/).filter(function(w){ return w.length > 3; })
@@ -196,19 +206,25 @@ function dedupe(items){
     if(!map.has(key)){
       var copy = {}; for(var k in it) copy[k] = it[k];
       copy.sources = [it.source];
+      copy.tags = it.tags ? it.tags.slice() : [];
       map.set(key, copy);
     } else {
       var e = map.get(key);
       if(e.sources.indexOf(it.source) < 0) e.sources.push(it.source);
+      // Voeg unieke tags samen
+      if(it.tags){
+        it.tags.forEach(function(t){
+          if(e.tags.indexOf(t) === -1) e.tags.push(t);
+        });
+      }
     }
   });
   return Array.from(map.values());
 }
 
 /* ============================================================
-   ROBUUSTE PARSER — XML / rss2json / genestelde JSON
+   ROBUUSTE PARSER
    ============================================================ */
-
 function parseRssXml(xmlText){
   try{
     var doc = new DOMParser().parseFromString(xmlText, "text/xml");
@@ -267,7 +283,7 @@ function normalizeItem(it){
 }
 
 /* ============================================================
-   PROXY FALLBACK
+   PROXY FALLBACK (Fase 2)
    ============================================================ */
 window.__proxyHealth = {};
 
@@ -278,7 +294,6 @@ function proxyHost(p){
 function markProxyFail(p){
   if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabled: false };
   window.__proxyHealth[p].fails++;
-  /* Na 5 opeenvolgende fails → proxy voor deze sessie uitzetten */
   if(window.__proxyHealth[p].fails >= 5) window.__proxyHealth[p].disabled = true;
 }
 
@@ -333,7 +348,7 @@ async function fetchFeedWithFallback(feedUrl){
   throw lastErr || new Error("alle proxies faalden");
 }
 
-/* ===== LOAD FEEDS ===== */
+/* ===== LOAD FEEDS (Fase 1 & 2 geïntegreerd) ===== */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
@@ -366,6 +381,8 @@ async function loadAllFeeds(){
         var key = String(it.link || titleClean).toLowerCase().trim();
         if(key && !collectedLinks[key]){
           collectedLinks[key] = 1;
+          // FASE 1 FIX: Behoud de bron-categorie, voeg tags toe
+          var detectedTags = extractTags(titleClean, descClean, f.cat);
           collected.push({
             title: titleClean,
             link: it.link || "#",
@@ -373,14 +390,14 @@ async function loadAllFeeds(){
             img: it.thumbnail || "",
             date: it.pubDate || "",
             source: f.n,
-            cat: detectTopic(titleClean, descClean, f.cat),
+            cat: f.cat, // <-- Dit is de fix! Nooit meer overschrijven.
+            tags: detectedTags,
             lang: f.lang
           });
           added++;
         }
       });
 
-      /* Diagnostiek — alleen in debug modus */
       if(window.__wdDebug && window.__wdDiagCount < 5 && window.wdLog){
         window.__wdDiagCount++;
         var pTag = proxyIdx === 0 ? "p1" : ("p" + (proxyIdx + 1));
@@ -428,8 +445,6 @@ async function loadAllFeeds(){
 
   document.getElementById("statSources").textContent = State.loadedSources + "/" + State.totalSources;
   document.getElementById("statItems").textContent = State.items.length;
-  var statWar = document.getElementById("statWar");
-  if(statWar) statWar.textContent = State.items.filter(function(x){ return x.cat === "war"; }).length;
 
   NewsDB.saveItems(State.items);
   NewsDB.saveHealth(State.health);
@@ -496,13 +511,18 @@ function detectBreaking(){
   banner._timer = setTimeout(function(){ banner.classList.remove("show"); }, 30000);
 }
 
-/* ===== FILTER + RENDER ===== */
+/* ===== FILTER + RENDER (Fase 1 & 3 geïntegreerd) ===== */
 function filterItems(){
   var list = State.items.slice();
 
   if(State.currentCat !== "all"){
     var cats = CAT_GROUPS[State.currentCat] || [State.currentCat];
-    list = list.filter(function(it){ return cats.indexOf(it.cat) >= 0; });
+    list = list.filter(function(it){
+      // Match op de bron-categorie OF op een van de tags
+      var matchCat = cats.indexOf(it.cat) >= 0;
+      var matchTags = it.tags && it.tags.some(function(t){ return cats.indexOf(t) >= 0; });
+      return matchCat || matchTags;
+    });
   }
 
   if(State.currentSearch){
@@ -527,6 +547,13 @@ function renderNews(){
   var grid = document.getElementById("feedGrid");
   var title = document.getElementById("newsTitle");
   var count = document.getElementById("newsCount");
+
+  // FASE 3: Voorkom onnodige DOM updates als de lijst niet is veranderd
+  var hash = State.currentCat + "|" + State.currentSort + "|" + State.currentSearch + "|" + State.viewMode + "|" + list.length + "|" + list.slice(0, 5).map(function(x){ return x.link; }).join(",");
+  if(hash === State._lastRenderHash){
+    return;
+  }
+  State._lastRenderHash = hash;
 
   var titles = {
     all: "Laatste berichten",

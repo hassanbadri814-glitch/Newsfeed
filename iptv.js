@@ -1,5 +1,6 @@
 /* ============================================================
-   WAR DESK v19.0 — IPTV (Xtream Codes) v3
+   WAR DESK v19.0 — IPTV (Xtream Codes) v4
+   Direct VLC + fallback detectie
    ============================================================ */
 
 (function(){
@@ -16,7 +17,11 @@
     currentGroup: "all",
     hlsInstance: null,
     hlsLoaded: false,
-    db: null
+    db: null,
+    /* VLC tracking */
+    vlcOpenTime: 0,
+    vlcWatchdog: null,
+    vlcDidHide: false
   };
 
   /* ===== DB ===== */
@@ -352,15 +357,72 @@
     });
   }
 
-  function vlcOpen(url){
+  /* ===== VLC met watchdog ===== */
+  function vlcOpen(url, channelName){
+    IPTV.vlcOpenTime = Date.now();
+    IPTV.vlcDidHide = false;
+
+    clearTimeout(IPTV.vlcWatchdog);
+
+    // Watchdog 1: na 3 sec kijken of we nog in de app zijn
+    // Als we nog zichtbaar zijn → VLC is niet opengegaan
+    IPTV.vlcWatchdog = setTimeout(function(){
+      if(!IPTV.vlcDidHide){
+        // VLC opende niet
+        if(window.showToast) window.showToast("VLC opent niet — is VLC geïnstalleerd?");
+        LOG("VLC watchdog: pagina bleef zichtbaar");
+      }
+    }, 3000);
+
+    // Open VLC via intent
     try{
-      window.location.href = "intent:" + url + "#Intent;package=org.videolan.vlc;type=video/*;end";
+      window.location.href = "intent:" + url + "#Intent;package=org.videolan.vlc;type=video/*;S.title=" + encodeURIComponent(channelName || "WAR DESK") + ";end";
     }catch(e){
+      clearTimeout(IPTV.vlcWatchdog);
       if(window.showToast) window.showToast("VLC niet gevonden");
+      LOG("VLC open fout:", e);
     }
   }
 
+  // Detecteer of we de app verlaten (VLC opent)
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden){
+      // App gaat naar achtergrond — VLC opent
+      if(IPTV.vlcOpenTime && Date.now() - IPTV.vlcOpenTime < 5000){
+        IPTV.vlcDidHide = true;
+        clearTimeout(IPTV.vlcWatchdog);
+        LOG("App verborgen — VLC geopend");
+      }
+    } else {
+      // App komt terug
+      if(IPTV.vlcOpenTime){
+        var elapsed = Date.now() - IPTV.vlcOpenTime;
+        IPTV.vlcOpenTime = 0;
+        LOG("Terug in app na " + elapsed + "ms");
+        // Fallback 2: als je binnen 2 sec terug bent → stream werkte niet
+        if(elapsed < 2000 && IPTV.vlcDidHide){
+          setTimeout(function(){
+            if(window.showToast) window.showToast("Stream lijkt offline — probeer een ander kanaal");
+          }, 400);
+        }
+      }
+    }
+  });
+
+  /* ===== KANAAL SPELEN ===== */
   function playChannel(ch){
+    var url = ch.url;
+    var isHttp = /^http:\/\//i.test(url);
+    var isHttpsPage = location.protocol === "https:";
+
+    // HTTP stream → direct VLC
+    if(isHttp && isHttpsPage){
+      if(window.showToast) window.showToast("Openen in VLC...");
+      vlcOpen(url, ch.name);
+      return;
+    }
+
+    // HTTPS of HLS → overlay speler
     var overlay = $("iptvPlayer");
     var title = $("iptvPlayerTitle");
     var video = $("iptvVideo");
@@ -371,31 +433,6 @@
     overlay.classList.add("show");
     if(IPTV.hlsInstance){ try{ IPTV.hlsInstance.destroy(); }catch(e){} IPTV.hlsInstance = null; }
     video.pause(); video.removeAttribute("src"); video.load();
-
-    var url = ch.url;
-    var isHttp = /^http:\/\//i.test(url);
-    var isHttpsPage = location.protocol === "https:";
-
-    if(isHttp && isHttpsPage){
-      status.innerHTML = '⚠ HTTP-stream kan niet direct in HTTPS-browser.<br>' +
-        '<div class="iptv-action-row">' +
-        '<button class="iptv-btn primary" id="iptvOpenVlc">📺 Open in VLC</button>' +
-        '<button class="iptv-btn" id="iptvCopyUrl">📋 Kopieer URL</button>' +
-        '</div>';
-      var vlcBtn = $("iptvOpenVlc");
-      if(vlcBtn) vlcBtn.onclick = function(){
-        closePlayer();
-        if(window.showToast) window.showToast("Openen in VLC...");
-        vlcOpen(url);
-      };
-      var copyBtn = $("iptvCopyUrl");
-      if(copyBtn) copyBtn.onclick = function(){
-        navigator.clipboard.writeText(url).then(function(){
-          if(window.showToast) window.showToast("URL gekopieerd");
-        });
-      };
-      return;
-    }
 
     var isHls = /\.m3u8(\?|$)/i.test(url);
 
@@ -416,21 +453,11 @@
           });
           IPTV.hlsInstance.on(window.Hls.Events.ERROR, function(e, data){
             if(data.fatal){
-              status.innerHTML = 'Streamfout: ' + data.details +
-                '<div class="iptv-action-row">' +
-                '<button class="iptv-btn primary" id="iptvOpenVlc">📺 Open in VLC</button>' +
-                '</div>';
-              var b = $("iptvOpenVlc");
-              if(b) b.onclick = function(){ closePlayer(); vlcOpen(url); };
+              status.innerHTML = 'Streamfout: ' + data.details;
             }
           });
         } else {
-          status.innerHTML = 'HLS niet ondersteund.' +
-            '<div class="iptv-action-row">' +
-            '<button class="iptv-btn primary" id="iptvOpenVlc">📺 Open in VLC</button>' +
-            '</div>';
-          var b2 = $("iptvOpenVlc");
-          if(b2) b2.onclick = function(){ closePlayer(); vlcOpen(url); };
+          status.innerHTML = 'HLS niet ondersteund. Gebruik VLC.';
         }
       });
     } else {

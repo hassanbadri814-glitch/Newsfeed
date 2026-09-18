@@ -1,10 +1,10 @@
 /* ============================================================
-   WAR DESK v20.3 — Nieuws logica
-   - Progressive rendering: artikelen verschijnen tijdens laden
-   - Skeleton-loaders
-   - Specifieke lege-staat per categorie
+   WAR DESK v20.4 — Nieuws logica
+   - Progressive rendering: MERGE in plaats van overschrijven
+   - Sortering volledig via filterItems()
+   - Hard refresh functie
    ============================================================ */
-window.__newsVersion = "v20.3-progressive";
+window.__newsVersion = "v20.4-merge-progressive";
 
 window.State = {
   items: [],
@@ -371,12 +371,16 @@ async function fetchFeedWithFallback(feedUrl){
 }
 
 /* ============================================================
-   LOAD FEEDS — met progressive rendering
+   LOAD FEEDS — met merge-based progressive rendering
    ============================================================ */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
 
   window.__proxyHealth = {};
+
+  /* FIX: snapshot van bestaande items — deze worden NOOIT overschreven,
+     alleen aangevuld met nieuwe items */
+  var itemsAtStart = State.items.slice();
 
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
   State.totalSources = active.length;
@@ -394,9 +398,7 @@ async function loadAllFeeds(){
 
   window.__wdDiagCount = 0;
 
-  /* ===== PROGRESSIVE RENDERING =====
-     Elke 1.5s een checkpoint: render zichtbare items zonder te wachten
-     tot alle feeds klaar zijn. */
+  /* ===== PROGRESSIVE RENDERING (MERGE) ===== */
   var lastProgressiveCount = 0;
   var progressiveTimer = setInterval(function(){
     if(session !== State.loadSession){
@@ -406,18 +408,14 @@ async function loadAllFeeds(){
     if(collected.length <= lastProgressiveCount) return;
     lastProgressiveCount = collected.length;
 
-    var deduped = dedupe(collected);
-    State.items = deduped.sort(function(a, b){ return tm(b.date) - tm(a.date); });
+    /* FIX: merge nieuwe items MET oude items — nooit overschrijven */
+    State.items = dedupe(collected.concat(itemsAtStart));
 
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = State.items.length;
 
     State._lastRenderHash = "";
     renderNews();
-
-    if(window.__wdDebug && window.wdLog && collected.length === lastProgressiveCount){
-      /* alleen loggen als we daadwerkelijk renderen */
-    }
   }, 1500);
 
   async function processOne(f){
@@ -493,13 +491,12 @@ async function loadAllFeeds(){
   }
   await Promise.all(workers);
 
-  /* Stop progressive timer en doe finale render */
   clearInterval(progressiveTimer);
 
   if(session !== State.loadSession) return;
 
-  var deduped = dedupe(collected);
-  State.items = deduped.sort(function(a, b){ return tm(b.date) - tm(a.date); });
+  /* FIX: finale render — merge opnieuw, geen hardcoded sortering */
+  State.items = dedupe(collected.concat(itemsAtStart));
 
   var srcEl = document.getElementById("statSources");
   if(srcEl) srcEl.textContent = State.loadedSources + "/" + State.totalSources;
@@ -771,6 +768,41 @@ async function initNews(){
     window.addEventListener(ev, function(){ State.lastActivity = Date.now(); }, {passive:true});
   });
 }
+
+/* ===== HARD REFRESH — wist alles en herlaadt ===== */
+window.__hardRefresh = async function(){
+  if(!window.NewsAPI) return;
+  if(!confirm('Alle artikelen wissen en opnieuw laden?\n\nDit kan 30-60 seconden duren.')) return;
+
+  try{
+    if(window.showToast) window.showToast("🔄 Hard refresh gestart...");
+
+    State.items = [];
+    State.disabled = {};
+    State.health = {};
+    State.loadedSources = 0;
+    State.totalSources = 0;
+    State.failedSources = [];
+    State._lastRenderHash = "";
+
+    await NewsDB.saveItems([]);
+
+    var grid = document.getElementById("feedGrid");
+    if(grid) renderSkeletons(grid);
+
+    var itemsEl = document.getElementById("statItems");
+    if(itemsEl) itemsEl.textContent = "0";
+    var srcEl = document.getElementById("statSources");
+    if(srcEl) srcEl.textContent = "0/0";
+
+    await NewsAPI.reload();
+
+    if(window.showToast) window.showToast("✓ Hard refresh klaar");
+  }catch(e){
+    console.error("[WAR DESK] hard refresh fout:", e);
+    if(window.showToast) window.showToast("Hard refresh mislukt");
+  }
+};
 
 window.NewsAPI = {
   init: initNews,

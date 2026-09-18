@@ -1,7 +1,8 @@
 /* ============================================================
-   WAR DESK v3.5 — IPTV
-   - "Alle" pill verwijderd (want rechts staat al "Alle kanalen")
-   - "Groepen" en "Alle kanalen" pills even groot
+   WAR DESK v3.6 — IPTV
+   - Pills-rij opgeschoond: alleen Groepen (links) + Alle kanalen (rechts)
+   - Recent pill verwijderd
+   - Horizontale midden-scroll verwijderd
    ============================================================ */
 
 (function(){
@@ -9,7 +10,7 @@
 
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[IPTV]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
-  LOG("v3.5 geladen");
+  LOG("v3.6 geladen");
 
   var IPTV = {
     server: "", user: "", pass: "",
@@ -25,15 +26,12 @@
     vlcWatchdog: null,
     vlcDidHide: false,
     isLoading: false,
-    recent: [],
     workingChannels: {},
     visibleList: [],
     _initialized: false,
     _groupsBound: false
   };
 
-  var MAX_RECENT = 10;
-  var RECENT_STORAGE_KEY = "wardesk_iptv_recent";
   var VOLUME_STORAGE_KEY = "wardesk_iptv_volume";
   var MUTE_STORAGE_KEY = "wardesk_iptv_mute";
   var VIEW_STORAGE_KEY = "wardesk_iptv_view";
@@ -110,23 +108,7 @@
     });
   }
 
-  /* ========== RECENT + WORKING ========== */
-  function loadRecent(){
-    try {
-      var raw = localStorage.getItem(RECENT_STORAGE_KEY);
-      IPTV.recent = raw ? JSON.parse(raw) : [];
-      if(!Array.isArray(IPTV.recent)) IPTV.recent = [];
-    } catch(e) { IPTV.recent = []; }
-  }
-  function saveRecent(){
-    try { localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(IPTV.recent.slice(0, MAX_RECENT))); } catch(e){}
-  }
-  function addRecent(ch){
-    IPTV.recent = IPTV.recent.filter(function(x){ return x.id !== ch.id; });
-    IPTV.recent.unshift({ id: ch.id, name: ch.name, logo: ch.logo, group: ch.group });
-    IPTV.recent = IPTV.recent.slice(0, MAX_RECENT);
-    saveRecent();
-  }
+  /* ========== WORKING ========== */
   function markWorking(ch){
     IPTV.workingChannels[ch.id] = Date.now();
     try { localStorage.setItem("wardesk_iptv_working", JSON.stringify(IPTV.workingChannels)); } catch(e){}
@@ -278,7 +260,6 @@
     await dbDelete("creds");
     await dbDelete("channels");
     IPTV.server = ""; IPTV.user = ""; IPTV.pass = ""; IPTV.channels = [];
-    IPTV.recent = []; saveRecent();
     var sEl = $("iptvServer"); if(sEl) sEl.value = "";
     var uEl = $("iptvUser"); if(uEl) uEl.value = "";
     var pEl = $("iptvPass"); if(pEl) pEl.value = "";
@@ -442,7 +423,7 @@
       });
     }
 
-    /* PILLS */
+    /* PILLS — alleen Groepen en Alle kanalen */
     var pills = $("iptvPills");
     if(pills){
       pills.addEventListener("click", function(e){
@@ -542,7 +523,6 @@
       }
     }
 
-    /* Player controls */
     var playerClose = $("iptvPlayerClose");
     if(playerClose) playerClose.addEventListener("click", closePlayer);
 
@@ -627,43 +607,24 @@
     if(!wrap) return;
     if(!IPTV.channels.length){ wrap.innerHTML = ""; return; }
 
-    var groups = {}, order = [];
-    IPTV.channels.forEach(function(c){
-      if(!groups[c.group]){ groups[c.group] = 0; order.push(c.group); }
-      groups[c.group]++;
-    });
-    order.sort(function(a, b){ return groups[b] - groups[a]; });
-
-    /* Links: Groepen */
-    var leftHtml = '<button class="iptv-pill iptv-pill-eq iptv-pill-groups" data-action="open-groups" title="Alle groepen">☰ Groepen</button>';
-
-    /* Midden: Recent + top groups (scrollend) — GEEN "Alle" meer */
-    var middleHtml = "";
-    if(IPTV.recent.length){
-      middleHtml += '<button class="iptv-pill ' + (IPTV.currentGroup === "recent" ? "active" : "") + '" data-group="recent">★ Recent (' + IPTV.recent.length + ')</button>';
-    }
-    order.slice(0, 8).forEach(function(g){
-      var short = g.length > 18 ? g.slice(0, 17) + "…" : g;
-      middleHtml += '<button class="iptv-pill ' + (IPTV.currentGroup === g ? "active" : "") + '" data-group="' + esc(g) + '">' + esc(short) + ' (' + groups[g] + ')</button>';
-    });
-
-    /* Rechts: Alle kanalen */
     var totalCount = IPTV.channels.length;
+    var groupsCount = {};
+    IPTV.channels.forEach(function(c){
+      groupsCount[c.group] = (groupsCount[c.group] || 0) + 1;
+    });
+    var groupNumber = Object.keys(groupsCount).length;
+
+    var leftHtml = '<button class="iptv-pill iptv-pill-eq iptv-pill-groups" data-action="open-groups" title="Alle groepen">☰ Groepen (' + groupNumber + ')</button>';
     var rightHtml = '<button class="iptv-pill iptv-pill-eq iptv-pill-allchannels ' + (IPTV.currentGroup === "all" ? "active" : "") + '" data-group="all" title="Alle kanalen">Alle kanalen (' + totalCount + ')</button>';
 
     wrap.innerHTML =
       '<div class="iptv-pills-left">' + leftHtml + '</div>' +
-      '<div class="iptv-pills-middle">' + middleHtml + '</div>' +
       '<div class="iptv-pills-right">' + rightHtml + '</div>';
   }
 
   function getVisibleChannels(){
     var list = IPTV.channels;
-    if(IPTV.currentGroup === "recent"){
-      var recentIds = {};
-      IPTV.recent.forEach(function(r){ recentIds[r.id] = 1; });
-      list = list.filter(function(c){ return recentIds[c.id]; });
-    } else if(IPTV.currentGroup === "search" && IPTV.searchQuery){
+    if(IPTV.currentGroup === "search" && IPTV.searchQuery){
       var q = IPTV.searchQuery;
       list = list.filter(function(c){
         return (c.name || "").toLowerCase().indexOf(q) >= 0 ||
@@ -712,7 +673,6 @@
     if(!list.length){
       var msg;
       if(IPTV.currentGroup === "search") msg = 'Geen kanalen gevonden voor "' + esc(IPTV.searchQuery) + '"';
-      else if(IPTV.currentGroup === "recent") msg = "Nog geen recent bekeken kanalen";
       else msg = "Geen kanalen in deze groep";
       grid.innerHTML = '<div class="empty-state">' +
         '<div class="empty-icon">🔍</div>' +
@@ -877,7 +837,6 @@
     if(spinner) spinner.classList.add("show");
 
     var isHls = /\.m3u8(\?|$)/i.test(url);
-    addRecent(ch);
 
     var markAndUpdate = function(){
       markWorking(ch);
@@ -953,7 +912,6 @@
     try{
       LOG("init start");
       await openDB();
-      loadRecent();
       loadWorking();
       loadViewMode();
 

@@ -1,5 +1,5 @@
 /* ============================================================
-   WAR DESK v3.0 — State persistentie
+   WAR DESK v3.1 — State persistentie
    ============================================================ */
 
 (function(){
@@ -7,7 +7,7 @@
 
   var KEY = "wardesk_ui_state_v1";
   var VIEW_KEY = "wardesk_active_view_v1";
-  var VALID_CATS = ["all","war","mideast","europe","nl","sport","favorites"];
+  var VALID_CATS = ["all","war","mideast","europe","nl","maroc","vs","sport","favorites"];
   var VALID_SORTS = ["importance","newest"];
   var VALID_VIEWS = ["cards","list"];
 
@@ -112,5 +112,5 @@
   if(document.readyState !== "loading") initPersist();
   else document.addEventListener("DOMContentLoaded", initPersist);
 
-  console.log("[WAR DESK] persist.js v3.0 geladen");
+  console.log("[WAR DESK] persist.js v3.1 geladen");
 })();

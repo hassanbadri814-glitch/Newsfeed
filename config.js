@@ -1,6 +1,6 @@
 /* ============================================================
-   WAR DESK v20.5 — Configuratie
-   - Stadia Maps API-key
+   WAR DESK v20.6 — Configuratie
+   - IPTV opties toegevoegd
    ============================================================ */
 
 window.CONFIG = {
@@ -21,6 +21,15 @@ window.CONFIG = {
   detailCacheMax: 500,
   detailCacheTTL: 7200000,
   stadiaKey: "6b91d05e-5862-449d-ab5d-a34a15e2112e",
+
+  /* IPTV */
+  iptvMaxRecent: 10,
+  iptvChannelsDisplayMax: 500,
+  iptvHlsCdns: [
+    "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js",
+    "https://unpkg.com/hls.js@1/dist/hls.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.15/hls.min.js"
+  ],
 
   proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
@@ -226,4 +235,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v20.5 geladen —", window.FEEDS.length, "feeds, Stadia Maps");
+console.log("[WAR DESK] config.js v20.6 geladen —", window.FEEDS.length, "feeds");

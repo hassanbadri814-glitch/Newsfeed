@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="80%">
+      <stop offset="0%"   stop-color="#141e3a"/>
+      <stop offset="60%"  stop-color="#0a1226"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </radialGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#f5c176"/>
+      <stop offset="45%"  stop-color="#e2a857"/>
+      <stop offset="100%" stop-color="#8a5c26"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#e2a857" stop-opacity="0.18"/>
+      <stop offset="70%"  stop-color="#e2a857" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#e2a857" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="redGrad" cx="35%" cy="35%" r="70%">
+      <stop offset="0%"   stop-color="#ff7a8c"/>
+      <stop offset="60%"  stop-color="#e63950"/>
+      <stop offset="100%" stop-color="#a01f30"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <circle cx="256" cy="256" r="200" fill="url(#glow)"/>
+  <circle cx="256" cy="256" r="130" fill="none" stroke="#e2a857" stroke-width="1.5" opacity="0.16"/>
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#e2a857" stroke-width="1.5" opacity="0.09"/>
+  <g fill="none" stroke="url(#amberGrad)" stroke-width="26"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 168 196 L 210 316 L 252 196"/>
+    <path d="M 288 196 L 288 316 L 344 316"/>
+  </g>
+  <circle cx="250" cy="306" r="10" fill="url(#amberGrad)"/>
+  <circle cx="378" cy="134" r="20" fill="url(#redGrad)"/>
+  <circle cx="378" cy="134" r="6"  fill="#ffffff" opacity="0.9"/>
+</svg>

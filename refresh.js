@@ -1,29 +1,31 @@
 /* ============================================================
-   WAR DESK v15 — Refresh knop + status indicator
-   - Laadtijd-indicator nu ook zichtbaar op mobiel
+   WAR DESK v16.0 — Refresh knop + status indicator
    ============================================================ */
 
 (function(){
   "use strict";
 
   var $ = function(id){ return document.getElementById(id); };
+  var APP_VERSION = window.APP_VERSION || "v8.1";
 
-  window.addEventListener("DOMContentLoaded", function(){
+  function initRefresh(){
     var lastUpdate = null;
     var newCount = 0;
 
     var themeBtn = $("btnTheme");
-    if(!themeBtn) return;
+    var headerActions = themeBtn ? themeBtn.parentNode : document.querySelector(".header-actions");
+    if(!headerActions) return;
 
     var refreshBtn = document.createElement("button");
     refreshBtn.className = "btn-mini";
     refreshBtn.id = "btnRefresh";
     refreshBtn.setAttribute("aria-label", "Verversen");
     refreshBtn.textContent = "↻";
-    themeBtn.parentNode.insertBefore(refreshBtn, themeBtn);
+    if(themeBtn) headerActions.insertBefore(refreshBtn, themeBtn);
+    else headerActions.appendChild(refreshBtn);
 
     var statsEl = document.querySelector(".header-stats");
-    if(statsEl){
+    if(statsEl && !$("lastUpdateStat")){
       var updEl = document.createElement("div");
       updEl.className = "hstat teal";
       updEl.id = "lastUpdateStat";
@@ -64,7 +66,7 @@
         document.head.appendChild(s);
       }
 
-      NewsAPI.reload().then(function(){
+      Promise.resolve(NewsAPI.reload()).then(function(){
         var afterCount = (window.State && State.items.length) || 0;
         newCount = Math.max(0, afterCount - beforeCount);
         lastUpdate = Date.now();
@@ -72,11 +74,7 @@
         refreshBtn.style.animation = "";
         refreshBtn.disabled = false;
         refreshBtn.style.opacity = "1";
-        if(newCount > 0){
-          if(window.showToast) window.showToast(newCount + " nieuwe artikelen");
-        } else {
-          if(window.showToast) window.showToast("Geen nieuwe artikelen");
-        }
+        if(window.showToast) window.showToast(newCount > 0 ? (newCount + " nieuwe artikelen") : "Geen nieuwe artikelen");
       }).catch(function(){
         refreshBtn.style.animation = "";
         refreshBtn.disabled = false;
@@ -87,8 +85,10 @@
 
     refreshBtn.addEventListener("click", doRefresh);
 
-    if(window.NewsAPI && window.NewsAPI.reload){
+    if(window.NewsAPI && typeof NewsAPI.reload === "function" && !NewsAPI._wrapped){
       var origReload = NewsAPI.reload;
+      NewsAPI._originalReload = origReload;
+      NewsAPI._wrapped = true;
       NewsAPI.reload = function(){
         var p = origReload.apply(this, arguments);
         if(p && p.then){
@@ -113,6 +113,9 @@
       if(attempts > 200) clearInterval(waitInit);
     }, 500);
 
-    console.log("[WAR DESK] refresh.js v15 geladen — laadtijd zichtbaar op mobiel");
-  });
+    console.log("[WAR DESK] refresh.js " + APP_VERSION + " geladen");
+  }
+
+  if(document.readyState !== "loading") initRefresh();
+  else document.addEventListener("DOMContentLoaded", initRefresh);
 })();

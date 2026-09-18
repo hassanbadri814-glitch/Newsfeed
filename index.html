@@ -7,106 +7,166 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v8.0</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="WAR DESK">
+<title>WAR DESK v9.2</title>
+
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<link rel="mask-icon" href="icon.svg" color="#e0a857">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="./icons/icon-144.png">
+
 <script>
 try{
-  var t=localStorage.getItem("wardesk_theme");
-  if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches)){document.documentElement.classList.add("light")}
+  var t = localStorage.getItem("wardesk_theme");
+  if(t === "light" || (!t && matchMedia("(prefers-color-scheme:light)").matches)){
+    document.documentElement.classList.add("light");
+  }
 }catch(e){}
 try{
   var fs = localStorage.getItem("wardesk_font_size") || "medium";
-  var ac = localStorage.getItem("wardesk_accent_color") || "amber";
+  var ac = localStorage.getItem("wardesk_accent_color") || "goud";
+  var map = { amber:"goud", blue:"saffier", green:"smaragd", red:"koraal", mono:"parel" };
+  if(map[ac]) { ac = map[ac]; localStorage.setItem("wardesk_accent_color", ac); }
+  if(["goud","saffier","smaragd","kobalt","koraal","parel"].indexOf(ac) < 0) ac = "goud";
   document.documentElement.setAttribute("data-font-size", fs);
   document.documentElement.setAttribute("data-accent", ac);
+  if(localStorage.getItem("wardesk_oled_mode") === "1"){
+    document.documentElement.setAttribute("data-oled", "true");
+  }
 }catch(e){}
 </script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
-<link rel="stylesheet" href="styles.css?v=14">
+<link rel="stylesheet" href="styles.css?v=22">
 <style>
 /* ============================================================
    FONT-SIZE
    ============================================================ */
-html[data-font-size="small"] body { font-size: 13px; }
-html[data-font-size="medium"] body { font-size: 15px; }
-html[data-font-size="large"] body { font-size: 17px; }
+html[data-font-size="small"] body { font-size: 14px; }
+html[data-font-size="medium"] body { font-size: 16px; }
+html[data-font-size="large"] body { font-size: 18px; }
 
 /* ============================================================
-   ACCENTKLEUR
+   ACCENTKLEUREN — 6 thema's
    ============================================================ */
-html[data-accent="amber"] { --amber:#e2a857; --amber-2:#f0c78a; --amber-3:#8a5c26; }
-html[data-accent="blue"]  { --amber:#3b82f6; --amber-2:#93c5fd; --amber-3:#1e40af; }
-html[data-accent="green"] { --amber:#10b981; --amber-2:#6ee7b7; --amber-3:#065f46; }
-html[data-accent="red"]   { --amber:#e63950; --amber-2:#f87171; --amber-3:#991b1b; }
+html[data-accent="goud"]    { --amber:#e0a857; --amber-2:#f0c78a; --amber-3:#8a5c26; --accent-glow:rgba(224,168,87,.35); }
+html[data-accent="saffier"] { --amber:#5b9dff; --amber-2:#93c2ff; --amber-3:#1e40af; --accent-glow:rgba(91,157,255,.35); }
+html[data-accent="smaragd"] { --amber:#2dd4a8; --amber-2:#6ee7c8; --amber-3:#065f46; --accent-glow:rgba(45,212,168,.35); }
+html[data-accent="kobalt"]  { --amber:#8b7fff; --amber-2:#b3aaff; --amber-3:#3a2a99; --accent-glow:rgba(139,127,255,.35); }
+html[data-accent="koraal"]  { --amber:#ff6b7a; --amber-2:#ff9ba6; --amber-3:#991b2c; --accent-glow:rgba(255,107,122,.35); }
+html[data-accent="parel"]   { --amber:#e8eaf0; --amber-2:#ffffff; --amber-3:#6b7280; --accent-glow:rgba(232,234,240,.30); }
 
 /* ============================================================
-   ACHTERGROND-TINT — donker
+   ACHTERGROND — donker per thema
    ============================================================ */
-html[data-accent="amber"]{ --bg:#0e0a07; --bg-2:#17120c; --bg-3:#20180f; --card:#1b140c; --card-hover:#271c12; --line:#261b11; --line-2:#372716; }
-html[data-accent="blue"]{ --bg:#070c16; --bg-2:#0d1522; --bg-3:#131e30; --card:#111b2d; --card-hover:#18253c; --line:#1a2540; --line-2:#26344f; }
-html[data-accent="green"]{ --bg:#070f0a; --bg-2:#0b1710; --bg-3:#10221a; --card:#0e1d14; --card-hover:#152a1e; --line:#162a1e; --line-2:#1f3a2a; }
-html[data-accent="red"]{ --bg:#0f0708; --bg-2:#170b0d; --bg-3:#200e11; --card:#1c0b0e; --card-hover:#281216; --line:#281014; --line-2:#3a181e; }
-
-html[data-accent="amber"] .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(23,18,12,.95) 100%)}
-html[data-accent="green"] .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(11,23,16,.95) 100%)}
-html[data-accent="red"] .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(23,11,13,.95) 100%)}
-html[data-accent="amber"] .bottom-tabs{background:linear-gradient(180deg,rgba(23,18,12,.92),var(--bg-2))}
-html[data-accent="green"] .bottom-tabs{background:linear-gradient(180deg,rgba(11,23,16,.92),var(--bg-2))}
-html[data-accent="red"] .bottom-tabs{background:linear-gradient(180deg,rgba(23,11,13,.92),var(--bg-2))}
+html[data-accent="goud"]   { --bg:#0e0a07; --bg-2:#17120c; --bg-3:#20180f; --card:#1b140c; --card-hover:#271c12; --line:#261b11; --line-2:#372716; }
+html[data-accent="saffier"]{ --bg:#070c16; --bg-2:#0d1522; --bg-3:#131e30; --card:#111b2d; --card-hover:#18253c; --line:#1a2540; --line-2:#26344f; }
+html[data-accent="smaragd"]{ --bg:#070f0a; --bg-2:#0b1710; --bg-3:#10221a; --card:#0e1d14; --card-hover:#152a1e; --line:#162a1e; --line-2:#1f3a2a; }
+html[data-accent="kobalt"] { --bg:#0a0818; --bg-2:#100d24; --bg-3:#1a1532; --card:#15102b; --card-hover:#201a3d; --line:#221a44; --line-2:#352a5c; }
+html[data-accent="koraal"] { --bg:#0f0708; --bg-2:#170b0d; --bg-3:#200e11; --card:#1c0b0e; --card-hover:#281216; --line:#281014; --line-2:#3a181e; }
+html[data-accent="parel"]  { --bg:#080808; --bg-2:#111111; --bg-3:#1c1c1c; --card:#151515; --card-hover:#222222; --line:#252525; --line-2:#383838; }
 
 /* ============================================================
-   ACHTERGROND-TINT — licht
+   DIEPZWART MODUS (OLED)
    ============================================================ */
-html[data-accent="amber"].light, html[data-accent="amber"].light body.light{ --bg:#faf5ec; --bg-2:#fffcf5; --bg-3:#f0e6d4; --card:#fffdf7; --card-hover:#fcf7ee; --line:#f0e5d3; --line-2:#ddceb7; }
-html[data-accent="blue"].light, html[data-accent="blue"].light body.light{ --bg:#f0f3f8; --bg-2:#ffffff; --bg-3:#e3e8f0; --card:#ffffff; --card-hover:#f4f7fc; --line:#e1e6ee; --line-2:#ccd4de; }
-html[data-accent="green"].light, html[data-accent="green"].light body.light{ --bg:#f1f7f2; --bg-2:#ffffff; --bg-3:#e2ece4; --card:#ffffff; --card-hover:#f4f9f5; --line:#e1ece3; --line-2:#c8dbc9; }
-html[data-accent="red"].light, html[data-accent="red"].light body.light{ --bg:#f8f1f1; --bg-2:#ffffff; --bg-3:#f0e3e3; --card:#ffffff; --card-hover:#faf3f3; --line:#efe0e0; --line-2:#dbc7c7; }
-
-html[data-accent="amber"].light .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(255,252,245,.95) 100%)}
-html[data-accent="blue"].light .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(255,255,255,.95) 100%)}
-html[data-accent="green"].light .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(255,255,255,.95) 100%)}
-html[data-accent="red"].light .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(255,255,255,.95) 100%)}
-html[data-accent="amber"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,252,245,.92),var(--bg-2))}
-html[data-accent="blue"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,255,255,.92),var(--bg-2))}
-html[data-accent="green"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,255,255,.92),var(--bg-2))}
-html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,255,255,.92),var(--bg-2))}
+html[data-oled="true"] { --bg:#000000; --bg-2:#050505; --bg-3:#0d0d0d; --card:#080808; --card-hover:#141414; --line:#141414; --line-2:#242424; }
+html[data-oled="true"] body { background:#000000; }
+html[data-oled="true"] .header { background:linear-gradient(180deg,#050505 0%,rgba(5,5,5,.96) 100%); border-bottom-color:#141414; }
+html[data-oled="true"] .bottom-tabs { background:linear-gradient(180deg,rgba(5,5,5,.96),#000000); }
+html[data-oled="true"] .sheet { background:linear-gradient(180deg,#050505,#000000); }
+html[data-oled="true"] .news-card:hover { box-shadow:0 16px 40px -18px var(--accent-glow); }
 
 /* ============================================================
    SVG ICON BASE
    ============================================================ */
-.ic {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  display: inline-block;
-  vertical-align: -3px;
-}
+.ic { width: 16px; height: 16px; flex-shrink: 0; display: inline-block; vertical-align: -3px; }
 .ic-lg { width: 20px; height: 20px; }
 .ic-sm { width: 14px; height: 14px; }
 
 /* ============================================================
-   SECTIE-HEAD + KLEURDOTS
+   HEADER — grid layout
    ============================================================ */
-.section-head-actions{ margin-left: auto; display: flex; align-items: center; gap: .75rem; }
-.accent-picker{ display: flex; align-items: center; gap: .5rem; padding: .25rem .5rem; background: var(--bg-3); border: 1px solid var(--line-2); border-radius: 999px; }
-.accent-dot{ width: 16px; height: 16px; border-radius: 50%; border: none; padding: 0; cursor: pointer; transition: transform .15s, box-shadow .15s; box-shadow: 0 0 0 0 transparent; }
-.accent-dot[data-color="amber"]{ background: linear-gradient(135deg, #f0c78a, #e2a857); }
-.accent-dot[data-color="blue"]{ background: linear-gradient(135deg, #93c5fd, #3b82f6); }
-.accent-dot[data-color="green"]{ background: linear-gradient(135deg, #6ee7b7, #10b981); }
-.accent-dot[data-color="red"]{ background: linear-gradient(135deg, #f87171, #e63950); }
-.accent-dot:hover{ transform: scale(1.15); }
-.accent-dot.active{ box-shadow: 0 0 0 2px var(--bg-3), 0 0 0 3.5px var(--ink-2); transform: scale(1.05); }
-@media(max-width:640px){
-  .accent-dot{ width: 14px; height: 14px; }
-  .accent-picker{ gap: .4rem; padding: .2rem .4rem; }
+.header-inner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+.header-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.header-stats .hstat { flex: 1; min-width: 0; }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-shrink: 0;
 }
 
 /* ============================================================
-   NIEUWS — FAVORIETEN + SKELETON
+   RONDE VERVERSINGSKNOP
+   ============================================================ */
+.btn-refresh {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(180deg,var(--bg-3),var(--bg-2));
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all .18s;
+  padding: 0;
+  font-family: inherit;
+}
+.btn-refresh:hover { border-color: var(--amber); color: var(--amber); }
+.btn-refresh:active { transform: scale(.92); }
+.btn-refresh:disabled { cursor: default; opacity: .9; }
+.btn-refresh .refresh-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.btn-refresh .refresh-progress {
+  transition: stroke-dashoffset .25s cubic-bezier(.4,.9,.6,1);
+}
+.btn-refresh .refresh-icon {
+  position: relative;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  transition: transform .3s;
+}
+.btn-refresh.loading .refresh-icon { animation: spin .8s linear infinite; }
+.btn-refresh.loading { color: var(--amber); border-color: var(--amber); box-shadow: 0 0 12px var(--accent-glow); }
+.btn-refresh.done { color: #2dd4a8; border-color: #2dd4a8; box-shadow: 0 0 12px rgba(45,212,168,.5); }
+.btn-refresh.done .refresh-icon { animation: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   SECTIE-HEAD
+   ============================================================ */
+.section-head-actions { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
+
+/* ============================================================
+   NIEUWS — SKELETON
    ============================================================ */
 .card-actions { margin-left: auto; display: flex; gap: .4rem; align-items: center; }
 .card-footer .card-action { margin-left: 0 !important; }
@@ -123,41 +183,32 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
 .skeleton-meta{height:10px;width:30%;border-radius:5px;background:linear-gradient(90deg,var(--bg-3) 25%,var(--card-hover) 50%,var(--bg-3) 75%);background-size:200% 100%;animation:wdShimmer 1.6s ease-in-out infinite;margin-bottom:.4rem}
 @keyframes wdShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(prefers-reduced-motion:reduce){ .skeleton-thumb,.skeleton-line,.skeleton-meta{animation:none;background:var(--bg-3)} }
-@media(hover:hover){ .news-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -16px rgba(226,168,87,.35)} .news-card:hover .card-thumb img{transform:scale(1.02)} }
-@media(max-width:640px){ .hstat.teal{display:flex !important;gap:.1rem !important;flex-direction:column !important} .hstat.teal .hstat-label{font-size:.5rem !important} .hstat.teal .hstat-value{font-size:.72rem !important} }
+@media(hover:hover){ .news-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -16px var(--accent-glow)} .news-card:hover .card-thumb img{transform:scale(1.02)} }
 .empty-context{display:block;margin-top:.35rem;color:var(--amber);font-weight:600}
 
 .card-original{ font-family:"Inter",sans-serif; font-size:.72rem; line-height:1.35; color:var(--ink-3); margin-top:.25rem; font-style:italic; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; opacity:.7; }
 .card-original[dir="rtl"]{text-align:right}
 
 /* ============================================================
-   NIEUW MENU (v8.0) — strak en modern
+   MENU
    ============================================================ */
-
-/* Sectie-titels: subtieler */
 .sheet-content .sheet-section { margin-bottom: 1.15rem; }
 .sheet-content .sheet-title {
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 700;
   color: var(--ink-3);
   letter-spacing: .12em;
   text-transform: uppercase;
-  margin-bottom: .55rem;
-  padding: 0 0 .35rem 0;
+  margin-bottom: .6rem;
+  padding: 0 0 .4rem 0;
   border-bottom: none;
   display: flex;
   align-items: center;
   gap: .5rem;
 }
 .sheet-content .sheet-title::before { display: none; }
-.sheet-content .sheet-title::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
+.sheet-content .sheet-title::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
-/* Categorieën — chips horizontaal scrollend */
 .chips-row {
   display: flex;
   gap: .4rem;
@@ -189,13 +240,135 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
 .chips-row .sheet-item .ic { width: 14px; height: 14px; }
 .chips-row .sheet-item:hover { border-color: var(--amber); color: var(--amber); }
 .chips-row .sheet-item.active {
-  background: rgba(226,168,87,.12);
+  background: rgba(224,168,87,.12);
   border-color: var(--amber);
   color: var(--amber);
   font-weight: 700;
 }
 
-/* Segmented controls — sortering, weergave, tekstgrootte */
+.accent-picker-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .7rem .8rem;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.accent-picker-row:hover { border-color: var(--amber); }
+.accent-picker-row .accent-label {
+  flex: 1;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.accent-picker-row .accent-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,.4),
+    0 0 0 .5px rgba(0,0,0,.25),
+    inset 0 -1px 2px rgba(0,0,0,.35),
+    inset 0 1px 2px rgba(255,255,255,.5);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.accent-picker-row .accent-preview::before {
+  content:"";
+  position:absolute;
+  top:.5px;
+  left:18%; right:18%;
+  height:42%;
+  border-radius:50%;
+  background:linear-gradient(180deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.35) 45%, rgba(255,255,255,0) 100%);
+  pointer-events:none;
+  z-index:2;
+}
+.accent-picker-row .chev {
+  color: var(--ink-3);
+  width: 14px;
+  height: 14px;
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.accent-picker-row.open .chev { transform: rotate(180deg); }
+
+.accent-dots-grid {
+  display: none;
+  gap: .55rem;
+  padding: .75rem .8rem;
+  margin-top: .5rem;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  justify-content: center;
+  animation: accentSlideIn .2s ease;
+}
+.accent-dots-grid.open { display: flex; }
+@keyframes accentSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.accent-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  transition: transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s;
+  box-shadow:
+    0 2px 5px rgba(0,0,0,.4),
+    0 0 0 1px rgba(0,0,0,.25),
+    inset 0 -2px 4px rgba(0,0,0,.35),
+    inset 0 2px 3px rgba(255,255,255,.5);
+  overflow: hidden;
+  isolation: isolate;
+}
+.accent-dot::before {
+  content:"";
+  position:absolute;
+  top:2px;
+  left:18%; right:18%;
+  height:42%;
+  border-radius:50%;
+  background:linear-gradient(180deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.35) 45%, rgba(255,255,255,0) 100%);
+  pointer-events:none;
+  z-index:2;
+}
+.accent-dot:hover { transform: scale(1.18) translateY(-1px); }
+.accent-dot:active { transform: scale(1.05); }
+.accent-dot.active {
+  transform: scale(1.12);
+  box-shadow:
+    0 0 0 2px var(--bg-3),
+    0 0 0 3.5px currentColor,
+    0 0 14px currentColor,
+    0 2px 5px rgba(0,0,0,.4),
+    inset 0 -2px 4px rgba(0,0,0,.35),
+    inset 0 2px 3px rgba(255,255,255,.5);
+}
+
+.accent-dot[data-color="goud"]   { background:radial-gradient(circle at 35% 30%, #ffe2b5 0%, #e0a857 45%, #7a4a18 100%); color:#e0a857; }
+.accent-dot[data-color="saffier"]{ background:radial-gradient(circle at 35% 30%, #c8ddff 0%, #5b9dff 45%, #14307a 100%); color:#5b9dff; }
+.accent-dot[data-color="smaragd"]{ background:radial-gradient(circle at 35% 30%, #a8f0d8 0%, #2dd4a8 45%, #064a30 100%); color:#2dd4a8; }
+.accent-dot[data-color="kobalt"] { background:radial-gradient(circle at 35% 30%, #c8c2ff 0%, #8b7fff 45%, #3a2a99 100%); color:#8b7fff; }
+.accent-dot[data-color="koraal"] { background:radial-gradient(circle at 35% 30%, #ffc8cf 0%, #ff6b7a 45%, #7a1524 100%); color:#ff6b7a; }
+.accent-dot[data-color="parel"]  { background:radial-gradient(circle at 35% 30%, #ffffff 0%, #c8ccd8 45%, #4a5060 100%); color:#c8ccd8; }
+
+.accent-preview[data-color="goud"]   { background:radial-gradient(circle at 35% 30%, #ffe2b5 0%, #e0a857 45%, #7a4a18 100%); }
+.accent-preview[data-color="saffier"]{ background:radial-gradient(circle at 35% 30%, #c8ddff 0%, #5b9dff 45%, #14307a 100%); }
+.accent-preview[data-color="smaragd"]{ background:radial-gradient(circle at 35% 30%, #a8f0d8 0%, #2dd4a8 45%, #064a30 100%); }
+.accent-preview[data-color="kobalt"] { background:radial-gradient(circle at 35% 30%, #c8c2ff 0%, #8b7fff 45%, #3a2a99 100%); }
+.accent-preview[data-color="koraal"] { background:radial-gradient(circle at 35% 30%, #ffc8cf 0%, #ff6b7a 45%, #7a1524 100%); }
+.accent-preview[data-color="parel"]  { background:radial-gradient(circle at 35% 30%, #ffffff 0%, #c8ccd8 45%, #4a5060 100%); }
+
 .segmented {
   display: flex;
   gap: .25rem;
@@ -210,7 +383,7 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
   background: transparent;
   border: 1px solid transparent;
   color: var(--ink-2);
-  font-size: .78rem;
+  font-size: .8rem;
   font-weight: 600;
   border-radius: 8px;
   text-align: center;
@@ -232,52 +405,15 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0,0,0,.15);
 }
-html[data-accent="amber"] .segmented .sheet-item.active { color: var(--amber); border-color: var(--amber); }
-html[data-accent="blue"] .segmented .sheet-item.active { color: var(--amber); border-color: var(--amber); }
-html[data-accent="green"] .segmented .sheet-item.active { color: var(--amber); border-color: var(--amber); }
-html[data-accent="red"] .segmented .sheet-item.active { color: var(--amber); border-color: var(--amber); }
+html[data-accent] .segmented .sheet-item.active { color: var(--amber); border-color: var(--amber); }
 
-/* Tekstgrootte segmenten zijn smaller — 3 op een rij */
-.segmented.font-segmented .sheet-item { font-size: .76rem; padding: .5rem .4rem; }
+.segmented.font-segmented .sheet-item { font-size: .78rem; padding: .5rem .4rem; }
 
-/* Zoekveld — slanker */
-.search-field {
-  position: relative;
-}
-.search-field .ic-search {
-  position: absolute;
-  left: .85rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--ink-3);
-  width: 15px;
-  height: 15px;
-  pointer-events: none;
-}
-.search-field input {
-  width: 100%;
-  padding: .7rem .95rem .7rem 2.35rem;
-  background: var(--bg-3);
-  border: 1px solid var(--line-2);
-  color: var(--ink);
-  border-radius: 10px;
-  font-size: .88rem;
-  outline: none;
-  font-family: inherit;
-  transition: border-color .18s, box-shadow .18s;
-}
-.search-field input:focus {
-  border-color: var(--amber);
-  box-shadow: 0 0 0 3px rgba(226,168,87,.12);
-}
-.search-field input::placeholder { color: var(--ink-3); }
-
-/* Toggle rijen (meldingen) */
 .toggle-row {
   display: flex;
   align-items: center;
   gap: .7rem;
-  padding: .65rem .75rem;
+  padding: .7rem .8rem;
   background: var(--bg-3);
   border: 1px solid var(--line-2);
   border-radius: 10px;
@@ -287,26 +423,12 @@ html[data-accent="red"] .segmented .sheet-item.active { color: var(--amber); bor
   user-select: none;
 }
 .toggle-row:hover { border-color: var(--amber); }
-.toggle-row .toggle-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--ink-2);
-  flex-shrink: 0;
-}
-.toggle-row .toggle-label {
-  flex: 1;
-  font-size: .85rem;
-  font-weight: 600;
-  color: var(--ink);
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.toggle-row:last-child { margin-bottom: 0; }
+.toggle-row .toggle-icon { width: 18px; height: 18px; color: var(--ink-2); flex-shrink: 0; }
+.toggle-row .toggle-label { flex: 1; font-size: .87rem; font-weight: 600; color: var(--ink); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toggle-row.active .toggle-icon { color: var(--amber); }
 .toggle-row.active .toggle-label { color: var(--amber); }
 
-/* Toggle switch */
 .toggle-switch {
   position: relative;
   width: 40px;
@@ -331,19 +453,43 @@ html[data-accent="red"] .segmented .sheet-item.active { color: var(--amber); bor
 .toggle-row.active .toggle-switch { background: var(--amber); }
 .toggle-row.active .toggle-switch::after { transform: translateX(18px); }
 
-/* Actie-rijen (Kaart, IPTV, Onderhoud) */
-.action-row {
-  display: flex;
-  gap: .4rem;
-  flex-wrap: wrap;
+.search-field { position: relative; }
+.search-field .ic-search {
+  position: absolute;
+  left: .85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  width: 15px;
+  height: 15px;
+  pointer-events: none;
 }
+.search-field input {
+  width: 100%;
+  padding: .75rem .95rem .75rem 2.35rem;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  border-radius: 10px;
+  font-size: .9rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color .18s, box-shadow .18s;
+}
+.search-field input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.search-field input::placeholder { color: var(--ink-3); }
+
+.action-row { display: flex; gap: .4rem; flex-wrap: wrap; }
 .action-row .sheet-item {
   flex: 1;
-  padding: .6rem .75rem;
+  padding: .65rem .75rem;
   background: var(--bg-3);
   border: 1px solid var(--line-2);
   color: var(--ink-2);
-  font-size: .78rem;
+  font-size: .8rem;
   font-weight: 600;
   border-radius: 10px;
   display: inline-flex;
@@ -357,30 +503,17 @@ html[data-accent="red"] .segmented .sheet-item.active { color: var(--amber); bor
 .action-row .sheet-item .ic { width: 15px; height: 15px; }
 .action-row .sheet-item:hover { border-color: var(--amber); color: var(--amber); }
 
-/* Over-sectie */
-.sheet-about {
-  font-size: .75rem;
-  color: var(--ink-3);
-  line-height: 1.6;
-  text-align: center;
-  padding: .5rem 0;
-}
-.sheet-about .version {
-  color: var(--amber);
-  font-weight: 700;
-  letter-spacing: .05em;
-}
+.sheet-about { font-size: .78rem; color: var(--ink-3); line-height: 1.6; text-align: center; padding: .5rem 0; }
+.sheet-about .version { color: var(--amber); font-weight: 700; letter-spacing: .05em; }
 
-/* Legacy support — oude klassen verbergen indien aanwezig */
-.sheet-grid { display: none !important; }
-.sheet-search { display: none !important; }
+.sheet-grid, .sheet-search { display: none !important; }
 
 /* ============================================================
    IPTV
    ============================================================ */
 .iptv-search-wrap{ position: relative; margin-bottom: .75rem; }
 .iptv-search-wrap input{ width: 100%; padding: .8rem 2.6rem .8rem 2.4rem; background: var(--card); border: 1px solid var(--line-2); color: var(--ink); border-radius: 12px; font-size: .92rem; outline: none; transition: border-color .18s, box-shadow .18s; }
-.iptv-search-wrap input:focus{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(226,168,87,.15); }
+.iptv-search-wrap input:focus{ border-color: var(--amber); box-shadow: 0 0 0 3px var(--accent-glow); }
 .iptv-search-icon{ position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: var(--ink-3); display: grid; place-items: center; pointer-events: none; }
 .iptv-search-icon svg { width: 15px; height: 15px; }
 .iptv-search-clear{ position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background: transparent; border: none; color: var(--ink-3); border-radius: 50%; cursor: pointer; display: grid; place-items: center; padding: 0; }
@@ -425,7 +558,7 @@ html[data-accent="red"] .segmented .sheet-item.active { color: var(--amber); bor
 .iptv-load-more{ display: block; margin: .75rem auto 0; padding: .6rem 1.2rem; background: var(--bg-3); border: 1px solid var(--line-2); color: var(--amber); font-size: .8rem; font-weight: 700; border-radius: 10px; cursor: pointer; font-family: inherit; transition: all .15s; }
 .iptv-load-more:hover { border-color: var(--amber); background: var(--card-hover); }
 
-.iptv-player-box{ background: var(--card); border: 1px solid rgba(226,168,87,.4); border-radius: 14px; max-width: 900px; width: 100%; overflow: hidden; box-shadow: var(--shadow-deep); }
+.iptv-player-box{ background: var(--card); border: 1px solid var(--accent-glow); border-radius: 14px; max-width: 900px; width: 100%; overflow: hidden; box-shadow: var(--shadow-deep); }
 .iptv-player-head{ display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .7rem .9rem; border-bottom: 1px solid var(--line); font-size: .85rem; font-weight: 600; color: var(--amber); background: var(--bg-2); }
 .iptv-player-head span{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
 .iptv-player-head-actions{ display: flex; gap: .35rem; align-items: center; }
@@ -449,7 +582,7 @@ html[data-accent="red"] .segmented .sheet-item.active { color: var(--amber); bor
 .iptv-copy-btn .ic { width: 12px; height: 12px; }
 
 .iptv-setup{ background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; margin-bottom: 1rem; box-shadow: var(--shadow-card); }
-.iptv-setup-title{ font-size: .7rem; font-weight: 800; color: var(--ink-3); text-transform: uppercase; letter-spacing: .12em; margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 1px solid var(--line); }
+.iptv-setup-title{ font-size: .72rem; font-weight: 800; color: var(--ink-3); text-transform: uppercase; letter-spacing: .12em; margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 1px solid var(--line); }
 
 /* ============================================================
    GROUPS-PANEL
@@ -469,14 +602,14 @@ html[data-accent="red"] .segmented .sheet-item.active { color: var(--amber); bor
 .iptv-groups-close .ic { width: 14px; height: 14px; }
 .iptv-groups-search{ padding:.75rem 1rem; border-bottom:1px solid var(--line); }
 .iptv-groups-search input{ width:100%; padding:.65rem .85rem; background:var(--bg-3); border:1px solid var(--line-2); color:var(--ink); border-radius:10px; font-size:.86rem; outline:none; font-family:inherit; }
-.iptv-groups-search input:focus{ border-color:var(--amber); box-shadow:0 0 0 3px rgba(226,168,87,.15); }
+.iptv-groups-search input:focus{ border-color:var(--amber); box-shadow:0 0 0 3px var(--accent-glow); }
 .iptv-groups-panel-list{ flex:1; overflow-y:auto; padding:.5rem; }
 .iptv-group-item{ width:100%; display:flex; align-items:center; gap:.65rem; padding:.7rem .85rem; background:var(--bg-2); border:1px solid var(--line); border-radius:10px; color:var(--ink); cursor:pointer; font-family:inherit; text-align:left; margin-bottom:.35rem; transition:all .12s; }
 .iptv-group-item:hover{ background:var(--card-hover); border-color:var(--amber); transform:translateX(2px); }
-.iptv-group-item.active{ background:rgba(226,168,87,.12); color:var(--amber); border-color:var(--amber); font-weight:700; }
+.iptv-group-item.active{ background:rgba(224,168,87,.12); color:var(--amber); border-color:var(--amber); font-weight:700; }
 .iptv-group-item.active .iptv-group-count{ background:rgba(0,0,0,.2); color:var(--amber); }
 .iptv-group-color{ width:10px; height:10px; border-radius:50%; flex-shrink:0; border:1px solid rgba(255,255,255,.2); }
-.iptv-group-name{ flex:1; font-size:.85rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.iptv-group-name{ flex:1; font-size:.87rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
 .iptv-group-count{ font-size:.7rem; font-weight:700; background:var(--bg-3); color:var(--ink-3); padding:.2rem .5rem; border-radius:6px; font-variant-numeric:tabular-nums; flex-shrink:0; }
 
 @media(max-width:640px){
@@ -499,7 +632,7 @@ html[data-accent="red"] .segmented .sheet-item.active { color: var(--amber); bor
 html.wd-debug-on #wdDebugBtn{display:grid !important;position:fixed;bottom:100px;right:15px;z-index:20000;width:44px;height:44px;border-radius:50%;background:#e63950;color:#fff;border:2px solid #fff;font-size:1.2rem;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.6);cursor:pointer;place-items:center;font-family:monospace}
 html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inset:0;z-index:19999;background:rgba(0,0,0,.95);color:#0f0;font-family:monospace;font-size:11px;padding:1rem;overflow-y:auto;line-height:1.5}
 #wdDebugPanel .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;padding-bottom:.5rem;border-bottom:1px solid #333;position:sticky;top:0;background:rgba(0,0,0,.95);z-index:1}
-#wdDebugPanel h2{color:#e2a857;font-size:14px;margin:0}
+#wdDebugPanel h2{color:#e0a857;font-size:14px;margin:0}
 #wdDebugPanel .close{background:#e63950;color:#fff;border:none;padding:.4rem .8rem;border-radius:6px;font-family:monospace;font-weight:700;cursor:pointer}
 #wdDebugPanel .entry{padding:.5rem;margin-bottom:.4rem;border-left:3px solid #0f0;background:rgba(255,255,255,.03);word-break:break-all;white-space:pre-wrap}
 #wdDebugPanel .entry.err{border-left-color:#e63950;color:#ff7b8b}
@@ -510,6 +643,41 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 #wdDebugPanel .empty{color:#666;text-align:center;padding:2rem 1rem}
 #wdDebugPanel .actions{padding:.5rem;background:#111;border-radius:6px;margin-bottom:.8rem;display:flex;gap:.5rem;flex-wrap:wrap}
 #wdDebugPanel .actions button{background:#333;color:#fff;border:none;padding:.4rem .7rem;border-radius:4px;font-family:monospace;font-size:10px;cursor:pointer}
+
+/* ============================================================
+   MOBIEL — stats blijven zichtbaar (compact)
+   ============================================================ */
+@media(max-width:640px){
+  .header-inner {
+    grid-template-columns: auto 1fr;
+    gap: .5rem;
+  }
+  .header-stats {
+    display: flex !important;
+    gap: .5rem;
+    order: 3;
+    grid-column: 1 / -1;
+    justify-content: space-around;
+  }
+  .header-stats .hstat:nth-child(1),
+  .header-stats .hstat:nth-child(4) { display: none; }
+  .header-stats .hstat .hstat-label { font-size: .5rem; }
+  .header-stats .hstat .hstat-value { font-size: .72rem; }
+  .header-stats .hstat.teal { display: flex !important; }
+  .header-actions { grid-column: 2; justify-self: end; }
+  .btn-refresh { width: 36px; height: 36px; }
+  .btn-refresh .refresh-icon { width: 16px; height: 16px; }
+}
+
+@media(max-width:900px) and (min-width:641px){
+  .header-inner {
+    grid-template-columns: auto 1fr auto;
+    gap: .75rem;
+  }
+  .header-stats { gap: .6rem; }
+  .hstat-label { font-size: .5rem; }
+  .hstat-value { font-size: .75rem; }
+}
 </style>
 </head>
 <body>
@@ -524,15 +692,13 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
   <button class="breaking-close" id="breakingClose">✕</button>
 </div>
 
-<div class="progress-bar" id="progressBar"></div>
-
 <header class="header">
   <div class="header-inner">
     <div class="brand">
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v8.0</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v9.2</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
@@ -543,6 +709,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     <div class="header-actions">
       <button class="btn-mini" id="btnTheme" aria-label="Thema">◐</button>
       <button class="btn-mini" id="btnMenu" aria-label="Menu">☰</button>
+      <!-- refresh.js voegt hier de ronde verversingsknop toe -->
     </div>
   </div>
 </header>
@@ -552,12 +719,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     <div class="section-head">
       <h2 id="newsTitle">Laatste berichten</h2>
       <div class="section-head-actions">
-        <div class="accent-picker" role="group" aria-label="Accentkleur">
-          <button class="accent-dot" data-color="amber" aria-label="Amber"></button>
-          <button class="accent-dot" data-color="blue" aria-label="Blauw"></button>
-          <button class="accent-dot" data-color="green" aria-label="Groen"></button>
-          <button class="accent-dot" data-color="red" aria-label="Rood"></button>
-        </div>
         <span class="section-count" id="newsCount">—</span>
       </div>
     </div>
@@ -659,7 +820,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
   </div>
   <div class="sheet-content">
 
-    <!-- Categorieën (chips) -->
     <div class="sheet-section">
       <div class="sheet-title">Categorieën</div>
       <div class="chips-row">
@@ -683,6 +843,14 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="3" y1="14" x2="21" y2="14"/></svg>
           <span>Nederland</span>
         </button>
+        <button class="sheet-item" data-cat="maroc">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L14.5 8.5 L21 9.5 L16 13.5 L17.5 20 L12 16.5 L6.5 20 L8 13.5 L3 9.5 L9.5 8.5 Z"/></svg>
+          <span>Marokko</span>
+        </button>
+        <button class="sheet-item" data-cat="vs">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21 L12 4 L21 21 Z"/><line x1="7" y1="15" x2="17" y2="15"/></svg>
+          <span>VS</span>
+        </button>
         <button class="sheet-item" data-cat="sport">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93 8.5 8.5"/><path d="M15.5 15.5 19.07 19.07"/><path d="M8.5 15.5 4.93 19.07"/><path d="M15.5 8.5 19.07 4.93"/><circle cx="12" cy="12" r="3"/></svg>
           <span>Sport</span>
@@ -694,7 +862,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       </div>
     </div>
 
-    <!-- Sortering -->
     <div class="sheet-section">
       <div class="sheet-title">Sortering</div>
       <div class="segmented">
@@ -709,32 +876,36 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       </div>
     </div>
 
-    <!-- Weergave -->
     <div class="sheet-section">
       <div class="sheet-title">Weergave</div>
-      <div class="segmented">
-        <button class="sheet-item active" id="viewCards">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          <span>Kaarten</span>
-        </button>
-        <button class="sheet-item" id="viewList">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          <span>Lijst</span>
-        </button>
-      </div>
-    </div>
 
-    <!-- Tekstgrootte -->
-    <div class="sheet-section">
-      <div class="sheet-title">Tekstgrootte</div>
-      <div class="segmented font-segmented">
+      <div class="accent-picker-row" id="accentPickerRow" role="button" tabindex="0">
+        <span class="accent-label">Accentkleur</span>
+        <span class="accent-preview" id="accentPreview" data-color="goud"></span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accent-dots-grid" id="accentDotsGrid">
+        <button class="accent-dot" data-color="goud" aria-label="Goud"></button>
+        <button class="accent-dot" data-color="saffier" aria-label="Saffier"></button>
+        <button class="accent-dot" data-color="smaragd" aria-label="Smaragd"></button>
+        <button class="accent-dot" data-color="kobalt" aria-label="Kobalt"></button>
+        <button class="accent-dot" data-color="koraal" aria-label="Koraal"></button>
+        <button class="accent-dot" data-color="parel" aria-label="Parel"></button>
+      </div>
+
+      <div class="segmented font-segmented" style="margin-top:.6rem">
         <button class="sheet-item" data-font="small" onclick="if(window.__setFontSize)window.__setFontSize('small')">Aa Klein</button>
         <button class="sheet-item active" data-font="medium" onclick="if(window.__setFontSize)window.__setFontSize('medium')">Aa Medium</button>
         <button class="sheet-item" data-font="large" onclick="if(window.__setFontSize)window.__setFontSize('large')">Aa Groot</button>
       </div>
+
+      <div class="toggle-row" id="toggleOledRow" style="margin-top:.6rem" onclick="if(window.__setOled)window.__setOled(!window.__isOledActive())">
+        <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><rect x="5" y="7" width="14" height="8" rx="1" fill="currentColor" opacity="0.3"/></svg>
+        <span class="toggle-label">Diepzwart (OLED-modus)</span>
+        <div class="toggle-switch" id="toggleOled"></div>
+      </div>
     </div>
 
-    <!-- Zoeken -->
     <div class="sheet-section">
       <div class="sheet-title">Zoeken</div>
       <div class="search-field">
@@ -743,7 +914,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       </div>
     </div>
 
-    <!-- Meldingen -->
     <div class="sheet-section">
       <div class="sheet-title">Meldingen</div>
       <div class="toggle-row" id="toggleNotificationsRow" onclick="if(window.__setNotifications)window.__setNotifications(!window.State.notificationsEnabled)">
@@ -758,7 +928,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       </div>
     </div>
 
-    <!-- Kaart -->
     <div class="sheet-section">
       <div class="sheet-title">Kaart</div>
       <div class="action-row">
@@ -773,7 +942,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       </div>
     </div>
 
-    <!-- Onderhoud -->
     <div class="sheet-section">
       <div class="sheet-title">Onderhoud</div>
       <div class="action-row">
@@ -784,7 +952,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       </div>
     </div>
 
-    <!-- IPTV Account -->
     <div class="sheet-section">
       <div class="sheet-title">IPTV Account</div>
       <div class="action-row">
@@ -803,10 +970,9 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       </div>
     </div>
 
-    <!-- Over -->
     <div class="sheet-section">
       <div class="sheet-about">
-        WAR DESK <span class="version" id="appVersionMenu">v8.0</span><br>
+        WAR DESK <span class="version" id="appVersionMenu">v9.2</span><br>
         Live nieuws + IPTV + Conflictkaart
       </div>
     </div>
@@ -903,31 +1069,79 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     });
   };
   window.__setAccentColor = function(color){
-    if(["amber","blue","green","red"].indexOf(color) < 0) return;
+    if(["goud","saffier","smaragd","kobalt","koraal","parel"].indexOf(color) < 0) return;
     document.documentElement.setAttribute("data-accent", color);
     try { localStorage.setItem("wardesk_accent_color", color); } catch(e){}
     document.querySelectorAll("[data-color]").forEach(function(b){
       b.classList.toggle("active", b.dataset.color === color);
     });
-    if(window.showToast) window.showToast("Kleur aangepast");
+    var prev = document.getElementById("accentPreview");
+    if(prev) prev.setAttribute("data-color", color);
+    var names = {goud:"Goud", saffier:"Saffier", smaragd:"Smaragd", kobalt:"Kobalt", koraal:"Koraal", parel:"Parel"};
+    if(window.showToast) window.showToast("Thema: " + (names[color] || color));
+  };
+  window.__isOledActive = function(){
+    return document.documentElement.getAttribute("data-oled") === "true";
+  };
+  window.__setOled = function(enabled){
+    var on = !!enabled;
+    if(on) document.documentElement.setAttribute("data-oled", "true");
+    else document.documentElement.removeAttribute("data-oled");
+    try { localStorage.setItem("wardesk_oled_mode", on ? "1" : "0"); }catch(e){}
+    var row = document.getElementById("toggleOledRow");
+    if(row) row.classList.toggle("active", on);
+    /* Update meta theme-color */
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if(meta){
+      var light = document.body.classList.contains("light");
+      meta.setAttribute("content", on ? "#000000" : (light ? "#f6f4ee" : "#070c16"));
+    }
+    if(window.showToast) window.showToast(on ? "Diepzwart aan" : "Diepzwart uit");
   };
   document.addEventListener("DOMContentLoaded", function(){
     var fs = (document.documentElement.getAttribute("data-font-size") || "medium");
     document.querySelectorAll("[data-font]").forEach(function(b){
       b.classList.toggle("active", b.dataset.font === fs);
     });
-    var ac = (document.documentElement.getAttribute("data-accent") || "amber");
+    var ac = (document.documentElement.getAttribute("data-accent") || "goud");
     document.querySelectorAll("[data-color]").forEach(function(b){
       b.classList.toggle("active", b.dataset.color === ac);
     });
+    var prev = document.getElementById("accentPreview");
+    if(prev) prev.setAttribute("data-color", ac);
+
+    var oledRow = document.getElementById("toggleOledRow");
+    if(oledRow){
+      oledRow.classList.toggle("active", window.__isOledActive());
+    }
+
+    var pickerRow = document.getElementById("accentPickerRow");
+    var dotsGrid = document.getElementById("accentDotsGrid");
+    if(pickerRow && dotsGrid){
+      pickerRow.addEventListener("click", function(e){
+        e.stopPropagation();
+        var isOpen = dotsGrid.classList.toggle("open");
+        pickerRow.classList.toggle("open", isOpen);
+      });
+    }
     document.querySelectorAll(".accent-dot").forEach(function(b){
       b.addEventListener("click", function(e){
         e.stopPropagation();
         window.__setAccentColor(b.dataset.color);
+        setTimeout(function(){
+          if(dotsGrid){ dotsGrid.classList.remove("open"); }
+          if(pickerRow){ pickerRow.classList.remove("open"); }
+        }, 250);
       });
     });
 
-    /* Toggle-rows: sync active class met toggle switch */
+    document.addEventListener("click", function(e){
+      if(!dotsGrid || !pickerRow) return;
+      if(dotsGrid.contains(e.target) || pickerRow.contains(e.target)) return;
+      dotsGrid.classList.remove("open");
+      pickerRow.classList.remove("open");
+    });
+
     var notifRow = document.getElementById("toggleNotificationsRow");
     var transRow = document.getElementById("toggleTranslateRow");
     function syncToggles(){
@@ -1010,16 +1224,16 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       document.getElementById("wdDebugInfo").addEventListener("click", function(){
         add("info", "URL: " + location.href);
         add("info", "Online: " + navigator.onLine);
-        add("info", "news.js versie: " + (window.__newsVersion || "ONBEKEND"));
+        add("info", "Versie: " + (window.APP_VERSION || "?"));
         add("info", "Items: " + (window.State && window.State.items ? window.State.items.length : "?"));
         add("info", "Thema: " + (document.body.classList.contains("light") ? "licht" : "donker"));
-        add("info", "Font: " + (document.documentElement.getAttribute("data-font-size") || "medium"));
-        add("info", "Kleur: " + (document.documentElement.getAttribute("data-accent") || "amber"));
+        add("info", "Accent: " + (document.documentElement.getAttribute("data-accent") || "goud"));
+        add("info", "OLED: " + (window.__isOledActive() ? "aan" : "uit"));
       });
     }
     add("info", "WAR DESK start");
-    add("info", "URL: " + location.href);
-    if(DEBUG) add("info", "Debug modus actief (?debug=1)");
+    add("info", "Versie: " + (window.APP_VERSION || "?"));
+    if(DEBUG) add("info", "Debug modus actief");
   });
 })();
 </script>
@@ -1027,13 +1241,13 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-<script src="config.js?v=26"></script>
-<script src="news.js?v=33"></script>
-<script src="app.js?v=15"></script>
-<script src="persist.js?v=15"></script>
-<script src="refresh.js?v=16"></script>
-<script src="iptv.js?v=25"></script>
-<script src="map.js?v=18"></script>
+<script src="config.js?v=34"></script>
+<script src="news.js?v=41"></script>
+<script src="app.js?v=23"></script>
+<script src="persist.js?v=23"></script>
+<script src="refresh.js?v=24"></script>
+<script src="iptv.js?v=33"></script>
+<script src="map.js?v=26"></script>
 
 <script>
 (function(){
@@ -1051,7 +1265,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     if(t){t.classList.remove("show");t._shownAt=0}
   });
 })();
-console.log("%c WAR DESK %c v8.0 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v9.2 ","background:#e0a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e0a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

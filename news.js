@@ -1,8 +1,11 @@
 /* ============================================================
-   WAR DESK v19.9 — Nieuws logica
-   Health-reset per sessie + semaphore + smart proxy routing
+   WAR DESK v20.0 — Nieuws logica
+   - Health-reset per sessie
+   - __proxyHealth reset bij elke loadAllFeeds (geen cascade)
+   - Google News semaphore
+   - Timeout 10s
    ============================================================ */
-window.__newsVersion = "v19.9-timeout-fallback";
+window.__newsVersion = "v20.0-proxy-reset";
 
 window.State = {
   items: [],
@@ -291,10 +294,6 @@ function googleNewsRelease(){
   }
 }
 
-function proxyHost(p){
-  try{ return p.split("/")[2]; }catch(e){ return p; }
-}
-
 function markProxyFail(p){
   if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabledUntil: 0 };
   window.__proxyHealth[p].fails++;
@@ -374,6 +373,10 @@ async function fetchFeedWithFallback(feedUrl){
 
 async function loadAllFeeds(){
   var session = ++State.loadSession;
+
+  /* FIX: reset proxyHealth bij elke cyclus — voorkomt cascade */
+  window.__proxyHealth = {};
+
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
   State.totalSources = active.length;
   State.failedSources = [];

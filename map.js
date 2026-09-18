@@ -1,8 +1,8 @@
 /* ============================================================
-   WAR DESK v5.0 — Conflictkaart
-   - CartoDB Dark Matter (donker) + CartoDB Positron (licht)
-   - Thema-koppeling via body class observer
-   - Tijd-modus (06:00-19:00 = licht)
+   WAR DESK v5.1 — Conflictkaart
+   - Stadia Maps (Alidade Smooth Dark + Alidade Smooth)
+   - Close-knop fix (alleen zichtbaar in fullscreen)
+   - Thema-koppeling + tijd-modus
    - Fetch cancel + detail cache TTL + filter persistent
    ============================================================ */
 
@@ -12,18 +12,23 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v5.0 geladen");
+  LOG("v5.1 geladen");
+
+  function buildStadiaUrl(style){
+    var key = (window.CONFIG && CONFIG.stadiaKey) ? CONFIG.stadiaKey : "";
+    var base = "https://tiles.stadiamaps.com/tiles/" + style + "/{z}/{x}/{y}{r}.png";
+    if(key) base += "?api_key=" + encodeURIComponent(key);
+    return base;
+  }
 
   var TILES = {
     dark: {
-      url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-      subdomains: "abcd",
-      attribution: "© OpenStreetMap © CARTO"
+      url: buildStadiaUrl("alidade_smooth_dark"),
+      attribution: "© Stadia Maps © OpenMapTiles © OpenStreetMap"
     },
     light: {
-      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      subdomains: "abcd",
-      attribution: "© OpenStreetMap © CARTO"
+      url: buildStadiaUrl("alidade_smooth"),
+      attribution: "© Stadia Maps © OpenMapTiles © OpenStreetMap"
     }
   };
 
@@ -40,8 +45,7 @@
     detailCache: {},
     currentTheme: "dark",
     themeObserver: null,
-    detailAbort: null,
-    initialized: false
+    detailAbort: null
   };
 
   var TYPES = {
@@ -85,8 +89,8 @@
     if(!MAP.tileLayers[theme]){
       MAP.tileLayers[theme] = L.tileLayer(cfg.url, {
         maxZoom: 20,
-        subdomains: cfg.subdomains,
-        attribution: cfg.attribution
+        attribution: cfg.attribution,
+        crossOrigin: true
       });
     }
 
@@ -182,15 +186,15 @@
       ".marker-cluster-large{margin-left:-13px!important;margin-top:-13px!important}" +
       ".marker-cluster div span{font-size:.56rem!important;line-height:1!important;letter-spacing:-.02em!important}" +
 
-      /* Fullscreen */
+      /* Fullscreen + close-knop */
       ".map-wrap.fullscreen .map-legend{display:none!important}" +
       ".map-wrap.fullscreen .map-controls .map-ctrl[data-role='full']{display:none!important}" +
-      ".wd-map-close{display:none;position:absolute;top:.8rem;right:.8rem;z-index:600;" +
+      ".wd-map-close{display:none!important;position:absolute;top:.8rem;right:.8rem;z-index:600;" +
         "width:42px;height:42px;border-radius:50%;" +
         "background:rgba(10,16,28,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);" +
         "border:1px solid rgba(255,255,255,.12);color:#e6ebf5;" +
         "font-size:1.15rem;font-weight:400;line-height:1;" +
-        "display:grid;place-items:center;cursor:pointer;" +
+        "place-items:center;cursor:pointer;" +
         "box-shadow:0 4px 16px rgba(0,0,0,.6);transition:all .18s}" +
       ".wd-map-close:hover{background:rgba(20,28,44,.95);border-color:rgba(255,255,255,.25);transform:rotate(90deg)}" +
       ".map-wrap.fullscreen .wd-map-close{display:grid!important}" +
@@ -240,7 +244,6 @@
     if(!wrap || wrap.classList.contains("fullscreen")) return;
     wrap.classList.add("fullscreen");
     MAP.isFullscreen = true;
-    document.body.dataset.wdMapFullscreen = "1";
     if(MAP.instance) setTimeout(function(){ MAP.instance.invalidateSize(); }, 250);
   }
 
@@ -249,7 +252,6 @@
     if(!wrap) return;
     wrap.classList.remove("fullscreen");
     MAP.isFullscreen = false;
-    delete document.body.dataset.wdMapFullscreen;
     if(MAP.instance) setTimeout(function(){ MAP.instance.invalidateSize(); }, 250);
   }
 
@@ -372,10 +374,7 @@
     textEl.style.opacity = ".55";
     try{
       var detailUrl = "https://war-tracker.com/api/v1/events/" + encodeURIComponent(event.id);
-      var ctrl = new AbortController();
-      var timer = setTimeout(function(){ ctrl.abort(); }, 15000);
       var r = await fetch(MAP.worker + encodeURIComponent(detailUrl), { signal: signal });
-      clearTimeout(timer);
       if(!r.ok) throw new Error("HTTP " + r.status);
       var data = await r.json();
 
@@ -473,7 +472,7 @@
   }
 
   /* ============================================================
-     MARKERS — met incremental updates
+     MARKERS
      ============================================================ */
   function renderMarkers(){
     if(!MAP.cluster) return;
@@ -638,7 +637,7 @@
       center: [40, 30],
       zoom: 3,
       minZoom: 2,
-      maxZoom: 16,
+      maxZoom: 18,
       worldCopyJump: true,
       zoomControl: false,
       attributionControl: false,
@@ -754,7 +753,6 @@
       restoreFilter();
       startAutoRefresh();
 
-      /* Thema-knop → markeer als handmatig */
       var themeBtn = $("btnTheme");
       if(themeBtn){
         themeBtn.addEventListener("click", function(){
@@ -762,7 +760,6 @@
         });
       }
 
-      /* Thema-observer + tijd-modus */
       observeThemeChanges();
       checkTimeMode();
       setInterval(checkTimeMode, 60000);

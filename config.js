@@ -1,16 +1,15 @@
 /* ============================================================
-   WAR DESK v20.2 — Configuratie
-   - NRC, The Hindu, SCMP, CNN Türk verwijderd
-   - Auto-refresh UIT (alleen handmatig verversen)
+   WAR DESK v20.3 — Configuratie
+   - maxCacheItems 200 → 3000 (belangrijke fix)
    ============================================================ */
 
 window.CONFIG = {
   perFeed: 12,
-  autoRefreshMs: 0,            // 0 = auto-refresh UIT
+  autoRefreshMs: 0,
   pauseOnScrollMs: 15000,
   failThreshold: 5,
   retryAfterMs: 3600000,
-  maxCacheItems: 200,
+  maxCacheItems: 3000,           // Gewijzigd: 200 → 3000
 
   proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
@@ -216,4 +215,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v20.2 geladen —", window.FEEDS.length, "feeds, auto-refresh UIT");
+console.log("[WAR DESK] config.js v20.3 geladen —", window.FEEDS.length, "feeds, cache limit 3000");

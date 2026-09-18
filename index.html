@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v7.1</title>
+<title>WAR DESK v7.2</title>
 <script>
 try{
   var t=localStorage.getItem("wardesk_theme");
@@ -116,6 +116,7 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
 .iptv-pill:hover{ border-color: var(--amber); color: var(--amber); }
 .iptv-pill.active{ background: linear-gradient(135deg, var(--amber-2), var(--amber-3)); color: #070c16; border-color: var(--amber); font-weight: 700; }
 
+/* Grid mode (default) */
 .iptv-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: .6rem; }
 .iptv-ch{ background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--ch-color, var(--line-2)); border-radius: 12px; padding: .85rem .7rem .7rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: .55rem; cursor: pointer; transition: transform .15s, background .15s, border-color .15s; color: var(--ink); font-family: inherit; overflow: hidden; min-height: 120px; justify-content: flex-start; position: relative; }
 .iptv-ch:hover{ transform: translateY(-2px); background: var(--card-hover); border-color: var(--ch-color, var(--amber)); }
@@ -123,8 +124,49 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
 .iptv-ch-logo{ width: 52px; height: 52px; display: grid; place-items: center; background: var(--bg-3); border-radius: 12px; overflow: hidden; font-size: 1.3rem; font-weight: 800; color: var(--ch-color, var(--ink)); flex-shrink: 0; position: relative; }
 .iptv-ch-logo img{ max-width: 100%; max-height: 100%; object-fit: contain; }
 .iptv-ch-working{ position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; background: #10b981; border: 2px solid var(--card); border-radius: 50%; box-shadow: 0 0 6px rgba(16,185,129,.5); }
+.iptv-ch-info{ width: 100%; display: flex; flex-direction: column; align-items: center; gap: .15rem; min-width: 0; }
 .iptv-ch-name{ width: 100%; font-size: .76rem; font-weight: 600; line-height: 1.28; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; color: var(--ink); }
 .iptv-ch-group{ width: 100%; font-size: .62rem; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* List mode — lange smalle balkjes */
+.iptv-grid.list-mode{
+  grid-template-columns: 1fr;
+  gap: .35rem;
+}
+.iptv-grid.list-mode .iptv-ch{
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  padding: .5rem .75rem;
+  min-height: 52px;
+  gap: .7rem;
+  border-left-width: 3px;
+  justify-content: flex-start;
+}
+.iptv-grid.list-mode .iptv-ch-logo{
+  width: 38px;
+  height: 38px;
+  font-size: 1rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.iptv-grid.list-mode .iptv-ch-info{
+  width: auto;
+  flex: 1;
+  align-items: flex-start;
+  min-width: 0;
+}
+.iptv-grid.list-mode .iptv-ch-name{
+  width: 100%;
+  -webkit-line-clamp: 1;
+  font-size: .84rem;
+  line-height: 1.3;
+}
+.iptv-grid.list-mode .iptv-ch-group{
+  width: 100%;
+  font-size: .58rem;
+  -webkit-line-clamp: 1;
+}
 
 .iptv-visible-count{ text-align: center; font-size: .75rem; color: var(--ink-3); padding: .85rem 0 .5rem; font-weight: 500; }
 
@@ -156,6 +198,9 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
   .iptv-ch{ padding: .7rem .55rem .6rem; min-height: 110px; }
   .iptv-ch-logo{ width: 46px; height: 46px; font-size: 1.1rem; }
   .iptv-ch-name{ font-size: .72rem; }
+  .iptv-grid.list-mode .iptv-ch{ padding: .45rem .65rem; min-height: 48px; }
+  .iptv-grid.list-mode .iptv-ch-logo{ width: 34px; height: 34px; }
+  .iptv-grid.list-mode .iptv-ch-name{ font-size: .8rem; }
   .iptv-player-box video{ max-height: 45vh; }
   .iptv-player-head{ padding: .6rem .7rem; }
   .iptv-player-foot{ padding: .6rem .7rem; }
@@ -198,7 +243,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v7.1</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v7.2</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
@@ -268,6 +313,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     <div class="section-head">
       <h2>📡 IPTV</h2>
       <span class="section-count" id="iptvCount">0 kanalen</span>
+      <button class="btn-mini" id="iptvViewToggle" aria-label="Weergave" hidden>▦</button>
       <button class="btn-mini" id="iptvToggleSetup" onclick="var s=document.getElementById('iptvSetup');if(s){s.hidden=!s.hidden}">⚙</button>
     </div>
 
@@ -393,7 +439,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v7.1</span><br>Live nieuws + IPTV + Conflictkaart</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v7.2</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
 
   </div>
@@ -550,34 +596,15 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
         add("info", "Online: " + navigator.onLine);
         add("info", "news.js versie: " + (window.__newsVersion || "ONBEKEND"));
         add("info", "Items: " + (window.State && window.State.items ? window.State.items.length : "?"));
-        add("info", "Sources: " + (window.State ? window.State.loadedSources + "/" + window.State.totalSources : "?"));
         add("info", "Favorieten: " + (window.State && window.State.favorites ? Object.keys(window.State.favorites).length : "?"));
-        add("info", "Notificaties: " + (window.State && window.State.notificationsEnabled ? "AAN" : "UIT"));
-        add("info", "Vertaling: " + (window.State && window.State.translateEnabled ? "AAN" : "UIT"));
         add("info", "Thema: " + (document.body.classList.contains("light") ? "licht" : "donker"));
         add("info", "Font: " + (document.documentElement.getAttribute("data-font-size") || "medium"));
         add("info", "Kleur: " + (document.documentElement.getAttribute("data-accent") || "amber"));
-        add("info", "IPTV versie: v3.1");
+        add("info", "IPTV versie: v3.2");
         add("info", "IPTV kanalen: " + (window.IPTVAPI && window.IPTVAPI.state ? window.IPTVAPI.state.channels.length : "?"));
-        add("info", "IPTV recent: " + (window.IPTVAPI && window.IPTVAPI.state ? window.IPTVAPI.state.recent.length : "?"));
-        add("info", "Map events: " + (window.MAPAPI && window.MAPAPI.state && window.MAPAPI.state.events ? window.MAPAPI.state.events.length : "?"));
+        add("info", "IPTV view: " + (window.IPTVAPI && window.IPTVAPI.state ? window.IPTVAPI.state.viewMode : "?"));
+        add("info", "IPTV init: " + (window.IPTVAPI && window.IPTVAPI.state ? (window.IPTVAPI.state._initialized ? "ja" : "nee") : "?"));
       });
-      setTimeout(function(){
-        add("info", "--- Status na 5s ---");
-        if(window.State){
-          add("info", "State.items: " + (window.State.items ? window.State.items.length : 0));
-          add("info", "loadedSources: " + window.State.loadedSources + "/" + window.State.totalSources);
-        }
-      }, 5000);
-      setTimeout(function(){
-        add("info", "--- Status na 15s ---");
-        if(window.State){
-          add("info", "Items: " + (window.State.items ? window.State.items.length : 0));
-          add("info", "Sources: " + window.State.loadedSources + "/" + window.State.totalSources);
-        }
-        var grid = document.getElementById("feedGrid");
-        if(grid){ add("info", "Kaarten in DOM: " + grid.querySelectorAll("article").length); }
-      }, 15000);
     }
     add("info", "WAR DESK start");
     add("info", "URL: " + location.href);
@@ -594,7 +621,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 <script src="app.js?v=14"></script>
 <script src="persist.js?v=14"></script>
 <script src="refresh.js?v=15"></script>
-<script src="iptv.js?v=19"></script>
+<script src="iptv.js?v=20"></script>
 <script src="map.js?v=17"></script>
 
 <script>
@@ -618,14 +645,12 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       window.wdLog[window.CONFIG ? "ok" : "err"]("CONFIG: " + (window.CONFIG ? "✓" : "✗"));
       window.wdLog[window.FEEDS ? "ok" : "err"]("FEEDS: " + (window.FEEDS ? "✓" : "✗"));
       window.wdLog[window.NewsAPI ? "ok" : "err"]("NewsAPI: " + (window.NewsAPI ? "✓" : "✗"));
-      var okVer = window.__newsVersion && /^v(19|20|21|22)\./.test(window.__newsVersion);
-      window.wdLog[okVer ? "ok" : "err"]("news.js versie: " + (window.__newsVersion || "ONBEKEND"));
       window.wdLog[window.IPTVAPI ? "ok" : "err"]("IPTVAPI: " + (window.IPTVAPI ? "✓" : "✗"));
       window.wdLog[window.MAPAPI ? "ok" : "err"]("MAPAPI: " + (window.MAPAPI ? "✓" : "✗"));
     }
   }, 1000);
 })();
-console.log("%c WAR DESK %c v7.1 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v7.2 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

@@ -1,12 +1,12 @@
 /* ============================================================
-   WAR DESK v20.0 — App orchestration
+   WAR DESK v20.2 — App orchestration
    ============================================================ */
 
 (function(){
   "use strict";
 
   var $ = function(id){ return document.getElementById(id); };
-  var APP_VERSION = window.APP_VERSION || "v8.1";
+  var APP_VERSION = window.APP_VERSION || "v9.3";
 
   function ready(fn){
     if(document.readyState !== "loading") fn();
@@ -56,6 +56,22 @@
     Array.prototype.forEach.call(document.querySelectorAll(".bottom-tabs .tab"), function(tab){
       tab.addEventListener("click", function(){ showView(tab.dataset.view); });
     });
+
+    /* ?tab= shortcut lezer */
+    try{
+      var params = new URLSearchParams(location.search);
+      var requestedTab = params.get("tab");
+      if(requestedTab && ["news","map","iptv"].indexOf(requestedTab) >= 0){
+        setTimeout(function(){
+          var tabBtn = document.querySelector('.bottom-tabs .tab[data-view="' + requestedTab + '"]');
+          if(tabBtn) tabBtn.click();
+          try{
+            var clean = location.pathname + (location.hash || "");
+            history.replaceState(null, "", clean);
+          }catch(e){}
+        }, 500);
+      }
+    }catch(e){}
 
     var sheet = $("sheet");
     var overlay = $("sheetOverlay");
@@ -137,31 +153,39 @@
       });
     }
 
-    var startY = 0, currentY = 0, dragging = false;
+    /* Swipe-sluiten met scroll-detectie */
+    var startY = 0, currentY = 0, dragging = false, canSwipeClose = false;
     if(sheet){
       sheet.addEventListener("touchstart", function(e){
         if(e.touches.length !== 1) return;
         startY = e.touches[0].clientY;
         dragging = true;
+        canSwipeClose = (sheet.scrollTop <= 0);
       }, {passive: true});
       sheet.addEventListener("touchmove", function(e){
         if(!dragging || e.touches.length !== 1) return;
         currentY = e.touches[0].clientY;
         var delta = currentY - startY;
-        if(delta > 0){
+        if(delta > 0 && canSwipeClose){
           if(e.cancelable) e.preventDefault();
           sheet.style.transform = "translateY(" + delta + "px)";
+        } else {
+          if(delta < 0) canSwipeClose = false;
+          dragging = false;
+          sheet.style.transform = "";
         }
       }, {passive: false});
       sheet.addEventListener("touchend", function(){
         if(!dragging) return;
         dragging = false;
-        if(currentY - startY > 100) closeSheet();
+        if(canSwipeClose && currentY - startY > 100) closeSheet();
         sheet.style.transform = "";
         startY = currentY = 0;
+        canSwipeClose = false;
       });
       sheet.addEventListener("touchcancel", function(){
         dragging = false;
+        canSwipeClose = false;
         sheet.style.transform = "";
         startY = currentY = 0;
       });

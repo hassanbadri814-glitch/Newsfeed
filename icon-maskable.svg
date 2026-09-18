@@ -1,38 +1,194 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <radialGradient id="bgGrad" cx="50%" cy="40%" r="80%">
-      <stop offset="0%"   stop-color="#141e3a"/>
-      <stop offset="60%"  stop-color="#0a1226"/>
-      <stop offset="100%" stop-color="#050810"/>
-    </radialGradient>
-    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#f5c176"/>
-      <stop offset="45%"  stop-color="#e2a857"/>
-      <stop offset="100%" stop-color="#8a5c26"/>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#0f0824"/>
+      <stop offset="22%"  stop-color="#2a1440"/>
+      <stop offset="42%"  stop-color="#5a2440"/>
+      <stop offset="60%"  stop-color="#9a3a3a"/>
+      <stop offset="78%"  stop-color="#d96030"/>
+      <stop offset="92%"  stop-color="#f5a040"/>
+      <stop offset="100%" stop-color="#ffd070"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%"   stop-color="#e2a857" stop-opacity="0.18"/>
-      <stop offset="70%"  stop-color="#e2a857" stop-opacity="0.04"/>
-      <stop offset="100%" stop-color="#e2a857" stop-opacity="0"/>
+    <radialGradient id="sunDisc" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#ffffff"/>
+      <stop offset="25%"  stop-color="#fff0a0"/>
+      <stop offset="60%"  stop-color="#ffcc50"/>
+      <stop offset="100%" stop-color="#ff9020"/>
     </radialGradient>
-    <radialGradient id="redGrad" cx="35%" cy="35%" r="70%">
-      <stop offset="0%"   stop-color="#ff7a8c"/>
-      <stop offset="60%"  stop-color="#e63950"/>
-      <stop offset="100%" stop-color="#a01f30"/>
+    <radialGradient id="sunHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#ffe090" stop-opacity="0.9"/>
+      <stop offset="30%"  stop-color="#ff9040" stop-opacity="0.55"/>
+      <stop offset="65%"  stop-color="#c04030" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#5a1a20" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="moonDisc" cx="38%" cy="35%" r="70%">
+      <stop offset="0%"   stop-color="#fffdf0"/>
+      <stop offset="55%"  stop-color="#f5e8c0"/>
+      <stop offset="100%" stop-color="#d0b070"/>
+    </radialGradient>
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#fff8d0" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#fff8d0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="amber" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#fffaf0"/>
+      <stop offset="12%"  stop-color="#fde4b0"/>
+      <stop offset="42%"  stop-color="#f0b96a"/>
+      <stop offset="78%"  stop-color="#c08040"/>
+      <stop offset="100%" stop-color="#7a4a18"/>
+    </linearGradient>
+    <linearGradient id="layerFar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#5a2a28"/>
+      <stop offset="100%" stop-color="#1e0a14"/>
+    </linearGradient>
+    <linearGradient id="layerMid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#2a1218"/>
+      <stop offset="100%" stop-color="#0a0408"/>
+    </linearGradient>
+    <linearGradient id="layerNear" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#0a0408"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="smoke" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%"   stop-color="#7a3a28" stop-opacity="0.7"/>
+      <stop offset="40%"  stop-color="#4a3030" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1a1420" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="textBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#000000" stop-opacity="0"/>
+      <stop offset="25%"  stop-color="#000000" stop-opacity="0.55"/>
+      <stop offset="75%"  stop-color="#000000" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#bgGrad)"/>
+
+  <rect width="512" height="512" fill="url(#sky)"/>
+
   <g transform="translate(256 256) scale(0.72) translate(-256 -256)">
-    <circle cx="256" cy="256" r="200" fill="url(#glow)"/>
-    <circle cx="256" cy="256" r="130" fill="none" stroke="#e2a857" stroke-width="1.5" opacity="0.16"/>
-    <circle cx="256" cy="256" r="170" fill="none" stroke="#e2a857" stroke-width="1.5" opacity="0.09"/>
-    <g fill="none" stroke="url(#amberGrad)" stroke-width="26"
-       stroke-linecap="round" stroke-linejoin="round">
-      <path d="M 168 196 L 210 316 L 252 196"/>
-      <path d="M 288 196 L 288 316 L 344 316"/>
+    <g fill="#ffffff">
+      <circle cx="55"  cy="45"  r="1.2" opacity="0.9"/>
+      <circle cx="175" cy="62"  r="1.4" opacity="0.85"/>
+      <circle cx="300" cy="48"  r="1.2" opacity="0.8"/>
+      <circle cx="440" cy="25"  r="1.3" opacity="0.9"/>
+      <circle cx="410" cy="105" r="1"   opacity="0.55"/>
+      <circle cx="90"  cy="95"  r="0.9" opacity="0.5"/>
     </g>
-    <circle cx="250" cy="306" r="10" fill="url(#amberGrad)"/>
-    <circle cx="378" cy="134" r="20" fill="url(#redGrad)"/>
-    <circle cx="378" cy="134" r="6"  fill="#ffffff" opacity="0.9"/>
+
+    <circle cx="410" cy="105" r="60" fill="url(#moonGlow)"/>
+    <circle cx="410" cy="105" r="36" fill="url(#moonDisc)"/>
+    <circle cx="426" cy="88" r="29" fill="#2a1440" opacity="0.92"/>
+
+    <circle cx="256" cy="400" r="180" fill="url(#sunHalo)"/>
+    <circle cx="256" cy="400" r="42" fill="url(#sunDisc)"/>
+
+    <g opacity="0.25">
+      <path d="M 256,400 L 40,60 L 70,50 Z" fill="#ffb860"/>
+      <path d="M 256,400 L 220,10 L 250,5 Z" fill="#ffd890"/>
+      <path d="M 256,400 L 400,45 L 430,60 Z" fill="#ffb860"/>
+      <path d="M 256,400 L 480,110 L 500,130 Z" fill="#ff9040"/>
+    </g>
+
+    <g opacity="0.75">
+      <path d="M 155,340 Q 140,290 158,240 Q 172,205 152,165 Q 138,135 158,105"
+            stroke="url(#smoke)" stroke-width="38" fill="none" stroke-linecap="round"/>
+      <path d="M 370,330 Q 388,285 368,245 Q 352,215 375,180 Q 388,155 372,128"
+            stroke="url(#smoke)" stroke-width="30" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <g fill="url(#layerFar)">
+      <rect x="58"  y="300" width="8" height="150"/>
+      <ellipse cx="62" cy="300" rx="6" ry="3"/>
+      <path d="M 55,300 Q 62,282 69,300 Z"/>
+      <rect x="52"  y="330" width="20" height="4"/>
+      <rect x="54"  y="365" width="16" height="3"/>
+
+      <path d="M 95,450 L 95,380 Q 105,340 145,340 Q 185,340 195,380 L 195,450 Z"/>
+      <path d="M 108,360 Q 145,315 182,360 Z"/>
+      <g fill="#0a0408">
+        <path d="M 105,420 L 105,405 Q 112,398 118,405 L 118,420 Z"/>
+        <path d="M 125,420 L 125,405 Q 132,398 138,405 L 138,420 Z"/>
+        <path d="M 150,420 L 150,405 Q 157,398 163,405 L 163,420 Z"/>
+        <path d="M 172,420 L 172,405 Q 179,398 185,405 L 185,420 Z"/>
+      </g>
+
+      <rect x="222" y="280" width="8" height="170"/>
+      <ellipse cx="226" cy="280" rx="6" ry="3"/>
+      <path d="M 219,280 Q 226,260 233,280 Z"/>
+      <rect x="216" y="320" width="20" height="4"/>
+      <rect x="218" y="360" width="16" height="3"/>
+
+      <path d="M 245,450 L 245,395 Q 260,360 285,360 Q 310,360 325,395 L 325,450 Z"/>
+      <path d="M 252,378 Q 285,335 318,378 Z"/>
+      <path d="M 265,360 Q 285,340 305,360 Z" fill="#1e0a14"/>
+
+      <path d="M 340,450 L 340,410 Q 350,388 370,388 Q 390,388 400,410 L 400,450 Z"/>
+      <path d="M 348,398 Q 370,375 392,398 Z"/>
+
+      <rect x="415" y="295" width="8" height="155"/>
+      <ellipse cx="419" cy="295" rx="6" ry="3"/>
+      <path d="M 412,295 Q 419,278 426,295 Z"/>
+      <rect x="409" y="330" width="20" height="4"/>
+      <rect x="411" y="368" width="16" height="3"/>
+    </g>
+
+    <g fill="#f5a040" opacity="0.55">
+      <rect x="108" y="430" width="3" height="6"/>
+      <rect x="128" y="430" width="3" height="6"/>
+      <rect x="152" y="430" width="3" height="6"/>
+      <rect x="175" y="430" width="3" height="6"/>
+      <rect x="258" y="420" width="3" height="6"/>
+      <rect x="295" y="420" width="3" height="6"/>
+    </g>
+
+    <path d="M 0,460 Q 60,448 120,455 Q 180,462 240,455 Q 300,448 360,455 Q 420,462 480,452 L 512,458 L 512,512 L 0,512 Z" fill="url(#layerMid)"/>
+
+    <g fill="url(#layerNear)" transform="translate(100, 350)">
+      <path d="M -10,65 L -12,105 L -6,105 L -3,68 Z"/>
+      <path d="M 6,68 L 9,105 L 15,105 L 12,65 Z"/>
+      <path d="M -18,40 L -20,72 Q 0,78 20,72 L 18,40 Z"/>
+      <rect x="-18" y="48" width="36" height="5"/>
+      <path d="M -14,12 L -18,45 L 18,45 L 14,12 Z"/>
+      <ellipse cx="0" cy="-2" rx="7" ry="8"/>
+      <path d="M -9,-2 Q -11,-12 -8,-22 Q 0,-26 8,-22 Q 11,-12 9,-2 Z"/>
+      <ellipse cx="0" cy="-4" rx="11" ry="6"/>
+      <path d="M 20,-35 L 22,70" stroke="#000" stroke-width="2.5" fill="none"/>
+      <path d="M 20,-35 L 17,-48 L 22,-45 L 26,-48 Z"/>
+      <ellipse cx="-22" cy="32" rx="7" ry="12"/>
+    </g>
+
+    <g fill="url(#layerNear)" transform="translate(380, 355)">
+      <path d="M -12,62 L -14,102 L -7,102 L -4,66 Z"/>
+      <path d="M 6,66 L 10,102 L 16,102 L 12,62 Z"/>
+      <path d="M -20,38 L -22,70 Q 0,76 22,70 L 20,38 Z"/>
+      <rect x="-20" y="46" width="40" height="5"/>
+      <path d="M -16,10 L -20,43 L 20,43 L 16,10 Z"/>
+      <ellipse cx="0" cy="-4" rx="7" ry="8"/>
+      <path d="M -9,-4 Q -11,-14 -8,-24 Q 0,-28 8,-24 Q 11,-14 9,-4 Z"/>
+      <ellipse cx="0" cy="-6" rx="11" ry="6"/>
+      <path d="M -4,-24 Q -2,-34 4,-40 Q 6,-32 4,-24 Z"/>
+      <path d="M 20,18 Q 45,8 70,-18 Q 74,-22 70,-24 Q 62,-20 50,-4 Q 32,14 20,22 Z"/>
+    </g>
+
+    <rect x="0" y="140" width="512" height="200" fill="url(#textBg)"/>
+
+    <g font-family="sans-serif" font-size="112" font-weight="900" text-anchor="middle" style="paint-order:stroke">
+      <text x="262" y="196" fill="#1a0808">WAR</text>
+      <text x="259" y="193" fill="#623420">WAR</text>
+      <text x="257" y="191" fill="#925a30">WAR</text>
+      <text x="255" y="189" fill="#c08040">WAR</text>
+      <text x="254" y="188" fill="url(#amber)" stroke="#5a3010" stroke-width="2.5" stroke-linejoin="round">WAR</text>
+    </g>
+
+    <g font-family="sans-serif" font-size="112" font-weight="900" text-anchor="middle" style="paint-order:stroke">
+      <text x="262" y="304" fill="#1a0808">DESK</text>
+      <text x="259" y="301" fill="#623420">DESK</text>
+      <text x="257" y="299" fill="#925a30">DESK</text>
+      <text x="255" y="297" fill="#c08040">DESK</text>
+      <text x="254" y="296" fill="url(#amber)" stroke="#5a3010" stroke-width="2.5" stroke-linejoin="round">DESK</text>
+    </g>
+
+    <text x="256" y="346" font-family="sans-serif" font-size="14" font-weight="800"
+          text-anchor="middle" fill="#ffe8b0" letter-spacing="3.5"
+          style="paint-order:stroke" stroke="#3a1a08" stroke-width="2.5" stroke-linejoin="round">NIEUWS &amp; CONFLICT MONITOR</text>
   </g>
 </svg>

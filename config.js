@@ -1,11 +1,12 @@
 /* ============================================================
-   WAR DESK v20.1 — Configuratie
-   Sportbronnen opgeschoond (4 verwijderd)
+   WAR DESK v20.2 — Configuratie
+   - NRC, The Hindu, SCMP, CNN Türk verwijderd
+   - Auto-refresh UIT (alleen handmatig verversen)
    ============================================================ */
 
 window.CONFIG = {
   perFeed: 12,
-  autoRefreshMs: 60000,
+  autoRefreshMs: 0,            // 0 = auto-refresh UIT
   pauseOnScrollMs: 15000,
   failThreshold: 5,
   retryAfterMs: 3600000,
@@ -56,7 +57,6 @@ window.FEEDS = [
   {n:"De Telegraaf",lang:"nl",cat:"nl",url:"https://www.telegraaf.nl/rss"},
   {n:"AD.nl",lang:"nl",cat:"nl",url:"https://www.ad.nl/rss.xml"},
   {n:"De Volkskrant",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:volkskrant.nl&hl=nl&gl=NL&ceid=NL:nl"},
-  {n:"NRC",lang:"nl",cat:"nl",url:"https://www.nrc.nl/rss"},
   {n:"Het Parool",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:parool.nl&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"Trouw",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:trouw.nl&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"RTL Nieuws",lang:"nl",cat:"nl",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl&hl=nl&gl=NL&ceid=NL:nl"},
@@ -138,7 +138,6 @@ window.FEEDS = [
   {n:"Hürriyet",lang:"tr",cat:"tr",url:"https://www.hurriyet.com.tr/rss/anasayfa"},
   {n:"Sabah",lang:"tr",cat:"tr",url:"https://www.sabah.com.tr/rss/anasayfa.xml"},
   {n:"NTV",lang:"tr",cat:"tr",url:"https://www.ntv.com.tr/son-dakika.rss"},
-  {n:"CNN Türk",lang:"tr",cat:"tr",url:"https://www.cnnturk.com/feed/rss/all/news"},
   {n:"TRT Haber",lang:"tr",cat:"tr",url:"https://www.trthaber.com/sondakika.rss"},
   {n:"Sözcü",lang:"tr",cat:"tr",url:"https://www.sozcu.com.tr/rss/all.xml"},
 
@@ -196,10 +195,8 @@ window.FEEDS = [
   {n:"TASS",lang:"en",cat:"war",url:"https://tass.com/rss/v2.xml"},
 
   // ===== AZIË =====
-  {n:"SCMP",lang:"en",cat:"world",url:"https://www.scmp.com/rss/91/feed"},
   {n:"Japan Times",lang:"en",cat:"world",url:"https://www.japantimes.co.jp/feed/"},
   {n:"Times of India",lang:"en",cat:"world",url:"https://timesofindia.indiatimes.com/rssfeedstopstories.cms"},
-  {n:"The Hindu",lang:"en",cat:"world",url:"https://www.thehindu.com/feeder/default.rss"},
 
   // ===== WERELD =====
   {n:"BBC World",lang:"en",cat:"world",url:"https://feeds.bbci.co.uk/news/world/rss.xml"},
@@ -219,4 +216,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v20.1 geladen —", window.FEEDS.length, "feeds");
+console.log("[WAR DESK] config.js v20.2 geladen —", window.FEEDS.length, "feeds, auto-refresh UIT");

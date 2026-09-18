@@ -1,12 +1,8 @@
 /* ============================================================
-   WAR DESK v21.1 — Nieuws logica + Vertaling
-   - MyMemory primair (50.000 tekens/dag via de= parameter)
-   - Google Translate fallback
-   - Cache in IndexedDB (max 5000)
+   WAR DESK v22.0 — Nieuws logica + Favorieten + Notificaties
    ============================================================ */
-window.__newsVersion = "v21.1-mymemory-50k";
+window.__newsVersion = "v22.0-fav-notif";
 
-/* Jouw MyMemory contactadres — verhoogt limiet naar 50.000 tekens/dag */
 var MYMEMORY_EMAIL = "hassanbadri814@gmail.com";
 
 window.State = {
@@ -20,6 +16,8 @@ window.State = {
   disabled: {},
   health: {},
   readMap: {},
+  favorites: {},
+  notificationsEnabled: false,
   lastActivity: Date.now(),
   isScrolling: false,
   scrollTimer: null,
@@ -61,6 +59,17 @@ var NewsDB = (function(){
       try{
         var tx = db.transaction(store, "readwrite");
         tx.objectStore(store).put(value);
+        tx.oncomplete = function(){ res(true); };
+        tx.onerror = function(){ res(false); };
+      }catch(e){ res(false); }
+    });
+  }
+  function del(store, key){
+    if(!db) return Promise.resolve(false);
+    return new Promise(function(res){
+      try{
+        var tx = db.transaction(store, "readwrite");
+        tx.objectStore(store).delete(key);
         tx.oncomplete = function(){ res(true); };
         tx.onerror = function(){ res(false); };
       }catch(e){ res(false); }
@@ -132,6 +141,17 @@ var NewsDB = (function(){
     },
     loadTranslation: function(key){
       return get("translations", key).then(function(rec){ return (rec && rec.v) ? rec.v : null; });
+    },
+    saveFavorite: function(link){ return put("meta", {k:"fav_" + link, v: Date.now()}); },
+    removeFavorite: function(link){ return del("meta", "fav_" + link); },
+    loadFavorites: function(){
+      return getAll("meta").then(function(all){
+        var map = {};
+        all.forEach(function(rec){
+          if(rec.k && rec.k.indexOf("fav_") === 0) map[rec.k.slice(4)] = rec.v;
+        });
+        return map;
+      });
     }
   };
 })();
@@ -156,12 +176,10 @@ function esc(s){
 function extractTags(title, desc, fallback){
   var tags = [];
   var t = ((title || "") + " " + (desc || "")).toLowerCase();
-
   var sportSignal = /\b(voetbal|football|soccer|eredivisie|eerste divisie|knvb|ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|n\.e\.c\.|sparta|willem ii|go ahead|pec zwolle|rkc|fortuna sittard|excelsior|almere city|heracles|voetbalzone|voetbalnieuws|voetbalprimeur|match|wedstrijd|goal|doelpunt|keeper|doelman|coach|trainer|speler|selectie|toernooi|competitie|champions league|europa league|conference league|knvb beker|johan cruijff schaal|fifa|uefa|wk|ek|kickboxing|glory|mma|ufc|boksen|boks|vechtsport|formule 1|f1|grand prix|motogp|olympische|tennis|wimbledon|roland garros|us open|australian open|basketbal|nba|nfl|nhl|mlb|wielrennen|tour de france|giro|vuelta|darts|schaatsen|zwemmen|atletiek|hockey|handbal|volleybal|honkbal|rugby|cricket|golf|surfen|ski|snowboard)\b/.test(t);
   if(sportSignal && !/\b(airstrike|missile strike|invasion|massacre|shelling)\b/.test(t)){
     tags.push("sport");
   }
-
   if(/\b(gaza|rafah|khan younis|hamas|palestin|netanyahu|tel aviv|jerusalem|idf|hebron|jenin|nablus|ramallah|west bank)\b/.test(t)) tags.push("gaza", "mideast", "war");
   if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah|sidon|tripoli|tyre)\b/.test(t)) tags.push("lebanon", "mideast", "war");
   if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf|pezeshkian)\b/.test(t)) tags.push("iran", "mideast", "war");
@@ -170,11 +188,9 @@ function extractTags(title, desc, fallback){
   if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|kharkiv|odesa|donbas|crimea|donetsk|luhansk|mariupol|putin|kremlin|moscow|russia)\b/.test(t)) tags.push("ukraine", "war");
   if(/\b(sudan|sudanese|khartoum|darfur|rsf|omdurman)\b/.test(t)) tags.push("sudan", "war");
   if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara)\b/.test(t)) tags.push("maroc");
-
   if(/\b(airstrike|air strike|missile|invasion|invaded|ceasefire|cease-fire|military|soldier|troops|combat|offensive|bombing|shelling|artillery|tank|drone strike|hostage|massacre|war crime)\b/.test(t)){
     if(tags.indexOf("war") === -1) tags.push("war");
   }
-
   return tags.filter(function(v, i, a){ return a.indexOf(v) === i; });
 }
 
@@ -263,10 +279,8 @@ function normalizeItem(it){
   if(it == null) return {title:"", link:"", description:"", pubDate:"", thumbnail:""};
   if(typeof it === "string") return {title: it, link:"", description:"", pubDate:"", thumbnail:""};
   if(typeof it !== "object") return {title: String(it), link:"", description:"", pubDate:"", thumbnail:""};
-
   if(it.fields) it = Object.assign({}, it, it.fields);
   if(it._source) it = Object.assign({}, it, it._source);
-
   var raw = it.description || it.content || it.summary || it["content:encoded"] || it.contentSnippet || "";
   var enc = it.enclosure && (it.enclosure.link || it.enclosure.url);
   var thumb = it.thumbnail || enc || it.image || "";
@@ -275,7 +289,6 @@ function normalizeItem(it){
     if(m) thumb = m[1];
   }
   var link = it.link || it.url || it.id || (it.guid && (it.guid.$t || it.guid._ || it.guid)) || "";
-
   return {
     title: String(it.title || it.name || it.headline || ""),
     link: String(link),
@@ -285,36 +298,22 @@ function normalizeItem(it){
   };
 }
 
-/* ============================================================
-   PROXY FALLBACK + GOOGLE NEWS SEMAPHORE
-   ============================================================ */
+/* ===== PROXY + GOOGLE NEWS ===== */
 window.__proxyHealth = {};
-
 var PROXY_COOLDOWN_MS = 30000;
 var PROXY_FAIL_THRESHOLD = 5;
-
 var googleNewsSem = { active: 0, max: 2, queue: [] };
 
 function googleNewsAcquire(){
   return new Promise(function(resolve){
-    if(googleNewsSem.active < googleNewsSem.max){
-      googleNewsSem.active++;
-      resolve();
-    } else {
-      googleNewsSem.queue.push(resolve);
-    }
+    if(googleNewsSem.active < googleNewsSem.max){ googleNewsSem.active++; resolve(); }
+    else { googleNewsSem.queue.push(resolve); }
   });
 }
-
 function googleNewsRelease(){
-  if(googleNewsSem.queue.length > 0){
-    var next = googleNewsSem.queue.shift();
-    next();
-  } else {
-    googleNewsSem.active--;
-  }
+  if(googleNewsSem.queue.length > 0){ var next = googleNewsSem.queue.shift(); next(); }
+  else { googleNewsSem.active--; }
 }
-
 function markProxyFail(p){
   if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabledUntil: 0 };
   window.__proxyHealth[p].fails++;
@@ -323,18 +322,14 @@ function markProxyFail(p){
     window.__proxyHealth[p].fails = 0;
   }
 }
-
 function markProxyOk(p){
   if(!window.__proxyHealth[p]) window.__proxyHealth[p] = { fails: 0, disabledUntil: 0 };
   window.__proxyHealth[p].fails = 0;
   window.__proxyHealth[p].disabledUntil = 0;
 }
-
 function parseResponse(txt){
   var trimmed = txt.replace(/^\uFEFF/, "").replace(/^\s+/, "");
-  if(trimmed.charAt(0) === "<"){
-    return { shape: "xml", items: parseRssXml(txt) };
-  }
+  if(trimmed.charAt(0) === "<") return { shape: "xml", items: parseRssXml(txt) };
   try{
     var data = JSON.parse(txt);
     var items = [];
@@ -343,33 +338,22 @@ function parseResponse(txt){
     else if(data.data && data.data.items && data.data.items.length) items = data.data.items;
     else if(Array.isArray(data)) items = data;
     return { shape: "json", items: items };
-  }catch(e){
-    return { shape: "?", items: [] };
-  }
+  }catch(e){ return { shape: "?", items: [] }; }
 }
 
 async function fetchFeedWithFallback(feedUrl){
   var isGoogleNews = /news\.google\.com/.test(feedUrl);
-
   if(isGoogleNews) await googleNewsAcquire();
-
   try {
     var proxies;
-    if(isGoogleNews && CONFIG.googleNewsProxies && CONFIG.googleNewsProxies.length){
-      proxies = CONFIG.googleNewsProxies;
-    } else if(CONFIG.proxies && CONFIG.proxies.length){
-      proxies = CONFIG.proxies;
-    } else {
-      proxies = [CONFIG.proxy];
-    }
-
+    if(isGoogleNews && CONFIG.googleNewsProxies && CONFIG.googleNewsProxies.length) proxies = CONFIG.googleNewsProxies;
+    else if(CONFIG.proxies && CONFIG.proxies.length) proxies = CONFIG.proxies;
+    else proxies = [CONFIG.proxy];
     var lastErr = null;
-
     for(var i = 0; i < proxies.length; i++){
       var p = proxies[i];
       var health = window.__proxyHealth[p];
       if(health && health.disabledUntil && Date.now() < health.disabledUntil) continue;
-
       try{
         var ctrl = new AbortController();
         var timer = setTimeout(function(){ ctrl.abort(); }, CONFIG.fetchTimeoutMs);
@@ -392,47 +376,29 @@ async function fetchFeedWithFallback(feedUrl){
   }
 }
 
-/* ============================================================
-   VERTALING — MyMemory primair (50K/dag via e-mail) → Google fallback
-   ============================================================ */
-
+/* ===== VERTALING ===== */
 var TRANSLATION_SEM = { active: 0, max: 3, queue: [] };
 
 function titleHashKey(lang, title) {
   var str = (lang || "xx") + "|" + (title || "");
   var h = 5381;
-  for (var i = 0; i < str.length; i++) {
-    h = ((h << 5) + h) ^ str.charCodeAt(i);
-  }
+  for (var i = 0; i < str.length; i++) { h = ((h << 5) + h) ^ str.charCodeAt(i); }
   return "tr_" + (h >>> 0).toString(36);
 }
-
 function translationAcquire() {
   return new Promise(function(resolve){
-    if(TRANSLATION_SEM.active < TRANSLATION_SEM.max){
-      TRANSLATION_SEM.active++;
-      resolve();
-    } else {
-      TRANSLATION_SEM.queue.push(resolve);
-    }
+    if(TRANSLATION_SEM.active < TRANSLATION_SEM.max){ TRANSLATION_SEM.active++; resolve(); }
+    else { TRANSLATION_SEM.queue.push(resolve); }
   });
 }
-
 function translationRelease() {
-  if(TRANSLATION_SEM.queue.length > 0){
-    var next = TRANSLATION_SEM.queue.shift();
-    next();
-  } else {
-    TRANSLATION_SEM.active--;
-  }
+  if(TRANSLATION_SEM.queue.length > 0){ var next = TRANSLATION_SEM.queue.shift(); next(); }
+  else { TRANSLATION_SEM.active--; }
 }
-
 async function fetchTranslation(text, sourceLang) {
   if(!text) return null;
   var cleanText = text.replace(/\s+/g, " ").trim().slice(0, 500);
   if(!cleanText) return null;
-
-  /* Poging 1: MyMemory DIRECT met e-mail → 50.000 tekens/dag */
   try {
     var mmUrl = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(cleanText) +
       "&langpair=" + encodeURIComponent(sourceLang || "en") + "|nl" +
@@ -454,9 +420,7 @@ async function fetchTranslation(text, sourceLang) {
         }
       }
     }
-  } catch(e) { /* stil doorgaan naar Google */ }
-
-  /* Poging 2: Google Translate via Worker (fallback) */
+  } catch(e) {}
   try {
     var proxy = CONFIG.proxies[0];
     var googleUrl = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" +
@@ -469,36 +433,23 @@ async function fetchTranslation(text, sourceLang) {
       var data2 = await r2.json();
       if(data2 && Array.isArray(data2[0])){
         var out2 = "";
-        for(var i = 0; i < data2[0].length; i++){
-          var seg = data2[0][i];
-          if(seg && seg[0]) out2 += seg[0];
-        }
+        for(var i = 0; i < data2[0].length; i++){ var seg = data2[0][i]; if(seg && seg[0]) out2 += seg[0]; }
         if(out2 && out2.length > 1) return out2;
       }
     }
-  } catch(e) { /* niets */ }
-
+  } catch(e) {}
   return null;
 }
-
 async function translateItem(item) {
   if(!item || !item.title) return null;
   if(!item.lang || item.lang === "nl") return null;
   if(!State.translateEnabled) return null;
-
   var key = titleHashKey(item.lang, item.title);
-
   if(State.translations[key]) return State.translations[key];
-
   var cached = await NewsDB.loadTranslation(key);
-  if(cached){
-    State.translations[key] = cached;
-    return cached;
-  }
-
+  if(cached){ State.translations[key] = cached; return cached; }
   if(State.translationPending[key]) return null;
   State.translationPending[key] = true;
-
   await translationAcquire();
   try {
     var translated = await fetchTranslation(item.title, item.lang);
@@ -513,7 +464,6 @@ async function translateItem(item) {
   }
   return null;
 }
-
 async function translateVisibleItems(items) {
   if(!State.translateEnabled) return;
   var toTranslate = items.filter(function(it){
@@ -522,25 +472,18 @@ async function translateVisibleItems(items) {
     return !State.translations[key];
   });
   if(!toTranslate.length) return;
-
   await Promise.all(toTranslate.map(async function(it){
     var translated = await translateItem(it);
-    if(translated){
-      updateCardTitle(it, translated);
-    }
+    if(translated) updateCardTitle(it, translated);
   }));
 }
-
 function updateCardTitle(item, translatedTitle) {
   var cards = document.querySelectorAll(".news-card[data-link]");
   for(var i = 0; i < cards.length; i++){
     if(cards[i].getAttribute("data-link") === item.link){
       var titleEl = cards[i].querySelector(".card-title");
       var origEl = cards[i].querySelector(".card-original");
-      if(titleEl){
-        titleEl.textContent = translatedTitle;
-        titleEl.setAttribute("dir", "ltr");
-      }
+      if(titleEl){ titleEl.textContent = translatedTitle; titleEl.setAttribute("dir", "ltr"); }
       if(!origEl && titleEl){
         origEl = document.createElement("p");
         origEl.className = "card-original";
@@ -552,17 +495,13 @@ function updateCardTitle(item, translatedTitle) {
     }
   }
 }
-
 function getDisplayTitle(it) {
   if(!State.translateEnabled) return { title: it.title, original: null };
   if(!it.lang || it.lang === "nl") return { title: it.title, original: null };
   var key = titleHashKey(it.lang, it.title);
-  if(State.translations[key]) {
-    return { title: State.translations[key], original: it.title };
-  }
+  if(State.translations[key]) return { title: State.translations[key], original: it.title };
   return { title: it.title, original: null };
 }
-
 window.__setTranslate = function(enabled){
   State.translateEnabled = !!enabled;
   try { localStorage.setItem("wardesk_translate", enabled ? "1" : "0"); } catch(e){}
@@ -570,60 +509,126 @@ window.__setTranslate = function(enabled){
   if(btn) btn.classList.toggle("toggle-on", enabled);
   State._lastRenderHash = "";
   renderNews();
-  if(window.showToast){
-    window.showToast(enabled ? "🌐 Vertaling aan" : "🌐 Vertaling uit");
-  }
+  if(window.showToast) window.showToast(enabled ? "🌐 Vertaling aan" : "🌐 Vertaling uit");
   if(enabled){
     var toShow = filterItems().slice(0, 100);
     translateVisibleItems(toShow);
   }
 };
 
-/* ============================================================
-   LOAD FEEDS
-   ============================================================ */
+/* ===== FAVORIETEN ===== */
+function isFavorite(link){ return !!State.favorites[link]; }
+
+function toggleFavorite(link, btnEl){
+  if(State.favorites[link]){
+    delete State.favorites[link];
+    NewsDB.removeFavorite(link);
+    if(btnEl){ btnEl.classList.remove("active"); btnEl.textContent = "☆"; }
+  } else {
+    State.favorites[link] = Date.now();
+    NewsDB.saveFavorite(link);
+    if(btnEl){ btnEl.classList.add("active"); btnEl.textContent = "★"; }
+  }
+  updateFavoritesCount();
+  if(State.currentCat === "favorites"){
+    State._lastRenderHash = "";
+    renderNews();
+  }
+}
+
+function updateFavoritesCount(){
+  var el = document.getElementById("favCount");
+  if(el) el.textContent = Object.keys(State.favorites).length;
+}
+
+/* ===== NOTIFICATIES ===== */
+async function requestNotificationPermission(){
+  if(!("Notification" in window)) return false;
+  if(Notification.permission === "granted") return true;
+  if(Notification.permission === "denied") return false;
+  try {
+    var result = await Notification.requestPermission();
+    return result === "granted";
+  } catch(e) { return false; }
+}
+
+window.__setNotifications = async function(enabled){
+  if(enabled){
+    var ok = await requestNotificationPermission();
+    if(!ok){
+      if(window.showToast) window.showToast("Notificaties geweigerd door browser");
+      var btn = document.getElementById("toggleNotifications");
+      if(btn) btn.classList.remove("toggle-on");
+      return;
+    }
+    State.notificationsEnabled = true;
+    try { localStorage.setItem("wardesk_notifications", "1"); } catch(e){}
+    var btn = document.getElementById("toggleNotifications");
+    if(btn) btn.classList.add("toggle-on");
+    if(window.showToast) window.showToast("🔔 Breaking notificaties aan");
+    try {
+      new Notification("WAR DESK", {
+        body: "Notificaties zijn ingeschakeld. Je krijgt een melding bij grote breaking events.",
+        tag: "wardesk-test"
+      });
+    } catch(e) {}
+  } else {
+    State.notificationsEnabled = false;
+    try { localStorage.setItem("wardesk_notifications", "0"); } catch(e){}
+    var btn = document.getElementById("toggleNotifications");
+    if(btn) btn.classList.remove("toggle-on");
+    if(window.showToast) window.showToast("🔔 Notificaties uit");
+  }
+};
+
+function sendBreakingNotification(group){
+  if(!State.notificationsEnabled) return;
+  if(!("Notification" in window)) return;
+  if(Notification.permission !== "granted") return;
+  if(group.sources.length < 5) return;
+  try {
+    var title = "🚨 Breaking · " + group.sources.length + " bronnen";
+    var body = group.items[0].title.slice(0, 180);
+    var notif = new Notification(title, {
+      body: body,
+      tag: "wardesk-breaking-" + Math.floor(Date.now() / 60000),
+      badge: undefined
+    });
+    notif.onclick = function(){
+      try { window.focus(); } catch(e){}
+      notif.close();
+    };
+  } catch(e) {
+    console.warn("[WAR DESK] notificatie fout:", e);
+  }
+}
+
+/* ===== LOAD FEEDS ===== */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
-
   window.__proxyHealth = {};
-
   var itemsAtStart = State.items.slice();
   var minKeep = itemsAtStart.length;
-
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
   State.totalSources = active.length;
   State.failedSources = [];
   State.loadedSources = 0;
-
   var collected = [];
   var collectedLinks = {};
   var tried = 0;
   var bar = document.getElementById("progressBar");
-  if(bar){
-    bar.classList.add("show");
-    bar.style.width = "10%";
-  }
-
+  if(bar){ bar.classList.add("show"); bar.style.width = "10%"; }
   window.__wdDiagCount = 0;
-
   var lastProgressiveCount = 0;
   var progressiveTimer = setInterval(function(){
-    if(session !== State.loadSession){
-      clearInterval(progressiveTimer);
-      return;
-    }
+    if(session !== State.loadSession){ clearInterval(progressiveTimer); return; }
     if(collected.length <= lastProgressiveCount) return;
     lastProgressiveCount = collected.length;
-
     var merged = dedupe(collected.concat(itemsAtStart));
-    if(merged.length < minKeep){
-      merged = itemsAtStart.slice();
-    }
+    if(merged.length < minKeep) merged = itemsAtStart.slice();
     State.items = merged;
-
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = State.items.length;
-
     renderNews();
   }, 1000);
 
@@ -635,7 +640,6 @@ async function loadAllFeeds(){
       var items = result.items;
       var shape = result.shape;
       var proxyIdx = result.proxyIdx;
-
       var added = 0;
       items.slice(0, CONFIG.perFeed).forEach(function(rawIt){
         var it = normalizeItem(rawIt);
@@ -659,30 +663,22 @@ async function loadAllFeeds(){
           added++;
         }
       });
-
       if(window.__wdDebug && window.__wdDiagCount < 5 && window.wdLog){
         window.__wdDiagCount++;
         var pTag = proxyIdx === 0 ? "p1" : ("p" + (proxyIdx + 1));
         window.wdLog.info("✓ " + f.n + " [" + shape + "/" + pTag + "] items=" + items.length + " nieuw=" + added);
       }
-
       State.loadedSources++;
       if(State.health[f.n]) State.health[f.n].fails = 0;
-
       var srcEl = document.getElementById("statSources");
-      if(srcEl && session === State.loadSession){
-        srcEl.textContent = State.loadedSources + "/" + State.totalSources;
-      }
+      if(srcEl && session === State.loadSession) srcEl.textContent = State.loadedSources + "/" + State.totalSources;
     }catch(e){
       State.failedSources.push(f.n);
       if(!State.health[f.n]) State.health[f.n] = {fails:0, last:0};
       State.health[f.n].fails++;
       State.health[f.n].last = Date.now();
-      if(State.health[f.n].fails >= CONFIG.failThreshold){
-        State.disabled[f.n] = true;
-      }
+      if(State.health[f.n].fails >= CONFIG.failThreshold) State.disabled[f.n] = true;
     }
-
     if(bar && session === State.loadSession){
       bar.style.width = (10 + Math.round((tried / active.length) * 85)) + "%";
     }
@@ -699,37 +695,26 @@ async function loadAllFeeds(){
     })());
   }
   await Promise.all(workers);
-
   clearInterval(progressiveTimer);
-
   if(session !== State.loadSession) return;
-
   State.items = dedupe(collected.concat(itemsAtStart));
-  if(State.items.length < minKeep){
-    State.items = itemsAtStart.slice();
-  }
-
+  if(State.items.length < minKeep) State.items = itemsAtStart.slice();
   var srcEl = document.getElementById("statSources");
   if(srcEl) srcEl.textContent = State.loadedSources + "/" + State.totalSources;
   var itemsEl = document.getElementById("statItems");
   if(itemsEl) itemsEl.textContent = State.items.length;
-
   NewsDB.saveItems(State.items);
   NewsDB.saveHealth(State.health);
-
   if(bar){
     bar.style.width = "100%";
     setTimeout(function(){ bar.classList.remove("show"); bar.style.width = "0%"; }, 400);
   }
-
   detectBreaking();
   renderNews();
-
   if(State.translateEnabled){
     var toShow = filterItems().slice(0, 100);
     translateVisibleItems(toShow);
   }
-
   if(window.__wdDebug && window.wdLog){
     window.wdLog[State.items.length ? "ok" : "warn"](
       "loadAllFeeds klaar — " + State.items.length + " items uit " + State.loadedSources + "/" + State.totalSources + " bronnen"
@@ -744,9 +729,7 @@ function detectBreaking(){
     var age = now - tm(it.date);
     return age > 0 && age < 900000;
   }).slice(0, 40);
-
   if(recent.length < 3) return;
-
   var groups = [];
   var used = {};
   recent.forEach(function(a, i){
@@ -767,33 +750,34 @@ function detectBreaking(){
     });
     if(group.sources.length >= 3) groups.push(group);
   });
-
   if(!groups.length) return;
   groups.sort(function(a, b){ return b.sources.length - a.sources.length; });
   var g = groups[0];
-
   State.breakingShownAt = Date.now();
   State.lastBreakingItem = g.items[0];
-
   var bcEl = document.getElementById("breakingCount");
   var btEl = document.getElementById("breakingTitle");
   var bmEl = document.getElementById("breakingMeta");
   if(bcEl) bcEl.textContent = g.sources.length;
   if(btEl) btEl.textContent = g.items[0].title.slice(0, 180);
   if(bmEl) bmEl.textContent = g.sources.slice(0, 4).join(" · ");
-
   var banner = document.getElementById("breakingBanner");
   if(banner){
     banner.classList.add("show");
     clearTimeout(banner._timer);
     banner._timer = setTimeout(function(){ banner.classList.remove("show"); }, 30000);
   }
+  /* Notificatie alleen bij 5+ bronnen EN als de app op de achtergrond is */
+  if(State.notificationsEnabled && document.hidden){
+    sendBreakingNotification(g);
+  }
 }
 
 function filterItems(){
   var list = State.items.slice();
-
-  if(State.currentCat !== "all"){
+  if(State.currentCat === "favorites"){
+    list = list.filter(function(it){ return !!State.favorites[it.link]; });
+  } else if(State.currentCat !== "all"){
     var cats = CAT_GROUPS[State.currentCat] || [State.currentCat];
     list = list.filter(function(it){
       var matchCat = cats.indexOf(it.cat) >= 0;
@@ -801,21 +785,18 @@ function filterItems(){
       return matchCat || matchTags;
     });
   }
-
   if(State.currentSearch){
     var q = State.currentSearch;
     list = list.filter(function(it){
       return (it.title + " " + it.desc + " " + it.source).toLowerCase().indexOf(q) >= 0;
     });
   }
-
   if(State.currentSort === "importance"){
     list.forEach(function(it){ if(it._score === undefined) it._score = scoreArticle(it); });
     list.sort(function(a, b){ return b._score - a._score; });
   } else {
     list.sort(function(a, b){ return tm(b.date) - tm(a.date); });
   }
-
   return list;
 }
 
@@ -839,21 +820,25 @@ function renderNews(){
   var grid = document.getElementById("feedGrid");
   var title = document.getElementById("newsTitle");
   var count = document.getElementById("newsCount");
-
   var titles = {
     all: "Laatste berichten", war: "Oorlog & conflict",
     mideast: "Midden-Oosten", europe: "Europa",
-    nl: "Nederland", sport: "Sport"
+    nl: "Nederland", sport: "Sport",
+    favorites: "⭐ Favorieten"
   };
   var catLabel = titles[State.currentCat] || "Laatste berichten";
   if(title) title.textContent = catLabel;
   if(count) count.textContent = list.length + " artikelen";
-
   if(!grid) return;
-
   if(!list.length){
     if(State.items.length === 0){
       renderSkeletons(grid);
+    } else if(State.currentCat === "favorites"){
+      grid.innerHTML = '<div class="empty-state">' +
+        '<div class="empty-icon">⭐</div>' +
+        '<div class="empty-msg">Nog geen favorieten</div>' +
+        '<div class="empty-hint">Tik op het ster-icoon bij een artikel om het te bewaren</div>' +
+        '</div>';
     } else {
       grid.innerHTML = '<div class="empty-state">' +
         '<div class="empty-icon">◌</div>' +
@@ -863,10 +848,8 @@ function renderNews(){
     }
     return;
   }
-
   var toShow = list.slice(0, 100);
   grid.classList.toggle("list-mode", State.viewMode === "list");
-
   var html = "";
   for(var i = 0; i < toShow.length; i++){
     var it = toShow[i];
@@ -875,6 +858,7 @@ function renderNews(){
     var isArabic = it.lang === "ar" || /[\u0600-\u06FF]/.test(disp.title);
     var titleDir = isTranslated ? "ltr" : (isArabic ? "rtl" : "ltr");
     var isRead = State.readMap[it.link];
+    var isFav = isFavorite(it.link);
     var sources = it.sources || [it.source];
     var multi = sources.length > 1;
 
@@ -894,7 +878,10 @@ function renderNews(){
     if(it.desc) html += '<p class="card-desc" dir="' + (it.lang === "ar" ? "rtl" : "ltr") + '">' + esc(it.desc) + '</p>';
     html += '<div class="card-footer">';
     html += '<span>' + rtime(it.desc) + ' min lezen</span>';
+    html += '<div class="card-actions">';
+    html += '<button class="card-fav ' + (isFav ? "active" : "") + '" aria-label="Favoriet">' + (isFav ? "★" : "☆") + '</button>';
     html += '<button class="card-action card-share" aria-label="Delen">⇗</button>';
+    html += '</div>';
     html += '</div></div></article>';
   }
   grid.innerHTML = html;
@@ -902,15 +889,21 @@ function renderNews(){
   Array.prototype.forEach.call(grid.querySelectorAll("article"), function(art, i){
     var it = toShow[i];
     if(!it) return;
-
     art.addEventListener("click", function(e){
       if(e.target.closest(".card-action")) return;
+      if(e.target.closest(".card-fav")) return;
       if(!State.readMap[it.link]){
         State.readMap[it.link] = Date.now();
         NewsDB.saveRead(it.link);
         art.classList.add("read");
       }
       window.open(it.link, "_blank", "noopener");
+    });
+
+    var favBtn = art.querySelector(".card-fav");
+    if(favBtn) favBtn.addEventListener("click", function(e){
+      e.stopPropagation();
+      toggleFavorite(it.link, favBtn);
     });
 
     var share = art.querySelector(".card-share");
@@ -932,9 +925,7 @@ function renderNews(){
     });
   });
 
-  if(State.translateEnabled){
-    translateVisibleItems(toShow);
-  }
+  if(State.translateEnabled) translateVisibleItems(toShow);
 }
 
 function startAutoRefresh(){
@@ -952,23 +943,21 @@ function startAutoRefresh(){
 
 async function initNews(){
   await NewsDB.open();
-
-  try {
-    State.translateEnabled = localStorage.getItem("wardesk_translate") === "1";
-  } catch(e) { State.translateEnabled = false; }
-
+  try { State.translateEnabled = localStorage.getItem("wardesk_translate") === "1"; } catch(e){}
+  try { State.notificationsEnabled = localStorage.getItem("wardesk_notifications") === "1"; } catch(e){}
   State.health = {};
   State.disabled = {};
-
   State.readMap = await NewsDB.loadReadMap();
+  State.favorites = await NewsDB.loadFavorites();
+  updateFavoritesCount();
 
   var btn = document.getElementById("toggleTranslate");
   if(btn) btn.classList.toggle("toggle-on", State.translateEnabled);
+  var btn2 = document.getElementById("toggleNotifications");
+  if(btn2) btn2.classList.toggle("toggle-on", State.notificationsEnabled);
 
   var grid = document.getElementById("feedGrid");
-  if(grid && !State.items.length){
-    renderSkeletons(grid);
-  }
+  if(grid && !State.items.length) renderSkeletons(grid);
 
   var cached = await NewsDB.loadItems();
   if(cached.length){
@@ -977,17 +966,14 @@ async function initNews(){
     if(itemsEl) itemsEl.textContent = State.items.length;
     renderNews();
   }
-
   await loadAllFeeds();
   startAutoRefresh();
-
   window.addEventListener("scroll", function(){
     State.lastActivity = Date.now();
     State.isScrolling = true;
     clearTimeout(State.scrollTimer);
     State.scrollTimer = setTimeout(function(){ State.isScrolling = false; }, 1500);
   }, {passive:true});
-
   ["touchstart", "mousedown", "keydown", "click"].forEach(function(ev){
     window.addEventListener(ev, function(){ State.lastActivity = Date.now(); }, {passive:true});
   });
@@ -996,20 +982,15 @@ async function initNews(){
 window.__hardRefresh = async function(){
   if(!window.NewsAPI) return;
   if(!confirm('Verversen?\n\nAlle bronnen worden opnieuw geladen. Dit kan 30-60 seconden duren.')) return;
-
   try{
     if(window.showToast) window.showToast("🔄 Verversen gestart...");
-
     await NewsDB.saveItems([]);
-
     State.disabled = {};
     State.health = {};
     State.loadedSources = 0;
     State.totalSources = 0;
     State.failedSources = [];
-
     await NewsAPI.reload();
-
     if(window.showToast) window.showToast("✓ Verversen klaar");
   }catch(e){
     console.error("[WAR DESK] hard refresh fout:", e);

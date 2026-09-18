@@ -19,8 +19,26 @@
     { "src": "./icons/icon-maskable-512.png",  "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Nieuws", "short_name": "Nieuws", "url": "./?tab=news", "description": "Laatste berichten" },
-    { "name": "Kaart",  "short_name": "Kaart",  "url": "./?tab=map",  "description": "Conflictkaart" },
-    { "name": "IPTV",   "short_name": "IPTV",   "url": "./?tab=iptv", "description": "Live kanalen" }
+    {
+      "name": "Nieuws",
+      "short_name": "Nieuws",
+      "description": "Laatste berichten",
+      "url": "./?tab=news",
+      "icons": [{ "src": "./icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Kaart",
+      "short_name": "Kaart",
+      "description": "Conflictkaart",
+      "url": "./?tab=map",
+      "icons": [{ "src": "./icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "IPTV",
+      "short_name": "IPTV",
+      "description": "Live kanalen",
+      "url": "./?tab=iptv",
+      "icons": [{ "src": "./icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    }
   ]
 }

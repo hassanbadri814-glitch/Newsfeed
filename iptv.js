@@ -1,7 +1,6 @@
 /* ============================================================
-   WAR DESK v3.2 — IPTV
-   - Fix: init() draait maar 1× (wachtwoord-oog werkt nu)
-   - Nieuw: grid/list view toggle
+   WAR DESK v3.3 — IPTV
+   - Nieuw: "Alle groepen" paneel (verticaal, doorzoekbaar, sorteerbaar)
    ============================================================ */
 
 (function(){
@@ -9,7 +8,7 @@
 
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[IPTV]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
-  LOG("v3.2 geladen");
+  LOG("v3.3 geladen");
 
   var IPTV = {
     server: "", user: "", pass: "",
@@ -17,6 +16,7 @@
     currentGroup: "all",
     searchQuery: "",
     viewMode: "grid",
+    groupsSort: "count",
     hlsInstance: null,
     hlsLoaded: false,
     db: null,
@@ -27,7 +27,8 @@
     recent: [],
     workingChannels: {},
     visibleList: [],
-    _initialized: false
+    _initialized: false,
+    _groupsBound: false
   };
 
   var MAX_RECENT = 10;
@@ -142,7 +143,6 @@
     return (Date.now() - t) < 86400000;
   }
 
-  /* ========== VIEW MODE ========== */
   function loadViewMode(){
     try {
       var v = localStorage.getItem(VIEW_STORAGE_KEY);
@@ -292,11 +292,67 @@
   window.__iptvClearChannels = clearChannelsOnly;
   window.__iptvClearAll = clearAll;
 
+  /* ========== GROUPS PANEL ========== */
+  function openGroupsPanel(){
+    var panel = $("iptvGroupsPanel");
+    if(!panel) return;
+    var search = $("iptvGroupsSearch");
+    if(search) search.value = "";
+    renderGroupsList("");
+    panel.classList.add("show");
+  }
+
+  function closeGroupsPanel(){
+    var panel = $("iptvGroupsPanel");
+    if(panel) panel.classList.remove("show");
+  }
+
+  function renderGroupsList(query){
+    var listEl = $("iptvGroupsList");
+    if(!listEl) return;
+
+    var groups = {}, order = [];
+    IPTV.channels.forEach(function(c){
+      if(!groups[c.group]){ groups[c.group] = 0; order.push(c.group); }
+      groups[c.group]++;
+    });
+
+    /* Sorteer */
+    if(IPTV.groupsSort === "name"){
+      order.sort(function(a, b){ return a.localeCompare(b); });
+    } else {
+      order.sort(function(a, b){ return groups[b] - groups[a]; });
+    }
+
+    /* Filter op query */
+    if(query){
+      var q = query.toLowerCase();
+      order = order.filter(function(g){ return g.toLowerCase().indexOf(q) >= 0; });
+    }
+
+    var html = "";
+    order.forEach(function(g){
+      var color = groupColor(g, "");
+      var isActive = IPTV.currentGroup === g;
+      html += '<button class="iptv-group-item ' + (isActive ? "active" : "") + '" data-group="' + esc(g) + '">';
+      html += '<span class="iptv-group-color" style="background:' + color + '"></span>';
+      html += '<span class="iptv-group-name">' + esc(g) + '</span>';
+      html += '<span class="iptv-group-count">' + groups[g] + '</span>';
+      html += '</button>';
+    });
+
+    if(!order.length){
+      html = '<div style="text-align:center;padding:2rem 1rem;color:var(--ink-3);font-size:.85rem">Geen groepen gevonden</div>';
+    }
+
+    listEl.innerHTML = html;
+  }
+
   /* ========== UI BINDING ========== */
   function bindUI(){
     LOG("bindUI start");
 
-    /* Wachtwoord-oog — robuuste methode */
+    /* Wachtwoord-oog */
     var pwToggle = $("iptvPwToggle");
     if(pwToggle){
       pwToggle.addEventListener("click", function(e){
@@ -305,15 +361,8 @@
         var p = $("iptvPass");
         if(!p) return;
         var isPassword = p.getAttribute("type") === "password";
-        try {
-          p.setAttribute("type", isPassword ? "text" : "password");
-          p.type = isPassword ? "text" : "password";
-        } catch(err){
-          /* Sommige browsers blokkeren — vervang element als fallback */
-          LOG("type-wissel geblokkeerd, replace input");
-        }
+        p.setAttribute("type", isPassword ? "text" : "password");
         this.textContent = isPassword ? "🙈" : "👁";
-        this.setAttribute("aria-label", isPassword ? "Verberg wachtwoord" : "Toon wachtwoord");
       });
     }
 
@@ -370,7 +419,7 @@
       });
     }
 
-    /* PILLS */
+    /* PILLS — klik op pill of "Alle groepen" knop */
     var pills = $("iptvPills");
     if(pills){
       pills.addEventListener("click", function(e){
@@ -378,6 +427,12 @@
         if(!btn) return;
         e.preventDefault();
         e.stopPropagation();
+
+        if(btn.dataset.action === "open-groups"){
+          openGroupsPanel();
+          return;
+        }
+
         var g = btn.dataset.group;
         if(!g) return;
         IPTV.currentGroup = g;
@@ -389,7 +444,7 @@
       });
     }
 
-    /* Zoekbalk */
+    /* Zoekbalk kanaal */
     var search = $("iptvSearch");
     if(search){
       var searchTimer;
@@ -413,7 +468,7 @@
       });
     }
 
-    /* View toggle (grid/list) */
+    /* View toggle */
     var viewToggle = $("iptvViewToggle");
     if(viewToggle){
       viewToggle.addEventListener("click", function(e){
@@ -424,6 +479,56 @@
         viewToggle.textContent = IPTV.viewMode === "grid" ? "▦" : "☰";
         renderChannels();
       });
+    }
+
+    /* Groups panel bindings */
+    var groupPanel = $("iptvGroupsPanel");
+    if(groupPanel && !IPTV._groupsBound){
+      IPTV._groupsBound = true;
+
+      groupPanel.addEventListener("click", function(e){
+        if(e.target === groupPanel) closeGroupsPanel();
+      });
+
+      var gpc = $("iptvGroupsPanelClose");
+      if(gpc) gpc.addEventListener("click", closeGroupsPanel);
+
+      var gps = $("iptvGroupsSearch");
+      if(gps){
+        gps.addEventListener("input", function(){
+          renderGroupsList(gps.value.trim());
+        });
+      }
+
+      var gsort = $("iptvGroupsSort");
+      if(gsort){
+        gsort.addEventListener("click", function(){
+          IPTV.groupsSort = IPTV.groupsSort === "count" ? "name" : "count";
+          gsort.textContent = IPTV.groupsSort === "count" ? "▤ Aantal" : "🔤 Naam";
+          var s = $("iptvGroupsSearch");
+          renderGroupsList(s ? s.value.trim() : "");
+        });
+      }
+
+      var gList = $("iptvGroupsList");
+      if(gList){
+        gList.addEventListener("click", function(e){
+          var btn = e.target.closest(".iptv-group-item");
+          if(!btn) return;
+          e.preventDefault();
+          e.stopPropagation();
+          var g = btn.dataset.group;
+          if(!g) return;
+          IPTV.currentGroup = g;
+          if(IPTV.searchQuery){
+            IPTV.searchQuery = "";
+            var sInp = $("iptvSearch");
+            if(sInp) sInp.value = "";
+          }
+          closeGroupsPanel();
+          renderChannels();
+        });
+      }
     }
 
     /* Player controls */
@@ -494,10 +599,19 @@
       html += '<button class="iptv-pill ' + (IPTV.currentGroup === "recent" ? "active" : "") + '" data-group="recent">★ Recent (' + IPTV.recent.length + ')</button>';
     }
     html += '<button class="iptv-pill ' + (IPTV.currentGroup === "all" ? "active" : "") + '" data-group="all">Alle (' + IPTV.channels.length + ')</button>';
-    order.slice(0, 8).forEach(function(g){
+
+    /* Top 6 groepen in pills */
+    order.slice(0, 6).forEach(function(g){
       var short = g.length > 18 ? g.slice(0, 17) + "…" : g;
       html += '<button class="iptv-pill ' + (IPTV.currentGroup === g ? "active" : "") + '" data-group="' + esc(g) + '">' + esc(short) + ' (' + groups[g] + ')</button>';
     });
+
+    /* Altijd "Alle groepen" knop tonen als er groepen zijn */
+    if(order.length > 0){
+      var label = order.length > 6 ? "☰ Alle groepen (" + order.length + ")" : "☰ Toon alle groepen";
+      html += '<button class="iptv-pill iptv-pill-more" data-action="open-groups">' + label + '</button>';
+    }
+
     wrap.innerHTML = html;
   }
 
@@ -533,9 +647,7 @@
       viewToggle.textContent = IPTV.viewMode === "grid" ? "▦" : "☰";
     }
 
-    /* Pas view-mode klasse toe */
     grid.classList.toggle("list-mode", IPTV.viewMode === "list");
-
     renderPills();
 
     if(!IPTV.channels.length){
@@ -788,11 +900,7 @@
 
   /* ========== INIT ========== */
   async function init(){
-    /* GUARD: voorkomt dubbele init (lost dubbele handlers op) */
-    if(IPTV._initialized){
-      LOG("init al gedaan, skip");
-      return;
-    }
+    if(IPTV._initialized){ LOG("init al gedaan, skip"); return; }
     IPTV._initialized = true;
 
     try{
@@ -821,7 +929,7 @@
       }
 
       bindUI();
-      LOG("init klaar (eenmalig)");
+      LOG("init klaar");
     }catch(e){
       LOG("init FOUT:", e);
     }

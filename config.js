@@ -1,6 +1,7 @@
 /* ============================================================
-   WAR DESK v20.3 — Configuratie
-   - maxCacheItems 200 → 3000 (belangrijke fix)
+   WAR DESK v20.4 — Configuratie
+   - Thema/tijd-modus opties
+   - Map opties (cache, limit)
    ============================================================ */
 
 window.CONFIG = {
@@ -9,7 +10,17 @@ window.CONFIG = {
   pauseOnScrollMs: 15000,
   failThreshold: 5,
   retryAfterMs: 3600000,
-  maxCacheItems: 3000,           // Gewijzigd: 200 → 3000
+  maxCacheItems: 3000,
+
+  /* Thema / tijd-modus */
+  themeAutoSwitch: true,
+  themeLightStart: 6,
+  themeDarkStart: 19,
+
+  /* Map */
+  warTrackerLimit: 100,
+  detailCacheMax: 500,
+  detailCacheTTL: 7200000,
 
   proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
@@ -215,4 +226,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v20.3 geladen —", window.FEEDS.length, "feeds, cache limit 3000");
+console.log("[WAR DESK] config.js v20.4 geladen —", window.FEEDS.length, "feeds, thema-modus:", window.CONFIG.themeAutoSwitch);

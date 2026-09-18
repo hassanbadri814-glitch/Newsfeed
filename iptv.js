@@ -1,8 +1,7 @@
 /* ============================================================
-   WAR DESK v3.4 — IPTV
-   - Pills: "Alle groepen" links, "Alle kanalen" rechts
-   - View-toggle iconen gewijzigd
-   - Play/Pause/Stop/PiP knoppen in player (HLS streams)
+   WAR DESK v3.5 — IPTV
+   - "Alle" pill verwijderd (want rechts staat al "Alle kanalen")
+   - "Groepen" en "Alle kanalen" pills even groot
    ============================================================ */
 
 (function(){
@@ -10,7 +9,7 @@
 
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[IPTV]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
-  LOG("v3.4 geladen");
+  LOG("v3.5 geladen");
 
   var IPTV = {
     server: "", user: "", pass: "",
@@ -357,16 +356,6 @@
     playBtn.setAttribute("aria-label", video.paused ? "Afspelen" : "Pauzeren");
   }
 
-  function showControlButtons(show){
-    var playBtn = $("iptvPlayerPlay");
-    var stopBtn = $("iptvPlayerStop");
-    var pipBtn = $("iptvPlayerPip");
-    var display = show ? "" : "none";
-    if(playBtn) playBtn.style.display = display;
-    if(stopBtn) stopBtn.style.display = display;
-    if(pipBtn) pipBtn.style.display = display;
-  }
-
   async function togglePiP(){
     var video = $("iptvVideo");
     if(!video) return;
@@ -387,7 +376,6 @@
   function bindUI(){
     LOG("bindUI start");
 
-    /* Wachtwoord-oog */
     var pwToggle = $("iptvPwToggle");
     if(pwToggle){
       pwToggle.addEventListener("click", function(e){
@@ -479,7 +467,6 @@
       });
     }
 
-    /* Zoekbalk kanaal */
     var search = $("iptvSearch");
     if(search){
       var searchTimer;
@@ -503,7 +490,6 @@
       });
     }
 
-    /* View toggle */
     var viewToggle = $("iptvViewToggle");
     if(viewToggle){
       viewToggle.addEventListener("click", function(e){
@@ -516,25 +502,16 @@
       });
     }
 
-    /* Groups panel */
     var groupPanel = $("iptvGroupsPanel");
     if(groupPanel && !IPTV._groupsBound){
       IPTV._groupsBound = true;
-
       groupPanel.addEventListener("click", function(e){
         if(e.target === groupPanel) closeGroupsPanel();
       });
-
       var gpc = $("iptvGroupsPanelClose");
       if(gpc) gpc.addEventListener("click", closeGroupsPanel);
-
       var gps = $("iptvGroupsSearch");
-      if(gps){
-        gps.addEventListener("input", function(){
-          renderGroupsList(gps.value.trim());
-        });
-      }
-
+      if(gps) gps.addEventListener("input", function(){ renderGroupsList(gps.value.trim()); });
       var gsort = $("iptvGroupsSort");
       if(gsort){
         gsort.addEventListener("click", function(){
@@ -544,7 +521,6 @@
           renderGroupsList(s ? s.value.trim() : "");
         });
       }
-
       var gList = $("iptvGroupsList");
       if(gList){
         gList.addEventListener("click", function(e){
@@ -658,24 +634,22 @@
     });
     order.sort(function(a, b){ return groups[b] - groups[a]; });
 
-    /* Linker deel: Alle groepen */
-    var leftHtml = '<button class="iptv-pill iptv-pill-groups" data-action="open-groups" title="Alle groepen">☰ Groepen</button>';
+    /* Links: Groepen */
+    var leftHtml = '<button class="iptv-pill iptv-pill-eq iptv-pill-groups" data-action="open-groups" title="Alle groepen">☰ Groepen</button>';
 
-    /* Midden: scrollbare pills */
+    /* Midden: Recent + top groups (scrollend) — GEEN "Alle" meer */
     var middleHtml = "";
     if(IPTV.recent.length){
       middleHtml += '<button class="iptv-pill ' + (IPTV.currentGroup === "recent" ? "active" : "") + '" data-group="recent">★ Recent (' + IPTV.recent.length + ')</button>';
     }
-    middleHtml += '<button class="iptv-pill ' + (IPTV.currentGroup === "all" ? "active" : "") + '" data-group="all">Alle (' + IPTV.channels.length + ')</button>';
-
     order.slice(0, 8).forEach(function(g){
       var short = g.length > 18 ? g.slice(0, 17) + "…" : g;
       middleHtml += '<button class="iptv-pill ' + (IPTV.currentGroup === g ? "active" : "") + '" data-group="' + esc(g) + '">' + esc(short) + ' (' + groups[g] + ')</button>';
     });
 
-    /* Rechter deel: Alle kanalen */
+    /* Rechts: Alle kanalen */
     var totalCount = IPTV.channels.length;
-    var rightHtml = '<button class="iptv-pill iptv-pill-allchannels ' + (IPTV.currentGroup === "all" ? "active" : "") + '" data-group="all" title="Alle kanalen">Alle kanalen (' + totalCount + ')</button>';
+    var rightHtml = '<button class="iptv-pill iptv-pill-eq iptv-pill-allchannels ' + (IPTV.currentGroup === "all" ? "active" : "") + '" data-group="all" title="Alle kanalen">Alle kanalen (' + totalCount + ')</button>';
 
     wrap.innerHTML =
       '<div class="iptv-pills-left">' + leftHtml + '</div>' +
@@ -794,7 +768,6 @@
     if(spinner) spinner.classList.remove("show");
     var qSel = $("iptvQualitySelect");
     if(qSel){ qSel.innerHTML = '<option value="auto">Auto</option>'; qSel.disabled = true; }
-    showControlButtons(true);
   }
 
   function toggleFullscreen(){
@@ -902,9 +875,6 @@
     if(IPTV.hlsInstance){ try{ IPTV.hlsInstance.destroy(); }catch(e){} IPTV.hlsInstance = null; }
     video.pause(); video.removeAttribute("src"); video.load();
     if(spinner) spinner.classList.add("show");
-
-    /* Toon play/stop/pip knoppen bij HLS streams */
-    showControlButtons(true);
 
     var isHls = /\.m3u8(\?|$)/i.test(url);
     addRecent(ch);

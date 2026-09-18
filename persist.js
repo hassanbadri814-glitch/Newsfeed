@@ -1,6 +1,5 @@
 /* ============================================================
-   WAR DESK v2.7 — State persistentie (v3)
-   Onthoudt categorie, sortering, weergave EN actieve tab
+   WAR DESK v3.0 — State persistentie
    ============================================================ */
 
 (function(){
@@ -8,8 +7,10 @@
 
   var KEY = "wardesk_ui_state_v1";
   var VIEW_KEY = "wardesk_active_view_v1";
+  var VALID_CATS = ["all","war","mideast","europe","nl","sport","favorites"];
+  var VALID_SORTS = ["importance","newest"];
+  var VALID_VIEWS = ["cards","list"];
 
-  /* ===== STATE OPSLAAN ===== */
   function save(){
     try{
       if(!window.State) return;
@@ -28,7 +29,6 @@
     }catch(e){ return null; }
   }
 
-  /* ===== VIEW (actieve tab) OPSLAAN ===== */
   function saveView(viewName){
     try{ localStorage.setItem(VIEW_KEY, viewName); }catch(e){}
   }
@@ -37,34 +37,31 @@
     try{ return localStorage.getItem(VIEW_KEY) || "news"; }catch(e){ return "news"; }
   }
 
-  /* ===== UI HERSTELLEN ===== */
   function applyToUI(saved){
     if(!saved) return;
     var $ = function(id){ return document.getElementById(id); };
-    
+
     document.querySelectorAll(".sheet-item[data-cat]").forEach(function(b){
       b.classList.toggle("active", b.dataset.cat === (saved.cat || "all"));
     });
-    
-    if($("sortImportance")) $("sortImportance").classList.toggle("active", (saved.sort || "importance") === "importance");
-    if($("sortNewest")) $("sortNewest").classList.toggle("active", (saved.sort || "importance") === "newest");
-    if($("viewCards")) $("viewCards").classList.toggle("active", (saved.view || "cards") === "cards");
-    if($("viewList")) $("viewList").classList.toggle("active", (saved.view || "cards") === "list");
+
+    var imp = $("sortImportance"), nn = $("sortNewest");
+    if(imp) imp.classList.toggle("active", (saved.sort || "importance") === "importance");
+    if(nn) nn.classList.toggle("active", (saved.sort || "importance") === "newest");
+    var vc = $("viewCards"), vl = $("viewList");
+    if(vc) vc.classList.toggle("active", (saved.view || "cards") === "cards");
+    if(vl) vl.classList.toggle("active", (saved.view || "cards") === "list");
   }
 
   function restore(){
     var saved = load();
-    if(!saved) return false;
-    if(window.State){
-      State.currentCat = saved.cat || "all";
-      State.currentSort = saved.sort || "importance";
-      State.viewMode = saved.view || "cards";
-      return true;
-    }
-    return false;
+    if(!saved || !window.State) return false;
+    State.currentCat = VALID_CATS.indexOf(saved.cat) >= 0 ? saved.cat : "all";
+    State.currentSort = VALID_SORTS.indexOf(saved.sort) >= 0 ? saved.sort : "importance";
+    State.viewMode = VALID_VIEWS.indexOf(saved.view) >= 0 ? saved.view : "cards";
+    return true;
   }
 
-  /* ===== ACTIEVE TAB HERSTELLEN ===== */
   function restoreActiveView(){
     var savedView = loadView();
     if(!savedView || savedView === "news") return;
@@ -73,47 +70,47 @@
     tab.click();
   }
 
-  /* ===== INIT ===== */
-  window.addEventListener("DOMContentLoaded", function(){
+  function initPersist(){
     var saved = load();
     if(saved){ restore(); applyToUI(saved); }
 
-    /* State opslaan bij UI-klikken (capture phase → omzeilt stopPropagation) */
     document.addEventListener("click", function(e){
       var target = e.target.closest("[data-cat], #sortImportance, #sortNewest, #viewCards, #viewList");
       if(target){ setTimeout(save, 200); }
     }, true);
 
-    /* Actieve tab opslaan bij tab-klikken */
     document.querySelectorAll(".bottom-tabs .tab").forEach(function(tab){
       tab.addEventListener("click", function(){
         if(tab.dataset.view) saveView(tab.dataset.view);
       });
     });
 
-    /* Vangnetten */
     window.addEventListener("pagehide", save);
     window.addEventListener("beforeunload", save);
     document.addEventListener("visibilitychange", function(){
       if(document.hidden) save();
     });
 
-    /* Wacht tot NewsAPI klaar is, dan state + view herstellen */
     var attempts = 0;
     var waitInterval = setInterval(function(){
       attempts++;
-      if(window.NewsAPI && window.State){
+      var ready = window.NewsAPI && window.State;
+      var hasItems = ready && State.items && State.items.length > 0;
+      var timedOut = attempts > 50;
+      if((ready && hasItems) || (ready && timedOut)){
         clearInterval(waitInterval);
         restore();
         applyToUI(load());
         try{ if(NewsAPI.render) NewsAPI.render(); }catch(e){}
-        /* Wacht 200ms zodat app.js's tab-listeners zeker gebonden zijn */
         setTimeout(restoreActiveView, 200);
         console.log("[WAR DESK] State + view hersteld");
       }
-      if(attempts > 100) clearInterval(waitInterval);
+      if(attempts > 200) clearInterval(waitInterval);
     }, 100);
-  });
+  }
 
-  console.log("[WAR DESK] persist.js v3 geladen — view persistence");
+  if(document.readyState !== "loading") initPersist();
+  else document.addEventListener("DOMContentLoaded", initPersist);
+
+  console.log("[WAR DESK] persist.js v3.0 geladen");
 })();

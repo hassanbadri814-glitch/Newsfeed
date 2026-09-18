@@ -1,9 +1,10 @@
 /* ============================================================
-   WAR DESK v20.2 — Nieuws logica
+   WAR DESK v20.3 — Nieuws logica
+   - Progressive rendering: artikelen verschijnen tijdens laden
    - Skeleton-loaders
    - Specifieke lege-staat per categorie
    ============================================================ */
-window.__newsVersion = "v20.2-skeleton-ui";
+window.__newsVersion = "v20.3-progressive";
 
 window.State = {
   items: [],
@@ -369,6 +370,9 @@ async function fetchFeedWithFallback(feedUrl){
   }
 }
 
+/* ============================================================
+   LOAD FEEDS — met progressive rendering
+   ============================================================ */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
 
@@ -389,6 +393,32 @@ async function loadAllFeeds(){
   }
 
   window.__wdDiagCount = 0;
+
+  /* ===== PROGRESSIVE RENDERING =====
+     Elke 1.5s een checkpoint: render zichtbare items zonder te wachten
+     tot alle feeds klaar zijn. */
+  var lastProgressiveCount = 0;
+  var progressiveTimer = setInterval(function(){
+    if(session !== State.loadSession){
+      clearInterval(progressiveTimer);
+      return;
+    }
+    if(collected.length <= lastProgressiveCount) return;
+    lastProgressiveCount = collected.length;
+
+    var deduped = dedupe(collected);
+    State.items = deduped.sort(function(a, b){ return tm(b.date) - tm(a.date); });
+
+    var itemsEl = document.getElementById("statItems");
+    if(itemsEl) itemsEl.textContent = State.items.length;
+
+    State._lastRenderHash = "";
+    renderNews();
+
+    if(window.__wdDebug && window.wdLog && collected.length === lastProgressiveCount){
+      /* alleen loggen als we daadwerkelijk renderen */
+    }
+  }, 1500);
 
   async function processOne(f){
     if(session !== State.loadSession) return;
@@ -463,6 +493,9 @@ async function loadAllFeeds(){
   }
   await Promise.all(workers);
 
+  /* Stop progressive timer en doe finale render */
+  clearInterval(progressiveTimer);
+
   if(session !== State.loadSession) return;
 
   var deduped = dedupe(collected);
@@ -482,6 +515,8 @@ async function loadAllFeeds(){
   }
 
   detectBreaking();
+
+  State._lastRenderHash = "";
   renderNews();
 
   if(window.__wdDebug && window.wdLog){
@@ -573,7 +608,6 @@ function filterItems(){
   return list;
 }
 
-/* ===== FASE C: skeleton-renderer ===== */
 function renderSkeletons(grid){
   var html = "";
   for(var i = 0; i < 6; i++){
@@ -613,7 +647,6 @@ function renderNews(){
 
   if(!grid) return;
 
-  /* FASE C: skeleton tijdens initieel laden */
   if(!list.length){
     if(State.items.length === 0){
       renderSkeletons(grid);
@@ -710,7 +743,6 @@ async function initNews(){
 
   State.readMap = await NewsDB.loadReadMap();
 
-  /* FASE C: toon direct skeletons tijdens laden */
   var grid = document.getElementById("feedGrid");
   if(grid && !State.items.length){
     renderSkeletons(grid);
@@ -733,10 +765,10 @@ async function initNews(){
     State.isScrolling = true;
     clearTimeout(State.scrollTimer);
     State.scrollTimer = setTimeout(function(){ State.isScrolling = false; }, 1500);
-  }, {passive: true});
+  }, {passive:true});
 
   ["touchstart", "mousedown", "keydown", "click"].forEach(function(ev){
-    window.addEventListener(ev, function(){ State.lastActivity = Date.now(); }, {passive: true});
+    window.addEventListener(ev, function(){ State.lastActivity = Date.now(); }, {passive:true});
   });
 }
 

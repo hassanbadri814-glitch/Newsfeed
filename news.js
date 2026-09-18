@@ -1,11 +1,13 @@
 /* ============================================================
-   WAR DESK v21.0 — Nieuws logica + Vertaling
-   - Toggle in menu: vertaal naar Nederlands
-   - Google Translate → MyMemory fallback
+   WAR DESK v21.1 — Nieuws logica + Vertaling
+   - MyMemory primair (50.000 tekens/dag via de= parameter)
+   - Google Translate fallback
    - Cache in IndexedDB (max 5000)
-   - Originele titel klein cursief onder vertaling
    ============================================================ */
-window.__newsVersion = "v21.0-translation";
+window.__newsVersion = "v21.1-mymemory-50k";
+
+/* Jouw MyMemory contactadres — verhoogt limiet naar 50.000 tekens/dag */
+var MYMEMORY_EMAIL = "hassanbadri814@gmail.com";
 
 window.State = {
   items: [],
@@ -28,7 +30,6 @@ window.State = {
   loadSession: 0,
   db: null,
   _lastRenderHash: "",
-  /* Vertaling */
   translateEnabled: false,
   translations: {},
   translationPending: {}
@@ -38,7 +39,7 @@ window.State = {
 var NewsDB = (function(){
   var db = null;
   var DB_NAME = "wardesk_v19_news";
-  var DB_VERSION = 2;  /* v2: translations store */
+  var DB_VERSION = 2;
 
   function open(){
     return new Promise(function(resolve){
@@ -87,17 +88,6 @@ var NewsDB = (function(){
       }catch(e){ res([]); }
     });
   }
-  function count(store){
-    if(!db) return Promise.resolve(0);
-    return new Promise(function(res){
-      try{
-        var tx = db.transaction(store, "readonly");
-        var r = tx.objectStore(store).count();
-        r.onsuccess = function(){ res(r.result || 0); };
-        r.onerror = function(){ res(0); };
-      }catch(e){ res(0); }
-    });
-  }
   function saveItems(items){
     if(!db) return Promise.resolve();
     return new Promise(function(res){
@@ -117,7 +107,7 @@ var NewsDB = (function(){
     });
   }
   return {
-    open: open, put: put, get: get, getAll: getAll, count: count, saveItems: saveItems,
+    open: open, put: put, get: get, getAll: getAll, saveItems: saveItems,
     loadItems: function(){
       return getAll("items").then(function(items){
         return items.sort(function(a,b){ return tm(b.date) - tm(a.date); });
@@ -142,8 +132,7 @@ var NewsDB = (function(){
     },
     loadTranslation: function(key){
       return get("translations", key).then(function(rec){ return (rec && rec.v) ? rec.v : null; });
-    },
-    countTranslations: function(){ return count("translations"); }
+    }
   };
 })();
 
@@ -404,7 +393,7 @@ async function fetchFeedWithFallback(feedUrl){
 }
 
 /* ============================================================
-   VERTALING
+   VERTALING — MyMemory primair (50K/dag via e-mail) → Google fallback
    ============================================================ */
 
 var TRANSLATION_SEM = { active: 0, max: 3, queue: [] };
@@ -443,42 +432,48 @@ async function fetchTranslation(text, sourceLang) {
   var cleanText = text.replace(/\s+/g, " ").trim().slice(0, 500);
   if(!cleanText) return null;
 
-  var proxy = CONFIG.proxies[0];
-
-  /* Poging 1: Google Translate via Worker */
+  /* Poging 1: MyMemory DIRECT met e-mail → 50.000 tekens/dag */
   try {
-    var googleUrl = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" +
-      encodeURIComponent(sourceLang || "auto") + "&tl=nl&dt=t&q=" + encodeURIComponent(cleanText);
+    var mmUrl = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(cleanText) +
+      "&langpair=" + encodeURIComponent(sourceLang || "en") + "|nl" +
+      "&de=" + encodeURIComponent(MYMEMORY_EMAIL);
     var ctrl = new AbortController();
     var timer = setTimeout(function(){ ctrl.abort(); }, 8000);
-    var r = await fetch(proxy + encodeURIComponent(googleUrl), { signal: ctrl.signal });
+    var r = await fetch(mmUrl, { signal: ctrl.signal });
     clearTimeout(timer);
     if(r.ok){
       var data = await r.json();
-      if(data && Array.isArray(data[0])){
-        var out = "";
-        for(var i = 0; i < data[0].length; i++){
-          var seg = data[0][i];
-          if(seg && seg[0]) out += seg[0];
+      if(data && data.responseData && data.responseData.translatedText){
+        var out = data.responseData.translatedText;
+        if(out && out.length > 1 &&
+           out.indexOf("MYMEMORY WARNING") === -1 &&
+           out.indexOf("QUERY LENGTH LIMIT") === -1 &&
+           out.indexOf("YOU USED ALL AVAILABLE") === -1 &&
+           out !== cleanText){
+          return out;
         }
-        if(out && out.length > 1) return out;
       }
     }
-  } catch(e) { /* stil doorgaan naar fallback */ }
+  } catch(e) { /* stil doorgaan naar Google */ }
 
-  /* Poging 2: MyMemory via Worker */
+  /* Poging 2: Google Translate via Worker (fallback) */
   try {
-    var mmUrl = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(cleanText) +
-      "&langpair=" + encodeURIComponent(sourceLang || "en") + "|nl";
+    var proxy = CONFIG.proxies[0];
+    var googleUrl = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" +
+      encodeURIComponent(sourceLang || "auto") + "&tl=nl&dt=t&q=" + encodeURIComponent(cleanText);
     var ctrl2 = new AbortController();
     var timer2 = setTimeout(function(){ ctrl2.abort(); }, 8000);
-    var r2 = await fetch(proxy + encodeURIComponent(mmUrl), { signal: ctrl2.signal });
+    var r2 = await fetch(proxy + encodeURIComponent(googleUrl), { signal: ctrl2.signal });
     clearTimeout(timer2);
     if(r2.ok){
       var data2 = await r2.json();
-      if(data2 && data2.responseData && data2.responseData.translatedText){
-        var out2 = data2.responseData.translatedText;
-        if(out2 && out2.length > 1 && out2 !== cleanText) return out2;
+      if(data2 && Array.isArray(data2[0])){
+        var out2 = "";
+        for(var i = 0; i < data2[0].length; i++){
+          var seg = data2[0][i];
+          if(seg && seg[0]) out2 += seg[0];
+        }
+        if(out2 && out2.length > 1) return out2;
       }
     }
   } catch(e) { /* niets */ }
@@ -493,17 +488,14 @@ async function translateItem(item) {
 
   var key = titleHashKey(item.lang, item.title);
 
-  /* Memory cache */
   if(State.translations[key]) return State.translations[key];
 
-  /* IndexedDB cache */
   var cached = await NewsDB.loadTranslation(key);
   if(cached){
     State.translations[key] = cached;
     return cached;
   }
 
-  /* Skip als al pending */
   if(State.translationPending[key]) return null;
   State.translationPending[key] = true;
 
@@ -575,14 +567,13 @@ window.__setTranslate = function(enabled){
   State.translateEnabled = !!enabled;
   try { localStorage.setItem("wardesk_translate", enabled ? "1" : "0"); } catch(e){}
   var btn = document.getElementById("toggleTranslate");
-  if(btn) btn.classList.toggle("active", enabled);
+  if(btn) btn.classList.toggle("toggle-on", enabled);
   State._lastRenderHash = "";
   renderNews();
   if(window.showToast){
     window.showToast(enabled ? "🌐 Vertaling aan" : "🌐 Vertaling uit");
   }
   if(enabled){
-    /* Start achtergrond-vertaling van zichtbare items */
     var toShow = filterItems().slice(0, 100);
     translateVisibleItems(toShow);
   }
@@ -732,10 +723,8 @@ async function loadAllFeeds(){
   }
 
   detectBreaking();
-
   renderNews();
 
-  /* Na render: trigger vertalingen voor zichtbare items */
   if(State.translateEnabled){
     var toShow = filterItems().slice(0, 100);
     translateVisibleItems(toShow);
@@ -943,7 +932,6 @@ function renderNews(){
     });
   });
 
-  /* Trigger achtergrond-vertaling voor zichtbare items */
   if(State.translateEnabled){
     translateVisibleItems(toShow);
   }
@@ -965,7 +953,6 @@ function startAutoRefresh(){
 async function initNews(){
   await NewsDB.open();
 
-  /* Laad translate-instelling */
   try {
     State.translateEnabled = localStorage.getItem("wardesk_translate") === "1";
   } catch(e) { State.translateEnabled = false; }
@@ -975,9 +962,8 @@ async function initNews(){
 
   State.readMap = await NewsDB.loadReadMap();
 
-  /* Zet toggle-knop in de juiste staat */
   var btn = document.getElementById("toggleTranslate");
-  if(btn) btn.classList.toggle("active", State.translateEnabled);
+  if(btn) btn.classList.toggle("toggle-on", State.translateEnabled);
 
   var grid = document.getElementById("feedGrid");
   if(grid && !State.items.length){

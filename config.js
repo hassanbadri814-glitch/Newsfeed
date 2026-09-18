@@ -1,7 +1,6 @@
 /* ============================================================
-   WAR DESK v20.0 — Configuratie
-   Revert naar timeout 10s + alleen allorigins voor Google News
-   Sport-sites blijven op Google News
+   WAR DESK v20.1 — Configuratie
+   Sportbronnen opgeschoond (4 verwijderd)
    ============================================================ */
 
 window.CONFIG = {
@@ -14,14 +13,12 @@ window.CONFIG = {
 
   proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
-  /* Normale proxies — Cloudflare eerst (snel) */
   proxies: [
     "https://newsfeed2.hassanbadri814.workers.dev/?url=",
     "https://nieuwsproxy.hassanbadri814.workers.dev/?url=",
     "https://api.allorigins.win/raw?url="
   ],
 
-  /* Google News — alleen allorigins (codetabs verwijderd) */
   googleNewsProxies: [
     "https://api.allorigins.win/raw?url="
   ],
@@ -83,12 +80,8 @@ window.FEEDS = [
   {n:"FCUpdate",lang:"nl",cat:"sport",url:"https://www.fcupdate.nl/rss"},
   {n:"Soccernews",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:soccernews.nl&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"NUsport",lang:"nl",cat:"sport",url:"https://www.nu.nl/rss/Sport"},
-  {n:"Sportnieuws.nl",lang:"nl",cat:"sport",url:"https://sportnieuws.nl/feed/"},
   {n:"RTL Sport",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl+sport&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"Glory Kickboxing",lang:"en",cat:"sport",url:"https://glorykickboxing.com/rss"},
-  {n:"Wielerflits",lang:"nl",cat:"sport",url:"https://www.wielerflits.nl/feed/"},
-  {n:"GPUpdate",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:gpupdate.net&hl=nl&gl=NL&ceid=NL:nl"},
-  {n:"Racexpress",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:racexpress.nl&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"MMA DNA",lang:"nl",cat:"sport",url:"https://mmadna.nl/feed/"},
 
   // ===== BELGIË =====
@@ -226,4 +219,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v20.0 geladen —", window.FEEDS.length, "feeds, timeout 10s");
+console.log("[WAR DESK] config.js v20.1 geladen —", window.FEEDS.length, "feeds");

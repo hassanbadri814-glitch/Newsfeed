@@ -1,10 +1,11 @@
 /* ============================================================
-   WAR DESK v20.7 — Nieuws logica
-   - maxCacheItems 3000 (via config.js)
-   - Altijd renderen (geen hash-check)
-   - Merge-based progressive rendering
+   WAR DESK v21.0 — Nieuws logica + Vertaling
+   - Toggle in menu: vertaal naar Nederlands
+   - Google Translate → MyMemory fallback
+   - Cache in IndexedDB (max 5000)
+   - Originele titel klein cursief onder vertaling
    ============================================================ */
-window.__newsVersion = "v20.7-always-render";
+window.__newsVersion = "v21.0-translation";
 
 window.State = {
   items: [],
@@ -26,14 +27,18 @@ window.State = {
   lastBreakingItem: null,
   loadSession: 0,
   db: null,
-  _lastRenderHash: ""
+  _lastRenderHash: "",
+  /* Vertaling */
+  translateEnabled: false,
+  translations: {},
+  translationPending: {}
 };
 
 /* ===== INDEXEDDB ===== */
 var NewsDB = (function(){
   var db = null;
   var DB_NAME = "wardesk_v19_news";
-  var DB_VERSION = 1;
+  var DB_VERSION = 2;  /* v2: translations store */
 
   function open(){
     return new Promise(function(resolve){
@@ -43,6 +48,7 @@ var NewsDB = (function(){
         var d = e.target.result;
         if(!d.objectStoreNames.contains("items")) d.createObjectStore("items", {keyPath:"link"});
         if(!d.objectStoreNames.contains("meta")) d.createObjectStore("meta", {keyPath:"k"});
+        if(!d.objectStoreNames.contains("translations")) d.createObjectStore("translations", {keyPath:"k"});
       };
       req.onsuccess = function(e){ db = e.target.result; resolve(db); };
       req.onerror = function(){ resolve(null); };
@@ -81,6 +87,17 @@ var NewsDB = (function(){
       }catch(e){ res([]); }
     });
   }
+  function count(store){
+    if(!db) return Promise.resolve(0);
+    return new Promise(function(res){
+      try{
+        var tx = db.transaction(store, "readonly");
+        var r = tx.objectStore(store).count();
+        r.onsuccess = function(){ res(r.result || 0); };
+        r.onerror = function(){ res(0); };
+      }catch(e){ res(0); }
+    });
+  }
   function saveItems(items){
     if(!db) return Promise.resolve();
     return new Promise(function(res){
@@ -100,7 +117,7 @@ var NewsDB = (function(){
     });
   }
   return {
-    open: open, put: put, get: get, getAll: getAll, saveItems: saveItems,
+    open: open, put: put, get: get, getAll: getAll, count: count, saveItems: saveItems,
     loadItems: function(){
       return getAll("items").then(function(items){
         return items.sort(function(a,b){ return tm(b.date) - tm(a.date); });
@@ -119,7 +136,14 @@ var NewsDB = (function(){
     saveHealth: function(health){ return put("meta", {k:"health", v: health}); },
     loadHealth: function(){
       return get("meta", "health").then(function(rec){ return (rec && rec.v) ? rec.v : {}; });
-    }
+    },
+    saveTranslation: function(key, value){
+      return put("translations", {k: key, v: value, t: Date.now()});
+    },
+    loadTranslation: function(key){
+      return get("translations", key).then(function(rec){ return (rec && rec.v) ? rec.v : null; });
+    },
+    countTranslations: function(){ return count("translations"); }
   };
 })();
 
@@ -272,6 +296,9 @@ function normalizeItem(it){
   };
 }
 
+/* ============================================================
+   PROXY FALLBACK + GOOGLE NEWS SEMAPHORE
+   ============================================================ */
 window.__proxyHealth = {};
 
 var PROXY_COOLDOWN_MS = 30000;
@@ -376,6 +403,194 @@ async function fetchFeedWithFallback(feedUrl){
   }
 }
 
+/* ============================================================
+   VERTALING
+   ============================================================ */
+
+var TRANSLATION_SEM = { active: 0, max: 3, queue: [] };
+
+function titleHashKey(lang, title) {
+  var str = (lang || "xx") + "|" + (title || "");
+  var h = 5381;
+  for (var i = 0; i < str.length; i++) {
+    h = ((h << 5) + h) ^ str.charCodeAt(i);
+  }
+  return "tr_" + (h >>> 0).toString(36);
+}
+
+function translationAcquire() {
+  return new Promise(function(resolve){
+    if(TRANSLATION_SEM.active < TRANSLATION_SEM.max){
+      TRANSLATION_SEM.active++;
+      resolve();
+    } else {
+      TRANSLATION_SEM.queue.push(resolve);
+    }
+  });
+}
+
+function translationRelease() {
+  if(TRANSLATION_SEM.queue.length > 0){
+    var next = TRANSLATION_SEM.queue.shift();
+    next();
+  } else {
+    TRANSLATION_SEM.active--;
+  }
+}
+
+async function fetchTranslation(text, sourceLang) {
+  if(!text) return null;
+  var cleanText = text.replace(/\s+/g, " ").trim().slice(0, 500);
+  if(!cleanText) return null;
+
+  var proxy = CONFIG.proxies[0];
+
+  /* Poging 1: Google Translate via Worker */
+  try {
+    var googleUrl = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" +
+      encodeURIComponent(sourceLang || "auto") + "&tl=nl&dt=t&q=" + encodeURIComponent(cleanText);
+    var ctrl = new AbortController();
+    var timer = setTimeout(function(){ ctrl.abort(); }, 8000);
+    var r = await fetch(proxy + encodeURIComponent(googleUrl), { signal: ctrl.signal });
+    clearTimeout(timer);
+    if(r.ok){
+      var data = await r.json();
+      if(data && Array.isArray(data[0])){
+        var out = "";
+        for(var i = 0; i < data[0].length; i++){
+          var seg = data[0][i];
+          if(seg && seg[0]) out += seg[0];
+        }
+        if(out && out.length > 1) return out;
+      }
+    }
+  } catch(e) { /* stil doorgaan naar fallback */ }
+
+  /* Poging 2: MyMemory via Worker */
+  try {
+    var mmUrl = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(cleanText) +
+      "&langpair=" + encodeURIComponent(sourceLang || "en") + "|nl";
+    var ctrl2 = new AbortController();
+    var timer2 = setTimeout(function(){ ctrl2.abort(); }, 8000);
+    var r2 = await fetch(proxy + encodeURIComponent(mmUrl), { signal: ctrl2.signal });
+    clearTimeout(timer2);
+    if(r2.ok){
+      var data2 = await r2.json();
+      if(data2 && data2.responseData && data2.responseData.translatedText){
+        var out2 = data2.responseData.translatedText;
+        if(out2 && out2.length > 1 && out2 !== cleanText) return out2;
+      }
+    }
+  } catch(e) { /* niets */ }
+
+  return null;
+}
+
+async function translateItem(item) {
+  if(!item || !item.title) return null;
+  if(!item.lang || item.lang === "nl") return null;
+  if(!State.translateEnabled) return null;
+
+  var key = titleHashKey(item.lang, item.title);
+
+  /* Memory cache */
+  if(State.translations[key]) return State.translations[key];
+
+  /* IndexedDB cache */
+  var cached = await NewsDB.loadTranslation(key);
+  if(cached){
+    State.translations[key] = cached;
+    return cached;
+  }
+
+  /* Skip als al pending */
+  if(State.translationPending[key]) return null;
+  State.translationPending[key] = true;
+
+  await translationAcquire();
+  try {
+    var translated = await fetchTranslation(item.title, item.lang);
+    if(translated){
+      State.translations[key] = translated;
+      NewsDB.saveTranslation(key, translated).catch(function(){});
+      return translated;
+    }
+  } finally {
+    translationRelease();
+    delete State.translationPending[key];
+  }
+  return null;
+}
+
+async function translateVisibleItems(items) {
+  if(!State.translateEnabled) return;
+  var toTranslate = items.filter(function(it){
+    if(!it.lang || it.lang === "nl") return false;
+    var key = titleHashKey(it.lang, it.title);
+    return !State.translations[key];
+  });
+  if(!toTranslate.length) return;
+
+  await Promise.all(toTranslate.map(async function(it){
+    var translated = await translateItem(it);
+    if(translated){
+      updateCardTitle(it, translated);
+    }
+  }));
+}
+
+function updateCardTitle(item, translatedTitle) {
+  var cards = document.querySelectorAll(".news-card[data-link]");
+  for(var i = 0; i < cards.length; i++){
+    if(cards[i].getAttribute("data-link") === item.link){
+      var titleEl = cards[i].querySelector(".card-title");
+      var origEl = cards[i].querySelector(".card-original");
+      if(titleEl){
+        titleEl.textContent = translatedTitle;
+        titleEl.setAttribute("dir", "ltr");
+      }
+      if(!origEl && titleEl){
+        origEl = document.createElement("p");
+        origEl.className = "card-original";
+        origEl.setAttribute("dir", item.lang === "ar" ? "rtl" : "ltr");
+        origEl.textContent = item.title;
+        titleEl.parentNode.insertBefore(origEl, titleEl.nextSibling);
+      }
+      break;
+    }
+  }
+}
+
+function getDisplayTitle(it) {
+  if(!State.translateEnabled) return { title: it.title, original: null };
+  if(!it.lang || it.lang === "nl") return { title: it.title, original: null };
+  var key = titleHashKey(it.lang, it.title);
+  if(State.translations[key]) {
+    return { title: State.translations[key], original: it.title };
+  }
+  return { title: it.title, original: null };
+}
+
+window.__setTranslate = function(enabled){
+  State.translateEnabled = !!enabled;
+  try { localStorage.setItem("wardesk_translate", enabled ? "1" : "0"); } catch(e){}
+  var btn = document.getElementById("toggleTranslate");
+  if(btn) btn.classList.toggle("active", enabled);
+  State._lastRenderHash = "";
+  renderNews();
+  if(window.showToast){
+    window.showToast(enabled ? "🌐 Vertaling aan" : "🌐 Vertaling uit");
+  }
+  if(enabled){
+    /* Start achtergrond-vertaling van zichtbare items */
+    var toShow = filterItems().slice(0, 100);
+    translateVisibleItems(toShow);
+  }
+};
+
+/* ============================================================
+   LOAD FEEDS
+   ============================================================ */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
 
@@ -383,10 +598,6 @@ async function loadAllFeeds(){
 
   var itemsAtStart = State.items.slice();
   var minKeep = itemsAtStart.length;
-
-  if(window.__wdDebug && window.wdLog){
-    window.wdLog.info("loadAllFeeds start — items voor merge: " + itemsAtStart.length);
-  }
 
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
   State.totalSources = active.length;
@@ -414,17 +625,10 @@ async function loadAllFeeds(){
     lastProgressiveCount = collected.length;
 
     var merged = dedupe(collected.concat(itemsAtStart));
-
-    /* SAFETY: nooit minder items tonen dan we begonnen zijn */
     if(merged.length < minKeep){
       merged = itemsAtStart.slice();
     }
-
     State.items = merged;
-
-    if(window.__wdDebug && window.wdLog && lastProgressiveCount % 50 === 0){
-      window.wdLog.info("Progressive render — items=" + State.items.length + " nieuw=" + collected.length);
-    }
 
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = State.items.length;
@@ -530,6 +734,12 @@ async function loadAllFeeds(){
   detectBreaking();
 
   renderNews();
+
+  /* Na render: trigger vertalingen voor zichtbare items */
+  if(State.translateEnabled){
+    var toShow = filterItems().slice(0, 100);
+    translateVisibleItems(toShow);
+  }
 
   if(window.__wdDebug && window.wdLog){
     window.wdLog[State.items.length ? "ok" : "warn"](
@@ -671,12 +881,15 @@ function renderNews(){
   var html = "";
   for(var i = 0; i < toShow.length; i++){
     var it = toShow[i];
-    var rtl = it.lang === "ar" || /[\u0600-\u06FF]/.test(it.title);
+    var disp = getDisplayTitle(it);
+    var isTranslated = !!disp.original;
+    var isArabic = it.lang === "ar" || /[\u0600-\u06FF]/.test(disp.title);
+    var titleDir = isTranslated ? "ltr" : (isArabic ? "rtl" : "ltr");
     var isRead = State.readMap[it.link];
     var sources = it.sources || [it.source];
     var multi = sources.length > 1;
 
-    html += '<article class="news-card ' + (it.cat === "war" ? "war " : "") + (isRead ? "read" : "") + '" data-idx="' + i + '">';
+    html += '<article class="news-card ' + (it.cat === "war" ? "war " : "") + (isRead ? "read" : "") + '" data-idx="' + i + '" data-link="' + esc(it.link) + '">';
     if(it.img) html += '<div class="card-thumb"><img src="' + esc(it.img) + '" loading="lazy" onerror="this.parentNode.remove()"></div>';
     html += '<div class="card-body">';
     html += '<div class="card-meta">';
@@ -685,8 +898,11 @@ function renderNews(){
     html += '<span>' + ago(it.date) + '</span>';
     if(multi) html += '<span class="card-multi">' + sources.length + '× bronnen</span>';
     html += '</div>';
-    html += '<h3 class="card-title" dir="' + (rtl ? "rtl" : "ltr") + '">' + esc(it.title) + '</h3>';
-    if(it.desc) html += '<p class="card-desc" dir="' + (rtl ? "rtl" : "ltr") + '">' + esc(it.desc) + '</p>';
+    html += '<h3 class="card-title" dir="' + titleDir + '">' + esc(disp.title) + '</h3>';
+    if(isTranslated){
+      html += '<p class="card-original" dir="' + (it.lang === "ar" ? "rtl" : "ltr") + '">' + esc(disp.original) + '</p>';
+    }
+    if(it.desc) html += '<p class="card-desc" dir="' + (it.lang === "ar" ? "rtl" : "ltr") + '">' + esc(it.desc) + '</p>';
     html += '<div class="card-footer">';
     html += '<span>' + rtime(it.desc) + ' min lezen</span>';
     html += '<button class="card-action card-share" aria-label="Delen">⇗</button>';
@@ -726,6 +942,11 @@ function renderNews(){
       if(window.showToast) window.showToast(it.sources.join(", "));
     });
   });
+
+  /* Trigger achtergrond-vertaling voor zichtbare items */
+  if(State.translateEnabled){
+    translateVisibleItems(toShow);
+  }
 }
 
 function startAutoRefresh(){
@@ -744,10 +965,19 @@ function startAutoRefresh(){
 async function initNews(){
   await NewsDB.open();
 
+  /* Laad translate-instelling */
+  try {
+    State.translateEnabled = localStorage.getItem("wardesk_translate") === "1";
+  } catch(e) { State.translateEnabled = false; }
+
   State.health = {};
   State.disabled = {};
 
   State.readMap = await NewsDB.loadReadMap();
+
+  /* Zet toggle-knop in de juiste staat */
+  var btn = document.getElementById("toggleTranslate");
+  if(btn) btn.classList.toggle("active", State.translateEnabled);
 
   var grid = document.getElementById("feedGrid");
   if(grid && !State.items.length){
@@ -757,9 +987,6 @@ async function initNews(){
   var cached = await NewsDB.loadItems();
   if(cached.length){
     State.items = ensureTags(cached);
-    if(window.__wdDebug && window.wdLog){
-      window.wdLog.info("Cache geladen — " + cached.length + " items (max " + CONFIG.maxCacheItems + ")");
-    }
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = State.items.length;
     renderNews();

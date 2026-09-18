@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v5.0</title>
+<title>WAR DESK v5.1</title>
 <script>
 try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches)){document.documentElement.classList.add("light")}}catch(e){}
 </script>
@@ -19,7 +19,6 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="stylesheet" href="styles.css?v=14">
 <style>
-/* Skeleton */
 .skeleton-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-card)}
 .skeleton-thumb{width:100%;aspect-ratio:16/9;background:linear-gradient(90deg,var(--bg-3) 25%,var(--card-hover) 50%,var(--bg-3) 75%);background-size:200% 100%;animation:wdShimmer 1.6s ease-in-out infinite}
 .skeleton-body{padding:1rem 1.1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem}
@@ -42,7 +41,6 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 }
 .empty-context{display:block;margin-top:.35rem;color:var(--amber);font-weight:600}
 
-/* Vertaling: originele titel klein cursief */
 .card-original{
   font-family:"Inter",sans-serif;
   font-size:.72rem;
@@ -58,7 +56,6 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 }
 .card-original[dir="rtl"]{text-align:right}
 
-/* Toggle-knop voor vertaling */
 .sheet-item.toggle-on{
   background:linear-gradient(135deg,var(--amber-2),var(--amber-3));
   color:#070c16;
@@ -67,7 +64,6 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 }
 .sheet-item.toggle-on::after{content:" ✓";margin-left:auto;font-weight:800}
 
-/* Debug */
 #wdDebugBtn, #wdDebugPanel { display: none !important; }
 html.wd-debug-on #wdDebugBtn{display:grid !important;position:fixed;bottom:100px;right:15px;z-index:20000;width:44px;height:44px;border-radius:50%;background:#e63950;color:#fff;border:2px solid #fff;font-size:1.2rem;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.6);cursor:pointer;place-items:center;font-family:monospace}
 html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inset:0;z-index:19999;background:rgba(0,0,0,.95);color:#0f0;font-family:monospace;font-size:11px;padding:1rem;overflow-y:auto;line-height:1.5}
@@ -105,7 +101,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v5.0</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v5.1</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
@@ -249,7 +245,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       </div>
     </div>
 
-    <!-- Vertaling sectie -->
     <div class="sheet-section">
       <div class="sheet-title">🌐 Vertaling</div>
       <div class="sheet-grid">
@@ -268,7 +263,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v5.0</span><br>Live nieuws + IPTV + Conflictkaart</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v5.1</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
 
   </div>
@@ -376,7 +371,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
         add("info", "Failed: " + (window.State && window.State.failedSources ? window.State.failedSources.length : "?"));
         add("info", "maxCacheItems: " + (window.CONFIG ? window.CONFIG.maxCacheItems : "?"));
         add("info", "Vertaling: " + (window.State && window.State.translateEnabled ? "AAN" : "UIT"));
-        add("info", "Vertaal-cache in geheugen: " + (window.State && window.State.translations ? Object.keys(window.State.translations).length : "?"));
+        add("info", "Vertaal-cache geheugen: " + (window.State && window.State.translations ? Object.keys(window.State.translations).length : "?"));
         var proxies = (window.CONFIG && window.CONFIG.proxies) ? window.CONFIG.proxies : [];
         add("info", "Proxies: " + proxies.length);
         var ph = window.__proxyHealth || {};
@@ -420,7 +415,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script src="config.js?v=23"></script>
-<script src="news.js?v=30"></script>
+<script src="news.js?v=31"></script>
 <script src="app.js?v=14"></script>
 <script src="persist.js?v=14"></script>
 <script src="refresh.js?v=15"></script>
@@ -455,7 +450,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     }
   }, 1000);
 })();
-console.log("%c WAR DESK %c v5.0 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v5.1 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 /* ============================================================
-   WAR DESK v19.0 — Refresh knop + status indicator
+   WAR DESK v15 — Refresh knop + status indicator
+   - Laadtijd-indicator nu ook zichtbaar op mobiel
    ============================================================ */
 
 (function(){
@@ -11,7 +12,6 @@
     var lastUpdate = null;
     var newCount = 0;
 
-    // Voeg refresh-knop toe aan header naast thema-knop
     var themeBtn = $("btnTheme");
     if(!themeBtn) return;
 
@@ -22,7 +22,6 @@
     refreshBtn.textContent = "↻";
     themeBtn.parentNode.insertBefore(refreshBtn, themeBtn);
 
-    // Voeg "laatst bijgewerkt" indicator toe aan header-stats
     var statsEl = document.querySelector(".header-stats");
     if(statsEl){
       var updEl = document.createElement("div");
@@ -50,7 +49,6 @@
 
     setInterval(tickUpdate, 5000);
 
-    // Verversen
     function doRefresh(){
       if(!window.NewsAPI) return;
       refreshBtn.style.animation = "spin 1s linear infinite";
@@ -59,7 +57,6 @@
 
       var beforeCount = (window.State && State.items.length) || 0;
 
-      // Voeg style toe voor spinner als nog niet bestaat
       if(!document.getElementById("spinStyle")){
         var s = document.createElement("style");
         s.id = "spinStyle";
@@ -90,7 +87,6 @@
 
     refreshBtn.addEventListener("click", doRefresh);
 
-    // Vang de bestaande NewsAPI.reload op om lastUpdate te kunnen zetten
     if(window.NewsAPI && window.NewsAPI.reload){
       var origReload = NewsAPI.reload;
       NewsAPI.reload = function(){
@@ -106,7 +102,6 @@
       };
     }
 
-    // Zet initiele waarde zodra eerste load klaar is
     var attempts = 0;
     var waitInit = setInterval(function(){
       attempts++;
@@ -118,6 +113,6 @@
       if(attempts > 200) clearInterval(waitInit);
     }, 500);
 
-    console.log("[WAR DESK] refresh.js geladen");
+    console.log("[WAR DESK] refresh.js v15 geladen — laadtijd zichtbaar op mobiel");
   });
 })();

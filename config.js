@@ -1,7 +1,6 @@
 /* ============================================================
-   WAR DESK v20.4 — Configuratie
-   - Thema/tijd-modus opties
-   - Map opties (cache, limit)
+   WAR DESK v20.5 — Configuratie
+   - Stadia Maps API-key
    ============================================================ */
 
 window.CONFIG = {
@@ -21,6 +20,7 @@ window.CONFIG = {
   warTrackerLimit: 100,
   detailCacheMax: 500,
   detailCacheTTL: 7200000,
+  stadiaKey: "6b91d05e-5862-449d-ab5d-a34a15e2112e",
 
   proxy: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
 
@@ -226,4 +226,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v20.4 geladen —", window.FEEDS.length, "feeds, thema-modus:", window.CONFIG.themeAutoSwitch);
+console.log("[WAR DESK] config.js v20.5 geladen —", window.FEEDS.length, "feeds, Stadia Maps");

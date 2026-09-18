@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v4.8</title>
+<title>WAR DESK v4.9</title>
 <script>
 try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches)){document.documentElement.classList.add("light")}}catch(e){}
 </script>
@@ -78,7 +78,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v4.8</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v4.9</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
@@ -173,31 +173,8 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
   <div class="sheet-handle"></div>
   <div class="sheet-header"><h3>Menu</h3><button class="sheet-close" id="sheetClose">✕</button></div>
   <div class="sheet-content">
-    <div class="sheet-section">
-      <div class="sheet-title">📡 IPTV Account</div>
-      <div class="sheet-grid">
-        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){var s=document.getElementById('iptvSetup');if(s){s.hidden=false;setTimeout(function(){s.scrollIntoView({behavior:'smooth',block:'start'})},200)}},350)">⚙ Wijzig inlog</button>
-        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){if(window.__iptvLoadChannels)window.__iptvLoadChannels()},400)">↻ Herlaad kanalen</button>
-        <button class="sheet-item" onclick="if(!confirm('Kanalen verwijderen?'))return;document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';if(window.__iptvClearChannels)window.__iptvClearChannels()">🗑 Verwijder kanalen</button>
-      </div>
-    </div>
-    <div class="sheet-section">
-      <div class="sheet-title">🗺️ Kaart</div>
-      <div class="sheet-grid">
-        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapRefresh)window.__mapRefresh()},400)">↻ Herlaad events</button>
-        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapResetView)window.__mapResetView()},400)">🌍 Wereldbeeld</button>
-      </div>
-    </div>
-    <div class="sheet-section">
-      <div class="sheet-title">🔧 Onderhoud</div>
-      <div class="sheet-grid">
-        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';setTimeout(function(){if(window.__hardRefresh)window.__hardRefresh()},200)">🔄 Ververs alles</button>
-      </div>
-    </div>
-    <div class="sheet-section">
-      <div class="sheet-title">Zoeken</div>
-      <input class="sheet-search" type="search" id="searchInput" placeholder="Zoek in artikelen..." autocomplete="off">
-    </div>
+
+    <!-- 1. CATEGORIEËN (nu bovenaan) -->
     <div class="sheet-section">
       <div class="sheet-title">Categorieën</div>
       <div class="sheet-grid">
@@ -209,6 +186,8 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
         <button class="sheet-item" data-cat="sport">⚽ Sport</button>
       </div>
     </div>
+
+    <!-- 2. SORTERING -->
     <div class="sheet-section">
       <div class="sheet-title">Sortering</div>
       <div class="sheet-grid">
@@ -216,6 +195,8 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
         <button class="sheet-item" id="sortNewest">🕒 Nieuwste eerst</button>
       </div>
     </div>
+
+    <!-- 3. WEERGAVE -->
     <div class="sheet-section">
       <div class="sheet-title">Weergave</div>
       <div class="sheet-grid">
@@ -223,10 +204,46 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
         <button class="sheet-item" id="viewList">☰ Lijst</button>
       </div>
     </div>
+
+    <!-- 4. ZOEKEN -->
+    <div class="sheet-section">
+      <div class="sheet-title">Zoeken</div>
+      <input class="sheet-search" type="search" id="searchInput" placeholder="Zoek in artikelen..." autocomplete="off">
+    </div>
+
+    <!-- 5. KAART -->
+    <div class="sheet-section">
+      <div class="sheet-title">🗺️ Kaart</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapRefresh)window.__mapRefresh()},400)">↻ Herlaad events</button>
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapResetView)window.__mapResetView()},400)">🌍 Wereldbeeld</button>
+      </div>
+    </div>
+
+    <!-- 6. ONDERHOUD -->
+    <div class="sheet-section">
+      <div class="sheet-title">🔧 Onderhoud</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';setTimeout(function(){if(window.__hardRefresh)window.__hardRefresh()},200)">🔄 Ververs alles</button>
+      </div>
+    </div>
+
+    <!-- 7. IPTV ACCOUNT (nu onderaan) -->
+    <div class="sheet-section">
+      <div class="sheet-title">📡 IPTV Account</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){var s=document.getElementById('iptvSetup');if(s){s.hidden=false;setTimeout(function(){s.scrollIntoView({behavior:'smooth',block:'start'})},200)}},350)">⚙ Wijzig inlog</button>
+        <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){if(window.__iptvLoadChannels)window.__iptvLoadChannels()},400)">↻ Herlaad kanalen</button>
+        <button class="sheet-item" onclick="if(!confirm('Kanalen verwijderen?'))return;document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';if(window.__iptvClearChannels)window.__iptvClearChannels()">🗑 Verwijder kanalen</button>
+      </div>
+    </div>
+
+    <!-- 8. OVER -->
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v4.8</span><br>Live nieuws + IPTV + Conflictkaart</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v4.9</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
+
   </div>
 </div>
 
@@ -409,7 +426,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     }
   }, 1000);
 })();
-console.log("%c WAR DESK %c v4.8 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v4.9 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

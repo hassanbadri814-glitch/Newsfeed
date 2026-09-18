@@ -1,11 +1,9 @@
 /* ============================================================
-   WAR DESK v20.0 — Nieuws logica
-   - Health-reset per sessie
-   - __proxyHealth reset bij elke loadAllFeeds (geen cascade)
-   - Google News semaphore
-   - Timeout 10s
+   WAR DESK v20.2 — Nieuws logica
+   - Skeleton-loaders
+   - Specifieke lege-staat per categorie
    ============================================================ */
-window.__newsVersion = "v20.0-proxy-reset";
+window.__newsVersion = "v20.2-skeleton-ui";
 
 window.State = {
   items: [],
@@ -374,7 +372,6 @@ async function fetchFeedWithFallback(feedUrl){
 async function loadAllFeeds(){
   var session = ++State.loadSession;
 
-  /* FIX: reset proxyHealth bij elke cyclus — voorkomt cascade */
   window.__proxyHealth = {};
 
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
@@ -576,6 +573,22 @@ function filterItems(){
   return list;
 }
 
+/* ===== FASE C: skeleton-renderer ===== */
+function renderSkeletons(grid){
+  var html = "";
+  for(var i = 0; i < 6; i++){
+    html += '<article class="skeleton-card">' +
+      '<div class="skeleton-thumb"></div>' +
+      '<div class="skeleton-body">' +
+      '<div class="skeleton-meta"></div>' +
+      '<div class="skeleton-line medium"></div>' +
+      '<div class="skeleton-line"></div>' +
+      '<div class="skeleton-line short"></div>' +
+      '</div></article>';
+  }
+  grid.innerHTML = html;
+}
+
 function renderNews(){
   var list = filterItems();
   var grid = document.getElementById("feedGrid");
@@ -594,16 +607,22 @@ function renderNews(){
     mideast: "Midden-Oosten", europe: "Europa",
     nl: "Nederland", sport: "Sport"
   };
-  if(title) title.textContent = titles[State.currentCat] || "Laatste berichten";
+  var catLabel = titles[State.currentCat] || "Laatste berichten";
+  if(title) title.textContent = catLabel;
   if(count) count.textContent = list.length + " artikelen";
 
   if(!grid) return;
 
+  /* FASE C: skeleton tijdens initieel laden */
   if(!list.length){
     if(State.items.length === 0){
-      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-msg">Nieuws wordt geladen...</div><div class="empty-hint">Eerste keer kan 20-30 seconden duren</div></div>';
+      renderSkeletons(grid);
     } else {
-      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">◌</div><div class="empty-msg">Geen artikelen in deze categorie</div><div class="empty-hint">Probeer een andere categorie of zoekterm</div></div>';
+      grid.innerHTML = '<div class="empty-state">' +
+        '<div class="empty-icon">◌</div>' +
+        '<div class="empty-msg">Geen artikelen in <span class="empty-context">' + esc(catLabel) + '</span></div>' +
+        '<div class="empty-hint">Probeer een andere categorie of zoekterm</div>' +
+        '</div>';
     }
     return;
   }
@@ -691,11 +710,18 @@ async function initNews(){
 
   State.readMap = await NewsDB.loadReadMap();
 
+  /* FASE C: toon direct skeletons tijdens laden */
+  var grid = document.getElementById("feedGrid");
+  if(grid && !State.items.length){
+    renderSkeletons(grid);
+  }
+
   var cached = await NewsDB.loadItems();
   if(cached.length){
     State.items = cached;
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = cached.length;
+    State._lastRenderHash = "";
     renderNews();
   }
 

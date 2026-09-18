@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v7.3</title>
+<title>WAR DESK v7.4</title>
 <script>
 try{
   var t=localStorage.getItem("wardesk_theme");
@@ -28,24 +28,15 @@ try{
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="stylesheet" href="styles.css?v=14">
 <style>
-/* ============================================================
-   FONT-SIZE
-   ============================================================ */
 html[data-font-size="small"] body { font-size: 13px; }
 html[data-font-size="medium"] body { font-size: 15px; }
 html[data-font-size="large"] body { font-size: 17px; }
 
-/* ============================================================
-   ACCENTKLEUR
-   ============================================================ */
 html[data-accent="amber"] { --amber:#e2a857; --amber-2:#f0c78a; --amber-3:#8a5c26; }
 html[data-accent="blue"]  { --amber:#3b82f6; --amber-2:#93c5fd; --amber-3:#1e40af; }
 html[data-accent="green"] { --amber:#10b981; --amber-2:#6ee7b7; --amber-3:#065f46; }
 html[data-accent="red"]   { --amber:#e63950; --amber-2:#f87171; --amber-3:#991b1b; }
 
-/* ============================================================
-   ACHTERGROND-TINT — donker
-   ============================================================ */
 html[data-accent="amber"]{ --bg:#0e0a07; --bg-2:#17120c; --bg-3:#20180f; --card:#1b140c; --card-hover:#271c12; --line:#261b11; --line-2:#372716; }
 html[data-accent="blue"]{ --bg:#070c16; --bg-2:#0d1522; --bg-3:#131e30; --card:#111b2d; --card-hover:#18253c; --line:#1a2540; --line-2:#26344f; }
 html[data-accent="green"]{ --bg:#070f0a; --bg-2:#0b1710; --bg-3:#10221a; --card:#0e1d14; --card-hover:#152a1e; --line:#162a1e; --line-2:#1f3a2a; }
@@ -58,9 +49,6 @@ html[data-accent="amber"] .bottom-tabs{background:linear-gradient(180deg,rgba(23
 html[data-accent="green"] .bottom-tabs{background:linear-gradient(180deg,rgba(11,23,16,.92),var(--bg-2))}
 html[data-accent="red"] .bottom-tabs{background:linear-gradient(180deg,rgba(23,11,13,.92),var(--bg-2))}
 
-/* ============================================================
-   ACHTERGROND-TINT — licht
-   ============================================================ */
 html[data-accent="amber"].light, html[data-accent="amber"].light body.light{ --bg:#faf5ec; --bg-2:#fffcf5; --bg-3:#f0e6d4; --card:#fffdf7; --card-hover:#fcf7ee; --line:#f0e5d3; --line-2:#ddceb7; }
 html[data-accent="blue"].light, html[data-accent="blue"].light body.light{ --bg:#f0f3f8; --bg-2:#ffffff; --bg-3:#e3e8f0; --card:#ffffff; --card-hover:#f4f7fc; --line:#e1e6ee; --line-2:#ccd4de; }
 html[data-accent="green"].light, html[data-accent="green"].light body.light{ --bg:#f1f7f2; --bg-2:#ffffff; --bg-3:#e2ece4; --card:#ffffff; --card-hover:#f4f9f5; --line:#e1ece3; --line-2:#c8dbc9; }
@@ -75,9 +63,6 @@ html[data-accent="blue"].light .bottom-tabs{background:linear-gradient(180deg,rg
 html[data-accent="green"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,255,255,.92),var(--bg-2))}
 html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,255,255,.92),var(--bg-2))}
 
-/* ============================================================
-   SECTIE-HEAD + KLEURDOTS
-   ============================================================ */
 .section-head-actions{ margin-left: auto; display: flex; align-items: center; gap: .75rem; }
 .accent-picker{ display: flex; align-items: center; gap: .5rem; padding: .25rem .5rem; background: var(--bg-3); border: 1px solid var(--line-2); border-radius: 999px; }
 .accent-dot{ width: 16px; height: 16px; border-radius: 50%; border: none; padding: 0; cursor: pointer; transition: transform .15s, box-shadow .15s; box-shadow: 0 0 0 0 transparent; }
@@ -92,9 +77,6 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
   .accent-picker{ gap: .4rem; padding: .2rem .4rem; }
 }
 
-/* ============================================================
-   NIEUWS — FAVORIETEN + SKELETON + ORIGINELE TITEL
-   ============================================================ */
 .card-actions { margin-left: auto; display: flex; gap: .4rem; align-items: center; }
 .card-footer .card-action { margin-left: 0 !important; }
 .card-fav { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-3); border: 1px solid var(--line-2); color: var(--ink-3); font-size: 1rem; display: grid; place-items: center; cursor: pointer; transition: all .15s; padding: 0; font-family: inherit; }
@@ -130,12 +112,52 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
 .iptv-search-clear{ position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background: transparent; border: none; color: var(--ink-3); font-size: .9rem; border-radius: 50%; cursor: pointer; display: grid; place-items: center; padding: 0; }
 .iptv-search-clear:hover{ background: var(--bg-3); color: var(--ink); }
 
-.iptv-pills{ display: flex; gap: .45rem; overflow-x: auto; padding: .25rem .1rem .75rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.iptv-pills::-webkit-scrollbar{ display: none; }
+/* Pill-rij: left / middle / right */
+.iptv-pills{
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .25rem 0 .75rem;
+  width: 100%;
+}
+.iptv-pills-left{
+  flex-shrink: 0;
+}
+.iptv-pills-middle{
+  display: flex;
+  gap: .45rem;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: .1rem 0;
+}
+.iptv-pills-middle::-webkit-scrollbar{ display: none; }
+.iptv-pills-right{
+  flex-shrink: 0;
+}
 .iptv-pill{ padding: .5rem .85rem; background: var(--card); border: 1px solid var(--line-2); color: var(--ink-2); font-size: .78rem; font-weight: 600; border-radius: 999px; white-space: nowrap; cursor: pointer; transition: all .15s; font-family: inherit; }
 .iptv-pill:hover{ border-color: var(--amber); color: var(--amber); }
 .iptv-pill.active{ background: linear-gradient(135deg, var(--amber-2), var(--amber-3)); color: #070c16; border-color: var(--amber); font-weight: 700; }
-.iptv-pill-more{ background: linear-gradient(135deg,var(--bg-3),var(--card))!important; border-style:dashed!important; font-weight:700!important; }
+.iptv-pill-groups{
+  background: linear-gradient(135deg, var(--amber-2), var(--amber-3));
+  color: #070c16;
+  border-color: var(--amber);
+  font-weight: 700;
+}
+.iptv-pill-allchannels{
+  background: var(--bg-3);
+  border-style: dashed;
+  font-weight: 700;
+}
+.iptv-pill-allchannels.active{
+  background: linear-gradient(135deg, var(--amber-2), var(--amber-3));
+  border-style: solid;
+  color: #070c16;
+}
+@media(max-width:520px){
+  .iptv-pill{ padding: .42rem .7rem; font-size: .72rem; }
+}
 
 .iptv-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: .6rem; }
 .iptv-ch{ background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--ch-color, var(--line-2)); border-radius: 12px; padding: .85rem .7rem .7rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: .55rem; cursor: pointer; transition: transform .15s, background .15s, border-color .15s; color: var(--ink); font-family: inherit; overflow: hidden; min-height: 120px; justify-content: flex-start; position: relative; }
@@ -181,7 +203,7 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
 .iptv-setup-title{ font-size: .7rem; font-weight: 800; color: var(--ink-3); text-transform: uppercase; letter-spacing: .12em; margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 1px solid var(--line); }
 
 /* ============================================================
-   GROUPS-PANEL (verticaal)
+   GROUPS-PANEL
    ============================================================ */
 .iptv-groups-panel{ position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:9800; display:none; align-items:flex-end; justify-content:center; }
 .iptv-groups-panel.show{ display:flex; }
@@ -219,9 +241,6 @@ html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgb
   .iptv-player-foot{ padding: .6rem .7rem; }
 }
 
-/* ============================================================
-   DEBUG
-   ============================================================ */
 #wdDebugBtn, #wdDebugPanel { display: none !important; }
 html.wd-debug-on #wdDebugBtn{display:grid !important;position:fixed;bottom:100px;right:15px;z-index:20000;width:44px;height:44px;border-radius:50%;background:#e63950;color:#fff;border:2px solid #fff;font-size:1.2rem;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.6);cursor:pointer;place-items:center;font-family:monospace}
 html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inset:0;z-index:19999;background:rgba(0,0,0,.95);color:#0f0;font-family:monospace;font-size:11px;padding:1rem;overflow-y:auto;line-height:1.5}
@@ -259,7 +278,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v7.3</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v7.4</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
@@ -329,7 +348,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     <div class="section-head">
       <h2>📡 IPTV</h2>
       <span class="section-count" id="iptvCount">0 kanalen</span>
-      <button class="btn-mini" id="iptvViewToggle" aria-label="Weergave" hidden>▦</button>
+      <button class="btn-mini" id="iptvViewToggle" aria-label="Weergave" hidden>⊞</button>
       <button class="btn-mini" id="iptvToggleSetup" onclick="var s=document.getElementById('iptvSetup');if(s){s.hidden=!s.hidden}">⚙</button>
     </div>
 
@@ -455,7 +474,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v7.3</span><br>Live nieuws + IPTV + Conflictkaart</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v7.4</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
 
   </div>
@@ -466,6 +485,9 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     <div class="iptv-player-head">
       <span id="iptvPlayerTitle">—</span>
       <div class="iptv-player-head-actions">
+        <button class="iptv-player-ico" id="iptvPlayerPlay" aria-label="Afspelen">▶</button>
+        <button class="iptv-player-ico" id="iptvPlayerStop" aria-label="Stoppen">■</button>
+        <button class="iptv-player-ico" id="iptvPlayerPip" aria-label="Picture-in-Picture">🗗</button>
         <button class="iptv-player-ico" id="iptvPlayerFs" aria-label="Volledig scherm">⛶</button>
         <button class="iptv-player-ico" id="iptvPlayerClose" aria-label="Sluiten">✕</button>
       </div>
@@ -486,7 +508,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
   </div>
 </div>
 
-<!-- ===== IPTV GROUPS PANEL ===== -->
 <div class="iptv-groups-panel" id="iptvGroupsPanel">
   <div class="iptv-groups-panel-box">
     <div class="iptv-groups-panel-head">
@@ -633,7 +654,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
         add("info", "Thema: " + (document.body.classList.contains("light") ? "licht" : "donker"));
         add("info", "Font: " + (document.documentElement.getAttribute("data-font-size") || "medium"));
         add("info", "Kleur: " + (document.documentElement.getAttribute("data-accent") || "amber"));
-        add("info", "IPTV versie: v3.3");
+        add("info", "IPTV versie: v3.4");
         add("info", "IPTV kanalen: " + (window.IPTVAPI && window.IPTVAPI.state ? window.IPTVAPI.state.channels.length : "?"));
         add("info", "IPTV view: " + (window.IPTVAPI && window.IPTVAPI.state ? window.IPTVAPI.state.viewMode : "?"));
       });
@@ -653,7 +674,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 <script src="app.js?v=14"></script>
 <script src="persist.js?v=14"></script>
 <script src="refresh.js?v=15"></script>
-<script src="iptv.js?v=21"></script>
+<script src="iptv.js?v=22"></script>
 <script src="map.js?v=17"></script>
 
 <script>
@@ -682,7 +703,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     }
   }, 1000);
 })();
-console.log("%c WAR DESK %c v7.3 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v7.4 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

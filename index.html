@@ -7,9 +7,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v5.3</title>
+<title>WAR DESK v6.0</title>
 <script>
-try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches)){document.documentElement.classList.add("light")}}catch(e){}
+try{
+  var t=localStorage.getItem("wardesk_theme");
+  if(t==="light"||(!t&&matchMedia("(prefers-color-scheme:light)").matches)){document.documentElement.classList.add("light")}
+}catch(e){}
+try{
+  var fs = localStorage.getItem("wardesk_font_size") || "medium";
+  var ac = localStorage.getItem("wardesk_accent_color") || "amber";
+  document.documentElement.setAttribute("data-font-size", fs);
+  document.documentElement.setAttribute("data-accent", ac);
+}catch(e){}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,6 +28,43 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="stylesheet" href="styles.css?v=14">
 <style>
+/* Font-size schaal */
+html[data-font-size="small"] body { font-size: 13px; }
+html[data-font-size="medium"] body { font-size: 15px; }
+html[data-font-size="large"] body { font-size: 17px; }
+
+/* Accentkleuren — override CSS-variabelen */
+html[data-accent="amber"] { --amber:#e2a857; --amber-2:#f0c78a; --amber-3:#8a5c26; }
+html[data-accent="blue"]  { --amber:#3b82f6; --amber-2:#93c5fd; --amber-3:#1e40af; }
+html[data-accent="green"] { --amber:#10b981; --amber-2:#6ee7b7; --amber-3:#065f46; }
+html[data-accent="red"]   { --amber:#e63950; --amber-2:#f87171; --amber-3:#991b1b; }
+
+/* Favorieten-ster op kaarten */
+.card-actions { margin-left: auto; display: flex; gap: .4rem; align-items: center; }
+.card-footer .card-action { margin-left: 0 !important; }
+.card-fav {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  color: var(--ink-3);
+  font-size: 1rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all .15s;
+  padding: 0;
+  font-family: inherit;
+}
+.card-fav:hover { border-color: var(--amber); color: var(--amber); }
+.card-fav.active {
+  background: linear-gradient(135deg, var(--amber-2), var(--amber-3));
+  color: #070c16;
+  border-color: var(--amber);
+  font-weight: 800;
+}
+
+/* Skeleton */
 .skeleton-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-card)}
 .skeleton-thumb{width:100%;aspect-ratio:16/9;background:linear-gradient(90deg,var(--bg-3) 25%,var(--card-hover) 50%,var(--bg-3) 75%);background-size:200% 100%;animation:wdShimmer 1.6s ease-in-out infinite}
 .skeleton-body{padding:1rem 1.1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem}
@@ -64,6 +110,19 @@ try{var t=localStorage.getItem("wardesk_theme");if(t==="light"||(!t&&matchMedia(
 }
 .sheet-item.toggle-on::after{content:" ✓";margin-left:auto;font-weight:800}
 
+/* Kleur-swatches */
+.color-swatch {
+  display: inline-flex !important;
+  align-items: center;
+  gap: .5rem;
+}
+.color-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.4);
+  flex-shrink: 0;
+}
+
 #wdDebugBtn, #wdDebugPanel { display: none !important; }
 html.wd-debug-on #wdDebugBtn{display:grid !important;position:fixed;bottom:100px;right:15px;z-index:20000;width:44px;height:44px;border-radius:50%;background:#e63950;color:#fff;border:2px solid #fff;font-size:1.2rem;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.6);cursor:pointer;place-items:center;font-family:monospace}
 html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inset:0;z-index:19999;background:rgba(0,0,0,.95);color:#0f0;font-family:monospace;font-size:11px;padding:1rem;overflow-y:auto;line-height:1.5}
@@ -101,7 +160,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v5.3</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v6.0</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
@@ -117,7 +176,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 </header>
 
 <main class="main">
-
   <section class="view" id="viewNews">
     <div class="section-head"><h2 id="newsTitle">Laatste berichten</h2><span class="section-count" id="newsCount">—</span></div>
     <div class="feed-grid" id="feedGrid"></div>
@@ -138,7 +196,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
           <div id="legendItems"></div>
         </div>
       </div>
-
       <div class="live-feed">
         <div class="live-head">
           <div class="live-title"><span class="live-dot"></span>LIVE EVENTS</div>
@@ -182,7 +239,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     <div class="iptv-filter-row" id="iptvFilter" hidden><select id="iptvGroupFilter"><option value="all">Alle groepen</option></select></div>
     <div class="iptv-grid" id="iptvGrid"><div class="empty-state"><div class="empty-icon">📡</div><div class="empty-msg">Vul je Xtream gegevens in</div></div></div>
   </section>
-
 </main>
 
 <nav class="bottom-tabs">
@@ -206,6 +262,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
         <button class="sheet-item" data-cat="europe">🇪🇺 Europa</button>
         <button class="sheet-item" data-cat="nl">🇳🇱 Nederland</button>
         <button class="sheet-item" data-cat="sport">⚽ Sport</button>
+        <button class="sheet-item" data-cat="favorites">⭐ Favorieten (<span id="favCount">0</span>)</button>
       </div>
     </div>
 
@@ -226,8 +283,31 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     </div>
 
     <div class="sheet-section">
+      <div class="sheet-title">🎨 Stijl</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" data-font="small" onclick="if(window.__setFontSize)window.__setFontSize('small')">Aa Klein</button>
+        <button class="sheet-item" data-font="medium" onclick="if(window.__setFontSize)window.__setFontSize('medium')">Aa Medium</button>
+        <button class="sheet-item" data-font="large" onclick="if(window.__setFontSize)window.__setFontSize('large')">Aa Groot</button>
+      </div>
+      <div class="sheet-grid" style="margin-top:.45rem">
+        <button class="sheet-item color-swatch" data-color="amber" onclick="if(window.__setAccentColor)window.__setAccentColor('amber')"><span class="color-dot" style="background:#e2a857"></span> Amber</button>
+        <button class="sheet-item color-swatch" data-color="blue" onclick="if(window.__setAccentColor)window.__setAccentColor('blue')"><span class="color-dot" style="background:#3b82f6"></span> Blauw</button>
+        <button class="sheet-item color-swatch" data-color="green" onclick="if(window.__setAccentColor)window.__setAccentColor('green')"><span class="color-dot" style="background:#10b981"></span> Groen</button>
+        <button class="sheet-item color-swatch" data-color="red" onclick="if(window.__setAccentColor)window.__setAccentColor('red')"><span class="color-dot" style="background:#e63950"></span> Rood</button>
+      </div>
+    </div>
+
+    <div class="sheet-section">
       <div class="sheet-title">Zoeken</div>
       <input class="sheet-search" type="search" id="searchInput" placeholder="Zoek in artikelen..." autocomplete="off">
+    </div>
+
+    <div class="sheet-section">
+      <div class="sheet-title">🔔 Meldingen</div>
+      <div class="sheet-grid">
+        <button class="sheet-item" id="toggleNotifications" onclick="if(window.__setNotifications)window.__setNotifications(!window.State.notificationsEnabled)">🔔 Breaking notificaties</button>
+        <button class="sheet-item" id="toggleTranslate" onclick="if(window.__setTranslate)window.__setTranslate(!window.State.translateEnabled)">🌐 Vertaal naar Nederlands</button>
+      </div>
     </div>
 
     <div class="sheet-section">
@@ -246,13 +326,6 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     </div>
 
     <div class="sheet-section">
-      <div class="sheet-title">🌐 Vertaling</div>
-      <div class="sheet-grid">
-        <button class="sheet-item" id="toggleTranslate" onclick="if(window.__setTranslate)window.__setTranslate(!window.State.translateEnabled)">🌐 Vertaal naar Nederlands</button>
-      </div>
-    </div>
-
-    <div class="sheet-section">
       <div class="sheet-title">📡 IPTV Account</div>
       <div class="sheet-grid">
         <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'iptv\']');if(t)t.click();setTimeout(function(){var s=document.getElementById('iptvSetup');if(s){s.hidden=false;setTimeout(function(){s.scrollIntoView({behavior:'smooth',block:'start'})},200)}},350)">⚙ Wijzig inlog</button>
@@ -263,7 +336,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v5.3</span><br>Live nieuws + IPTV + Conflictkaart</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v6.0</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
 
   </div>
@@ -294,6 +367,37 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 </div>
 
 <script>
+/* Font + kleur helpers */
+(function(){
+  window.__setFontSize = function(size){
+    if(["small","medium","large"].indexOf(size) < 0) return;
+    document.documentElement.setAttribute("data-font-size", size);
+    try { localStorage.setItem("wardesk_font_size", size); } catch(e){}
+    document.querySelectorAll("[data-font]").forEach(function(b){
+      b.classList.toggle("active", b.dataset.font === size);
+    });
+  };
+  window.__setAccentColor = function(color){
+    if(["amber","blue","green","red"].indexOf(color) < 0) return;
+    document.documentElement.setAttribute("data-accent", color);
+    try { localStorage.setItem("wardesk_accent_color", color); } catch(e){}
+    document.querySelectorAll("[data-color]").forEach(function(b){
+      b.classList.toggle("active", b.dataset.color === color);
+    });
+    if(window.showToast) window.showToast("🎨 Kleur aangepast");
+  };
+  document.addEventListener("DOMContentLoaded", function(){
+    var fs = (document.documentElement.getAttribute("data-font-size") || "medium");
+    document.querySelectorAll("[data-font]").forEach(function(b){
+      b.classList.toggle("active", b.dataset.font === fs);
+    });
+    var ac = (document.documentElement.getAttribute("data-accent") || "amber");
+    document.querySelectorAll("[data-color]").forEach(function(b){
+      b.classList.toggle("active", b.dataset.color === ac);
+    });
+  });
+})();
+
 (function(){
   "use strict";
   var DEBUG = /[?&]debug=1/.test(location.search);
@@ -369,12 +473,13 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
         add("info", "Items: " + (window.State && window.State.items ? window.State.items.length : "?"));
         add("info", "Sources: " + (window.State ? window.State.loadedSources + "/" + window.State.totalSources : "?"));
         add("info", "Failed: " + (window.State && window.State.failedSources ? window.State.failedSources.length : "?"));
-        add("info", "maxCacheItems: " + (window.CONFIG ? window.CONFIG.maxCacheItems : "?"));
+        add("info", "Favorieten: " + (window.State && window.State.favorites ? Object.keys(window.State.favorites).length : "?"));
+        add("info", "Notificaties: " + (window.State && window.State.notificationsEnabled ? "AAN" : "UIT"));
         add("info", "Vertaling: " + (window.State && window.State.translateEnabled ? "AAN" : "UIT"));
         add("info", "Thema: " + (document.body.classList.contains("light") ? "licht" : "donker"));
+        add("info", "Font: " + (document.documentElement.getAttribute("data-font-size") || "medium"));
+        add("info", "Kleur: " + (document.documentElement.getAttribute("data-accent") || "amber"));
         add("info", "Map events: " + (window.MAPAPI && window.MAPAPI.state && window.MAPAPI.state.events ? window.MAPAPI.state.events.length : "?"));
-        add("info", "Map filter: " + (window.MAPAPI && window.MAPAPI.state ? window.MAPAPI.state.currentFilter : "?"));
-        add("info", "Stadia key: " + (window.CONFIG && CONFIG.stadiaKey ? "aanwezig" : "ontbreekt"));
         var proxies = (window.CONFIG && window.CONFIG.proxies) ? window.CONFIG.proxies : [];
         add("info", "Proxies: " + proxies.length);
         var ph = window.__proxyHealth || {};
@@ -418,7 +523,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script src="config.js?v=25"></script>
-<script src="news.js?v=31"></script>
+<script src="news.js?v=32"></script>
 <script src="app.js?v=14"></script>
 <script src="persist.js?v=14"></script>
 <script src="refresh.js?v=15"></script>
@@ -446,14 +551,14 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       window.wdLog[window.CONFIG ? "ok" : "err"]("CONFIG: " + (window.CONFIG ? "✓" : "✗"));
       window.wdLog[window.FEEDS ? "ok" : "err"]("FEEDS: " + (window.FEEDS ? "✓" : "✗"));
       window.wdLog[window.NewsAPI ? "ok" : "err"]("NewsAPI: " + (window.NewsAPI ? "✓" : "✗"));
-      var okVer = window.__newsVersion && /^v(19|20|21)\./.test(window.__newsVersion);
+      var okVer = window.__newsVersion && /^v(19|20|21|22)\./.test(window.__newsVersion);
       window.wdLog[okVer ? "ok" : "err"]("news.js versie: " + (window.__newsVersion || "ONBEKEND"));
       window.wdLog[window.IPTVAPI ? "ok" : "err"]("IPTVAPI: " + (window.IPTVAPI ? "✓" : "✗"));
       window.wdLog[window.MAPAPI ? "ok" : "err"]("MAPAPI: " + (window.MAPAPI ? "✓" : "✗"));
     }
   }, 1000);
 })();
-console.log("%c WAR DESK %c v5.3 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v6.0 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

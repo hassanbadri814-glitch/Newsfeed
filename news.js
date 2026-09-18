@@ -1,10 +1,11 @@
 /* ============================================================
-   WAR DESK v20.4 — Nieuws logica
-   - Progressive rendering: MERGE in plaats van overschrijven
-   - Sortering volledig via filterItems()
+   WAR DESK v20.5 — Nieuws logica
+   - FIX: tags herberekenen bij cached items zonder tags
+   - Auto-refresh uit als autoRefreshMs = 0
+   - Merge-based progressive rendering
    - Hard refresh functie
    ============================================================ */
-window.__newsVersion = "v20.4-merge-progressive";
+window.__newsVersion = "v20.5-tag-fix";
 
 window.State = {
   items: [],
@@ -163,6 +164,16 @@ function extractTags(title, desc, fallback){
   }
 
   return tags.filter(function(v, i, a){ return a.indexOf(v) === i; });
+}
+
+/* ===== FIX: herbereken tags voor items zonder tags ===== */
+function ensureTags(items){
+  return items.map(function(it){
+    if(!it.tags || !Array.isArray(it.tags) || it.tags.length === 0){
+      it.tags = extractTags(it.title, it.desc || "", it.cat);
+    }
+    return it;
+  });
 }
 
 function scoreArticle(it){
@@ -378,8 +389,6 @@ async function loadAllFeeds(){
 
   window.__proxyHealth = {};
 
-  /* FIX: snapshot van bestaande items — deze worden NOOIT overschreven,
-     alleen aangevuld met nieuwe items */
   var itemsAtStart = State.items.slice();
 
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
@@ -398,7 +407,6 @@ async function loadAllFeeds(){
 
   window.__wdDiagCount = 0;
 
-  /* ===== PROGRESSIVE RENDERING (MERGE) ===== */
   var lastProgressiveCount = 0;
   var progressiveTimer = setInterval(function(){
     if(session !== State.loadSession){
@@ -408,7 +416,6 @@ async function loadAllFeeds(){
     if(collected.length <= lastProgressiveCount) return;
     lastProgressiveCount = collected.length;
 
-    /* FIX: merge nieuwe items MET oude items — nooit overschrijven */
     State.items = dedupe(collected.concat(itemsAtStart));
 
     var itemsEl = document.getElementById("statItems");
@@ -495,7 +502,6 @@ async function loadAllFeeds(){
 
   if(session !== State.loadSession) return;
 
-  /* FIX: finale render — merge opnieuw, geen hardcoded sortering */
   State.items = dedupe(collected.concat(itemsAtStart));
 
   var srcEl = document.getElementById("statSources");
@@ -720,8 +726,10 @@ function renderNews(){
   });
 }
 
+/* ===== AUTO-REFRESH: UIT als autoRefreshMs 0 of negatief is ===== */
 function startAutoRefresh(){
   clearInterval(State.refreshTimer);
+  if(!CONFIG.autoRefreshMs || CONFIG.autoRefreshMs <= 0) return;
   State.refreshTimer = setInterval(function(){
     var idle = Date.now() - State.lastActivity;
     var atTop = window.scrollY < 200;
@@ -747,9 +755,10 @@ async function initNews(){
 
   var cached = await NewsDB.loadItems();
   if(cached.length){
-    State.items = cached;
+    /* FIX: herbereken tags voor alle cached items */
+    State.items = ensureTags(cached);
     var itemsEl = document.getElementById("statItems");
-    if(itemsEl) itemsEl.textContent = cached.length;
+    if(itemsEl) itemsEl.textContent = State.items.length;
     State._lastRenderHash = "";
     renderNews();
   }
@@ -769,7 +778,6 @@ async function initNews(){
   });
 }
 
-/* ===== HARD REFRESH — wist alles en herlaadt ===== */
 window.__hardRefresh = async function(){
   if(!window.NewsAPI) return;
   if(!confirm('Alle artikelen wissen en opnieuw laden?\n\nDit kan 30-60 seconden duren.')) return;

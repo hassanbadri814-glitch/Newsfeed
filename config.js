@@ -1,6 +1,8 @@
 /* ============================================================
-   WAR DESK v19.8 — Configuratie
-   Google News: alleen allorigins (Cloudflare faalt voor Google)
+   WAR DESK v19.9 — Configuratie
+   - Snellere client timeout (7.5s)
+   - Google News fallback: allorigins → codetabs
+   - 5 sport-sites omgezet naar Google News
    ============================================================ */
 
 window.CONFIG = {
@@ -20,12 +22,13 @@ window.CONFIG = {
     "https://api.allorigins.win/raw?url="
   ],
 
-  /* Google News — alleen allorigins (Cloudflare Workers falen) */
+  /* Google News — allorigins eerst, codetabs als fallback */
   googleNewsProxies: [
-    "https://api.allorigins.win/raw?url="
+    "https://api.allorigins.win/raw?url=",
+    "https://api.codetabs.com/v1/proxy?quest="
   ],
 
-  fetchTimeoutMs: 10000,
+  fetchTimeoutMs: 7500,        // Gewijzigd: 10000 → 7500
   parallelWorkers: 5
 };
 
@@ -76,18 +79,18 @@ window.FEEDS = [
   {n:"NOS Sport",lang:"nl",cat:"sport",url:"https://feeds.nos.nl/nossport"},
   {n:"NOS Voetbal",lang:"nl",cat:"sport",url:"https://feeds.nos.nl/nossportvoetbal"},
   {n:"ESPN NL",lang:"nl",cat:"sport",url:"https://www.espn.nl/rss"},
-  {n:"Voetbalnieuws",lang:"nl",cat:"sport",url:"https://www.voetbalnieuws.nl/feed/"},
-  {n:"Voetbalzone",lang:"nl",cat:"sport",url:"https://www.voetbalzone.nl/rss"},
+  {n:"Voetbalnieuws",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:voetbalnieuws.nl&hl=nl&gl=NL&ceid=NL:nl"},        /* → GN */
+  {n:"Voetbalzone",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:voetbalzone.nl&hl=nl&gl=NL&ceid=NL:nl"},              /* → GN */
   {n:"Voetbalprimeur",lang:"nl",cat:"sport",url:"https://www.voetbalprimeur.nl/rss"},
   {n:"FCUpdate",lang:"nl",cat:"sport",url:"https://www.fcupdate.nl/rss"},
-  {n:"Soccernews",lang:"nl",cat:"sport",url:"https://www.soccernews.nl/rss"},
+  {n:"Soccernews",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:soccernews.nl&hl=nl&gl=NL&ceid=NL:nl"},                /* → GN */
   {n:"NUsport",lang:"nl",cat:"sport",url:"https://www.nu.nl/rss/Sport"},
   {n:"Sportnieuws.nl",lang:"nl",cat:"sport",url:"https://sportnieuws.nl/feed/"},
   {n:"RTL Sport",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:rtlnieuws.nl+sport&hl=nl&gl=NL&ceid=NL:nl"},
   {n:"Glory Kickboxing",lang:"en",cat:"sport",url:"https://glorykickboxing.com/rss"},
   {n:"Wielerflits",lang:"nl",cat:"sport",url:"https://www.wielerflits.nl/feed/"},
-  {n:"GPUpdate",lang:"nl",cat:"sport",url:"https://www.gpupdate.net/nl/rss"},
-  {n:"Racexpress",lang:"nl",cat:"sport",url:"https://www.racexpress.nl/rss.php"},
+  {n:"GPUpdate",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:gpupdate.net&hl=nl&gl=NL&ceid=NL:nl"},                  /* → GN */
+  {n:"Racexpress",lang:"nl",cat:"sport",url:"https://news.google.com/rss/search?q=site:racexpress.nl&hl=nl&gl=NL&ceid=NL:nl"},                /* → GN */
   {n:"MMA DNA",lang:"nl",cat:"sport",url:"https://mmadna.nl/feed/"},
 
   // ===== BELGIË =====
@@ -225,4 +228,4 @@ window.FEEDS = [
   {n:"Mondoweiss",lang:"en",cat:"gaza",url:"https://mondoweiss.net/feed/"}
 ];
 
-console.log("[WAR DESK] config.js v19.8 geladen —", window.FEEDS.length, "feeds");
+console.log("[WAR DESK] config.js v19.9 geladen —", window.FEEDS.length, "feeds, timeout 7500ms");

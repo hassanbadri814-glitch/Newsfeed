@@ -1,11 +1,10 @@
 /* ============================================================
-   WAR DESK v20.6 — Nieuws logica
-   - Hard refresh wist State.items NIET meer
-   - Progressive timer sneller (1000ms)
-   - Safety: nooit minder items tonen dan bij start
+   WAR DESK v20.7 — Nieuws logica
+   - maxCacheItems 3000 (via config.js)
+   - Altijd renderen (geen hash-check)
    - Merge-based progressive rendering
    ============================================================ */
-window.__newsVersion = "v20.6-no-empty-refresh";
+window.__newsVersion = "v20.7-always-render";
 
 window.State = {
   items: [],
@@ -273,9 +272,6 @@ function normalizeItem(it){
   };
 }
 
-/* ============================================================
-   PROXY FALLBACK + GOOGLE NEWS SEMAPHORE
-   ============================================================ */
 window.__proxyHealth = {};
 
 var PROXY_COOLDOWN_MS = 30000;
@@ -380,17 +376,17 @@ async function fetchFeedWithFallback(feedUrl){
   }
 }
 
-/* ============================================================
-   LOAD FEEDS — merge-based progressive rendering
-   ============================================================ */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
 
   window.__proxyHealth = {};
 
-  /* Snapshot van bestaande items — deze worden NOOIT verwijderd */
   var itemsAtStart = State.items.slice();
   var minKeep = itemsAtStart.length;
+
+  if(window.__wdDebug && window.wdLog){
+    window.wdLog.info("loadAllFeeds start — items voor merge: " + itemsAtStart.length);
+  }
 
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
   State.totalSources = active.length;
@@ -408,7 +404,6 @@ async function loadAllFeeds(){
 
   window.__wdDiagCount = 0;
 
-  /* ===== PROGRESSIVE RENDERING ===== */
   var lastProgressiveCount = 0;
   var progressiveTimer = setInterval(function(){
     if(session !== State.loadSession){
@@ -427,10 +422,13 @@ async function loadAllFeeds(){
 
     State.items = merged;
 
+    if(window.__wdDebug && window.wdLog && lastProgressiveCount % 50 === 0){
+      window.wdLog.info("Progressive render — items=" + State.items.length + " nieuw=" + collected.length);
+    }
+
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = State.items.length;
 
-    State._lastRenderHash = "";
     renderNews();
   }, 1000);
 
@@ -511,7 +509,6 @@ async function loadAllFeeds(){
 
   if(session !== State.loadSession) return;
 
-  /* Finale merge */
   State.items = dedupe(collected.concat(itemsAtStart));
   if(State.items.length < minKeep){
     State.items = itemsAtStart.slice();
@@ -532,7 +529,6 @@ async function loadAllFeeds(){
 
   detectBreaking();
 
-  State._lastRenderHash = "";
   renderNews();
 
   if(window.__wdDebug && window.wdLog){
@@ -644,13 +640,6 @@ function renderNews(){
   var grid = document.getElementById("feedGrid");
   var title = document.getElementById("newsTitle");
   var count = document.getElementById("newsCount");
-
-  var hash = State.currentCat + "|" + State.currentSort + "|" + State.currentSearch + "|" + State.viewMode + "|" + list.length;
-  for(var h = 0; h < list.length; h++){
-    hash += "|" + (list[h].link || "");
-  }
-  if(hash === State._lastRenderHash) return;
-  State._lastRenderHash = hash;
 
   var titles = {
     all: "Laatste berichten", war: "Oorlog & conflict",
@@ -768,9 +757,11 @@ async function initNews(){
   var cached = await NewsDB.loadItems();
   if(cached.length){
     State.items = ensureTags(cached);
+    if(window.__wdDebug && window.wdLog){
+      window.wdLog.info("Cache geladen — " + cached.length + " items (max " + CONFIG.maxCacheItems + ")");
+    }
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = State.items.length;
-    State._lastRenderHash = "";
     renderNews();
   }
 
@@ -789,9 +780,6 @@ async function initNews(){
   });
 }
 
-/* ============================================================
-   HARD REFRESH — wist cache maar behoudt UI-items
-   ============================================================ */
 window.__hardRefresh = async function(){
   if(!window.NewsAPI) return;
   if(!confirm('Verversen?\n\nAlle bronnen worden opnieuw geladen. Dit kan 30-60 seconden duren.')) return;
@@ -799,8 +787,6 @@ window.__hardRefresh = async function(){
   try{
     if(window.showToast) window.showToast("🔄 Verversen gestart...");
 
-    /* Wis alleen de database-cache. State.items blijft intact zodat de UI
-       nooit leeg wordt tijdens het laden. */
     await NewsDB.saveItems([]);
 
     State.disabled = {};
@@ -808,7 +794,6 @@ window.__hardRefresh = async function(){
     State.loadedSources = 0;
     State.totalSources = 0;
     State.failedSources = [];
-    State._lastRenderHash = "";
 
     await NewsAPI.reload();
 

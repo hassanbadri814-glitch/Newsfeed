@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
-<title>WAR DESK v6.0</title>
+<title>WAR DESK v6.1</title>
 <script>
 try{
   var t=localStorage.getItem("wardesk_theme");
@@ -28,18 +28,138 @@ try{
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="stylesheet" href="styles.css?v=14">
 <style>
-/* Font-size schaal */
+/* ============================================================
+   FONT-SIZE
+   ============================================================ */
 html[data-font-size="small"] body { font-size: 13px; }
 html[data-font-size="medium"] body { font-size: 15px; }
 html[data-font-size="large"] body { font-size: 17px; }
 
-/* Accentkleuren — override CSS-variabelen */
+/* ============================================================
+   ACCENTKLEUR — UI elementen (amber/blauw/groen/rood)
+   ============================================================ */
 html[data-accent="amber"] { --amber:#e2a857; --amber-2:#f0c78a; --amber-3:#8a5c26; }
 html[data-accent="blue"]  { --amber:#3b82f6; --amber-2:#93c5fd; --amber-3:#1e40af; }
 html[data-accent="green"] { --amber:#10b981; --amber-2:#6ee7b7; --amber-3:#065f46; }
 html[data-accent="red"]   { --amber:#e63950; --amber-2:#f87171; --amber-3:#991b1b; }
 
-/* Favorieten-ster op kaarten */
+/* ============================================================
+   ACHTERGROND-TINT — donker thema
+   ============================================================ */
+html[data-accent="amber"]{
+  --bg:#0e0a07; --bg-2:#17120c; --bg-3:#20180f;
+  --card:#1b140c; --card-hover:#271c12;
+  --line:#261b11; --line-2:#372716;
+}
+html[data-accent="blue"]{
+  --bg:#070c16; --bg-2:#0d1522; --bg-3:#131e30;
+  --card:#111b2d; --card-hover:#18253c;
+  --line:#1a2540; --line-2:#26344f;
+}
+html[data-accent="green"]{
+  --bg:#070f0a; --bg-2:#0b1710; --bg-3:#10221a;
+  --card:#0e1d14; --card-hover:#152a1e;
+  --line:#162a1e; --line-2:#1f3a2a;
+}
+html[data-accent="red"]{
+  --bg:#0f0708; --bg-2:#170b0d; --bg-3:#200e11;
+  --card:#1c0b0e; --card-hover:#281216;
+  --line:#281014; --line-2:#3a181e;
+}
+
+/* Header/tabs gradients — hardcoded in styles.css, override hier */
+html[data-accent="amber"] .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(23,18,12,.95) 100%)}
+html[data-accent="green"] .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(11,23,16,.95) 100%)}
+html[data-accent="red"] .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(23,11,13,.95) 100%)}
+
+html[data-accent="amber"] .bottom-tabs{background:linear-gradient(180deg,rgba(23,18,12,.92),var(--bg-2))}
+html[data-accent="green"] .bottom-tabs{background:linear-gradient(180deg,rgba(11,23,16,.92),var(--bg-2))}
+html[data-accent="red"] .bottom-tabs{background:linear-gradient(180deg,rgba(23,11,13,.92),var(--bg-2))}
+
+/* ============================================================
+   ACHTERGROND-TINT — licht thema
+   ============================================================ */
+html[data-accent="amber"].light,
+html[data-accent="amber"].light body.light{
+  --bg:#faf5ec; --bg-2:#fffcf5; --bg-3:#f0e6d4;
+  --card:#fffdf7; --card-hover:#fcf7ee;
+  --line:#f0e5d3; --line-2:#ddceb7;
+}
+html[data-accent="blue"].light,
+html[data-accent="blue"].light body.light{
+  --bg:#f0f3f8; --bg-2:#ffffff; --bg-3:#e3e8f0;
+  --card:#ffffff; --card-hover:#f4f7fc;
+  --line:#e1e6ee; --line-2:#ccd4de;
+}
+html[data-accent="green"].light,
+html[data-accent="green"].light body.light{
+  --bg:#f1f7f2; --bg-2:#ffffff; --bg-3:#e2ece4;
+  --card:#ffffff; --card-hover:#f4f9f5;
+  --line:#e1ece3; --line-2:#c8dbc9;
+}
+html[data-accent="red"].light,
+html[data-accent="red"].light body.light{
+  --bg:#f8f1f1; --bg-2:#ffffff; --bg-3:#f0e3e3;
+  --card:#ffffff; --card-hover:#faf3f3;
+  --line:#efe0e0; --line-2:#dbc7c7;
+}
+
+/* Light header/tabs — override rgba(255,255,255) */
+html[data-accent="amber"].light .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(255,252,245,.95) 100%)}
+html[data-accent="blue"].light .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(255,255,255,.95) 100%)}
+html[data-accent="green"].light .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(255,255,255,.95) 100%)}
+html[data-accent="red"].light .header{background:linear-gradient(180deg,var(--bg-2) 0%,rgba(255,255,255,.95) 100%)}
+
+html[data-accent="amber"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,252,245,.92),var(--bg-2))}
+html[data-accent="blue"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,255,255,.92),var(--bg-2))}
+html[data-accent="green"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,255,255,.92),var(--bg-2))}
+html[data-accent="red"].light .bottom-tabs{background:linear-gradient(180deg,rgba(255,255,255,.92),var(--bg-2))}
+
+/* ============================================================
+   KLEURDOTS OP HOOFDPAGINA
+   ============================================================ */
+.section-head-actions{
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+.accent-picker{
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .25rem .5rem;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+}
+.accent-dot{
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 0 0 0 transparent;
+}
+.accent-dot[data-color="amber"]{ background: linear-gradient(135deg, #f0c78a, #e2a857); }
+.accent-dot[data-color="blue"]{ background: linear-gradient(135deg, #93c5fd, #3b82f6); }
+.accent-dot[data-color="green"]{ background: linear-gradient(135deg, #6ee7b7, #10b981); }
+.accent-dot[data-color="red"]{ background: linear-gradient(135deg, #f87171, #e63950); }
+.accent-dot:hover{ transform: scale(1.15); }
+.accent-dot.active{
+  box-shadow: 0 0 0 2px var(--bg-3), 0 0 0 3.5px var(--ink-2);
+  transform: scale(1.05);
+}
+@media(max-width:640px){
+  .accent-dot{ width: 14px; height: 14px; }
+  .accent-picker{ gap: .4rem; padding: .2rem .4rem; }
+}
+
+/* ============================================================
+   FAVORIETEN + SKELETON + ORIGINELE TITEL
+   ============================================================ */
 .card-actions { margin-left: auto; display: flex; gap: .4rem; align-items: center; }
 .card-footer .card-action { margin-left: 0 !important; }
 .card-fav {
@@ -64,7 +184,6 @@ html[data-accent="red"]   { --amber:#e63950; --amber-2:#f87171; --amber-3:#991b1
   font-weight: 800;
 }
 
-/* Skeleton */
 .skeleton-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-card)}
 .skeleton-thumb{width:100%;aspect-ratio:16/9;background:linear-gradient(90deg,var(--bg-3) 25%,var(--card-hover) 50%,var(--bg-3) 75%);background-size:200% 100%;animation:wdShimmer 1.6s ease-in-out infinite}
 .skeleton-body{padding:1rem 1.1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem}
@@ -110,19 +229,7 @@ html[data-accent="red"]   { --amber:#e63950; --amber-2:#f87171; --amber-3:#991b1
 }
 .sheet-item.toggle-on::after{content:" ✓";margin-left:auto;font-weight:800}
 
-/* Kleur-swatches */
-.color-swatch {
-  display: inline-flex !important;
-  align-items: center;
-  gap: .5rem;
-}
-.color-dot {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.4);
-  flex-shrink: 0;
-}
-
+/* Debug */
 #wdDebugBtn, #wdDebugPanel { display: none !important; }
 html.wd-debug-on #wdDebugBtn{display:grid !important;position:fixed;bottom:100px;right:15px;z-index:20000;width:44px;height:44px;border-radius:50%;background:#e63950;color:#fff;border:2px solid #fff;font-size:1.2rem;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.6);cursor:pointer;place-items:center;font-family:monospace}
 html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inset:0;z-index:19999;background:rgba(0,0,0,.95);color:#0f0;font-family:monospace;font-size:11px;padding:1rem;overflow-y:auto;line-height:1.5}
@@ -160,7 +267,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.2" fill="#070c16"/><path d="M12 6.5 C 15.5 6.5, 18.5 9.5, 18.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 3 C 17.5 3, 21.5 7, 21.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/><path d="M12 17.5 C 8.5 17.5, 5.5 14.5, 5.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 21 C 6.5 21, 2.5 17, 2.5 12" stroke="#070c16" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/></svg>
       </div>
-      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v6.0</span></span></div>
+      <div class="brand-text"><span class="name">WAR DESK</span><span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v6.1</span></span></div>
     </div>
     <div class="header-stats">
       <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
@@ -177,7 +284,18 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 
 <main class="main">
   <section class="view" id="viewNews">
-    <div class="section-head"><h2 id="newsTitle">Laatste berichten</h2><span class="section-count" id="newsCount">—</span></div>
+    <div class="section-head">
+      <h2 id="newsTitle">Laatste berichten</h2>
+      <div class="section-head-actions">
+        <div class="accent-picker" role="group" aria-label="Accentkleur">
+          <button class="accent-dot" data-color="amber" aria-label="Amber"></button>
+          <button class="accent-dot" data-color="blue" aria-label="Blauw"></button>
+          <button class="accent-dot" data-color="green" aria-label="Groen"></button>
+          <button class="accent-dot" data-color="red" aria-label="Rood"></button>
+        </div>
+        <span class="section-count" id="newsCount">—</span>
+      </div>
+    </div>
     <div class="feed-grid" id="feedGrid"></div>
   </section>
 
@@ -283,17 +401,11 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     </div>
 
     <div class="sheet-section">
-      <div class="sheet-title">🎨 Stijl</div>
+      <div class="sheet-title">🔤 Tekstgrootte</div>
       <div class="sheet-grid">
         <button class="sheet-item" data-font="small" onclick="if(window.__setFontSize)window.__setFontSize('small')">Aa Klein</button>
         <button class="sheet-item" data-font="medium" onclick="if(window.__setFontSize)window.__setFontSize('medium')">Aa Medium</button>
         <button class="sheet-item" data-font="large" onclick="if(window.__setFontSize)window.__setFontSize('large')">Aa Groot</button>
-      </div>
-      <div class="sheet-grid" style="margin-top:.45rem">
-        <button class="sheet-item color-swatch" data-color="amber" onclick="if(window.__setAccentColor)window.__setAccentColor('amber')"><span class="color-dot" style="background:#e2a857"></span> Amber</button>
-        <button class="sheet-item color-swatch" data-color="blue" onclick="if(window.__setAccentColor)window.__setAccentColor('blue')"><span class="color-dot" style="background:#3b82f6"></span> Blauw</button>
-        <button class="sheet-item color-swatch" data-color="green" onclick="if(window.__setAccentColor)window.__setAccentColor('green')"><span class="color-dot" style="background:#10b981"></span> Groen</button>
-        <button class="sheet-item color-swatch" data-color="red" onclick="if(window.__setAccentColor)window.__setAccentColor('red')"><span class="color-dot" style="background:#e63950"></span> Rood</button>
       </div>
     </div>
 
@@ -336,7 +448,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 
     <div class="sheet-section">
       <div class="sheet-title">Over</div>
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v6.0</span><br>Live nieuws + IPTV + Conflictkaart</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v6.1</span><br>Live nieuws + IPTV + Conflictkaart</div>
     </div>
 
   </div>
@@ -367,7 +479,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
 </div>
 
 <script>
-/* Font + kleur helpers */
+/* Font + accent helpers */
 (function(){
   window.__setFontSize = function(size){
     if(["small","medium","large"].indexOf(size) < 0) return;
@@ -394,6 +506,13 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     var ac = (document.documentElement.getAttribute("data-accent") || "amber");
     document.querySelectorAll("[data-color]").forEach(function(b){
       b.classList.toggle("active", b.dataset.color === ac);
+    });
+    /* Bind kleurdots */
+    document.querySelectorAll(".accent-dot").forEach(function(b){
+      b.addEventListener("click", function(e){
+        e.stopPropagation();
+        window.__setAccentColor(b.dataset.color);
+      });
     });
   });
 })();
@@ -558,7 +677,7 @@ html.wd-debug-on #wdDebugPanel.show{display:block !important;position:fixed;inse
     }
   }, 1000);
 })();
-console.log("%c WAR DESK %c v6.0 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
+console.log("%c WAR DESK %c v6.1 ","background:#e2a857;color:#070c16;font-weight:800;padding:2px 6px;border-radius:4px 0 0 4px;","background:#131e30;color:#e2a857;font-weight:800;padding:2px 6px;border-radius:0 4px 4px 0;");
 </script>
 </body>
 </html>

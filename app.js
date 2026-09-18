@@ -1,11 +1,12 @@
 /* ============================================================
-   WAR DESK v19.0 — App orchestration
+   WAR DESK v20.0 — App orchestration
    ============================================================ */
 
 (function(){
   "use strict";
 
-  function $(id){ return document.getElementById(id); }
+  var $ = function(id){ return document.getElementById(id); };
+  var APP_VERSION = window.APP_VERSION || "v8.1";
 
   function ready(fn){
     if(document.readyState !== "loading") fn();
@@ -14,12 +15,10 @@
 
   ready(function(){
 
-    /* Thema init */
     if(document.documentElement.classList.contains("light")){
       document.body.classList.add("light");
     }
 
-    /* Klok */
     function tick(){
       var el = $("clock");
       if(el) el.textContent = new Date().toLocaleTimeString("nl-NL", {
@@ -29,14 +28,15 @@
     tick();
     setInterval(tick, 1000);
 
-    /* Thema knop */
-    $("btnTheme").addEventListener("click", function(){
-      var isLight = document.documentElement.classList.toggle("light");
-      document.body.classList.toggle("light", isLight);
-      try{ localStorage.setItem("wardesk_theme", isLight ? "light" : "dark"); }catch(e){}
-    });
+    var themeBtn = $("btnTheme");
+    if(themeBtn){
+      themeBtn.addEventListener("click", function(){
+        var isLight = document.documentElement.classList.toggle("light");
+        document.body.classList.toggle("light", isLight);
+        try{ localStorage.setItem("wardesk_theme", isLight ? "light" : "dark"); }catch(e){}
+      });
+    }
 
-    /* ===== VIEWS ===== */
     var views = {
       news: $("viewNews"),
       iptv: $("viewIptv"),
@@ -57,26 +57,28 @@
       tab.addEventListener("click", function(){ showView(tab.dataset.view); });
     });
 
-    /* ===== BOTTOM SHEET ===== */
     var sheet = $("sheet");
     var overlay = $("sheetOverlay");
 
     function openSheet(){
+      if(!sheet || !overlay) return;
       sheet.classList.add("open");
       overlay.classList.add("open");
       document.body.style.overflow = "hidden";
     }
     function closeSheet(){
+      if(!sheet || !overlay) return;
       sheet.classList.remove("open");
       overlay.classList.remove("open");
       document.body.style.overflow = "";
     }
 
-    $("btnMenu").addEventListener("click", openSheet);
-    $("sheetClose").addEventListener("click", closeSheet);
-    overlay.addEventListener("click", closeSheet);
+    var btnMenu = $("btnMenu");
+    if(btnMenu) btnMenu.addEventListener("click", openSheet);
+    var sheetClose = $("sheetClose");
+    if(sheetClose) sheetClose.addEventListener("click", closeSheet);
+    if(overlay) overlay.addEventListener("click", closeSheet);
 
-    /* Categorie — SLUIT EERST, dan filteren */
     Array.prototype.forEach.call(document.querySelectorAll(".sheet-item[data-cat]"), function(btn){
       btn.addEventListener("click", function(e){
         e.preventDefault();
@@ -92,7 +94,6 @@
       });
     });
 
-    /* Sortering */
     function bindSort(id, sortValue){
       var btn = $(id);
       if(!btn) return;
@@ -100,8 +101,8 @@
         e.preventDefault();
         e.stopPropagation();
         closeSheet();
-        $("sortImportance").classList.remove("active");
-        $("sortNewest").classList.remove("active");
+        var imp = $("sortImportance"); if(imp) imp.classList.remove("active");
+        var nn = $("sortNewest"); if(nn) nn.classList.remove("active");
         btn.classList.add("active");
         try{ if(window.NewsAPI) NewsAPI.setSort(sortValue); }catch(err){}
       });
@@ -109,7 +110,6 @@
     bindSort("sortImportance", "importance");
     bindSort("sortNewest", "newest");
 
-    /* Weergave */
     function bindView(id, viewValue){
       var btn = $(id);
       if(!btn) return;
@@ -117,8 +117,8 @@
         e.preventDefault();
         e.stopPropagation();
         closeSheet();
-        $("viewCards").classList.remove("active");
-        $("viewList").classList.remove("active");
+        var c = $("viewCards"); if(c) c.classList.remove("active");
+        var l = $("viewList"); if(l) l.classList.remove("active");
         btn.classList.add("active");
         try{ if(window.NewsAPI) NewsAPI.setView(viewValue); }catch(err){}
       });
@@ -126,7 +126,6 @@
     bindView("viewCards", "cards");
     bindView("viewList", "list");
 
-    /* Zoeken */
     var searchInput = $("searchInput");
     if(searchInput){
       var searchTimer;
@@ -138,36 +137,50 @@
       });
     }
 
-    /* Swipe sluiten */
     var startY = 0, currentY = 0, dragging = false;
-    sheet.addEventListener("touchstart", function(e){
-      startY = e.touches[0].clientY;
-      dragging = true;
-    }, {passive: true});
-    sheet.addEventListener("touchmove", function(e){
-      if(!dragging) return;
-      currentY = e.touches[0].clientY;
-      var delta = currentY - startY;
-      if(delta > 0) sheet.style.transform = "translateY(" + delta + "px)";
-    }, {passive: true});
-    sheet.addEventListener("touchend", function(){
-      dragging = false;
-      if(currentY - startY > 100) closeSheet();
-      sheet.style.transform = "";
-      startY = currentY = 0;
-    });
+    if(sheet){
+      sheet.addEventListener("touchstart", function(e){
+        if(e.touches.length !== 1) return;
+        startY = e.touches[0].clientY;
+        dragging = true;
+      }, {passive: true});
+      sheet.addEventListener("touchmove", function(e){
+        if(!dragging || e.touches.length !== 1) return;
+        currentY = e.touches[0].clientY;
+        var delta = currentY - startY;
+        if(delta > 0){
+          if(e.cancelable) e.preventDefault();
+          sheet.style.transform = "translateY(" + delta + "px)";
+        }
+      }, {passive: false});
+      sheet.addEventListener("touchend", function(){
+        if(!dragging) return;
+        dragging = false;
+        if(currentY - startY > 100) closeSheet();
+        sheet.style.transform = "";
+        startY = currentY = 0;
+      });
+      sheet.addEventListener("touchcancel", function(){
+        dragging = false;
+        sheet.style.transform = "";
+        startY = currentY = 0;
+      });
+    }
 
-    /* Escape */
     document.addEventListener("keydown", function(e){
-      if(e.key === "Escape") closeSheet();
+      if(e.key !== "Escape") return;
+      var modal = $("wdDetailModal");
+      if(modal && modal.classList.contains("show")) return;
+      if(document.querySelector(".map-wrap.fullscreen")) return;
+      closeSheet();
     });
 
-    /* Breaking banner */
     var bb = $("breakingClose");
     if(bb){
       bb.addEventListener("click", function(e){
         e.stopPropagation();
-        $("breakingBanner").classList.remove("show");
+        var banner = $("breakingBanner");
+        if(banner) banner.classList.remove("show");
       });
     }
     var banner = $("breakingBanner");
@@ -182,25 +195,24 @@
       });
     }
 
-    /* Toast */
     var toastTimer;
     window.showToast = function(msg){
       var t = $("toast");
+      if(!t) return;
       t.textContent = msg;
       t.classList.add("show");
       clearTimeout(toastTimer);
       toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
     };
 
-    /* Init nieuws */
-    if(window.NewsAPI){
-      NewsAPI.init().then(function(){
-        console.log("[WAR DESK] Nieuws geladen:", window.State.items.length, "artikelen");
+    if(window.NewsAPI && typeof NewsAPI.init === "function"){
+      Promise.resolve(NewsAPI.init()).then(function(){
+        if(window.State) console.log("[WAR DESK] Nieuws geladen:", State.items.length, "artikelen");
       }).catch(function(err){
         console.error("[WAR DESK] Nieuws init fout:", err);
       });
     }
 
-    console.log("[WAR DESK] app.js geladen");
+    console.log("[WAR DESK] app.js " + APP_VERSION + " geladen");
   });
 })();

@@ -1,7 +1,8 @@
 /* ============================================================
-   WAR DESK v22.0 — Nieuws logica + Favorieten + Notificaties
+   WAR DESK v24.2 — Nieuws logica
    ============================================================ */
-window.__newsVersion = "v22.0-fav-notif";
+
+window.__newsVersion = "v24.2";
 
 var MYMEMORY_EMAIL = "hassanbadri814@gmail.com";
 
@@ -33,7 +34,6 @@ window.State = {
   translationPending: {}
 };
 
-/* ===== INDEXEDDB ===== */
 var NewsDB = (function(){
   var db = null;
   var DB_NAME = "wardesk_v19_news";
@@ -41,16 +41,18 @@ var NewsDB = (function(){
 
   function open(){
     return new Promise(function(resolve){
-      if(!("indexedDB" in window)){ resolve(null); return; }
-      var req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = function(e){
-        var d = e.target.result;
-        if(!d.objectStoreNames.contains("items")) d.createObjectStore("items", {keyPath:"link"});
-        if(!d.objectStoreNames.contains("meta")) d.createObjectStore("meta", {keyPath:"k"});
-        if(!d.objectStoreNames.contains("translations")) d.createObjectStore("translations", {keyPath:"k"});
-      };
-      req.onsuccess = function(e){ db = e.target.result; resolve(db); };
-      req.onerror = function(){ resolve(null); };
+      try{
+        if(!("indexedDB" in window)){ resolve(null); return; }
+        var req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = function(e){
+          var d = e.target.result;
+          if(!d.objectStoreNames.contains("items")) d.createObjectStore("items", {keyPath:"link"});
+          if(!d.objectStoreNames.contains("meta")) d.createObjectStore("meta", {keyPath:"k"});
+          if(!d.objectStoreNames.contains("translations")) d.createObjectStore("translations", {keyPath:"k"});
+        };
+        req.onsuccess = function(e){ db = e.target.result; resolve(db); };
+        req.onerror = function(){ resolve(null); };
+      }catch(e){ resolve(null); }
     });
   }
   function put(store, value){
@@ -104,7 +106,8 @@ var NewsDB = (function(){
         var tx = db.transaction("items", "readwrite");
         var store = tx.objectStore("items");
         store.clear();
-        items.slice(0, CONFIG.maxCacheItems).forEach(function(it){
+        var max = (window.CONFIG && CONFIG.maxCacheItems) ? CONFIG.maxCacheItems : 3000;
+        items.slice(0, max).forEach(function(it){
           store.put({
             link: it.link, title: it.title, desc: it.desc, img: it.img,
             date: it.date, source: it.source, cat: it.cat, lang: it.lang,
@@ -112,11 +115,37 @@ var NewsDB = (function(){
           });
         });
         tx.oncomplete = function(){ res(); };
+        tx.onerror = function(){ res(); };
       }catch(e){ res(); }
+    });
+  }
+  function pruneOldReads(){
+    if(!db) return Promise.resolve(false);
+    return new Promise(function(res){
+      try{
+        var cutoffRead = Date.now() - 90 * 86400000;
+        var cutoffFav = Date.now() - 365 * 86400000;
+        var tx = db.transaction("meta", "readwrite");
+        var store = tx.objectStore("meta");
+        var req = store.openCursor();
+        req.onsuccess = function(e){
+          var cur = e.target.result;
+          if(!cur) return;
+          var rec = cur.value;
+          var k = rec && rec.k || "";
+          var v = rec && rec.v || 0;
+          if(k.indexOf("read_") === 0 && v < cutoffRead){ cur.delete(); }
+          else if(k.indexOf("fav_") === 0 && v < cutoffFav){ cur.delete(); }
+          cur.continue();
+        };
+        tx.oncomplete = function(){ res(true); };
+        tx.onerror = function(){ res(false); };
+      }catch(e){ res(false); }
     });
   }
   return {
     open: open, put: put, get: get, getAll: getAll, saveItems: saveItems,
+    pruneOldReads: pruneOldReads,
     loadItems: function(){
       return getAll("items").then(function(items){
         return items.sort(function(a,b){ return tm(b.date) - tm(a.date); });
@@ -168,37 +197,66 @@ function ago(d){
 function rtime(t){ return Math.max(1, Math.round((t || "").split(/\s+/).length / 200)); }
 function strip(s){ return (s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(); }
 function esc(s){
-  return (s || "").replace(/[&<>"']/g, function(c){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
   });
 }
 
-function extractTags(title, desc, fallback){
+function emitProgress(pct, done){
+  try{
+    document.dispatchEvent(new CustomEvent("wardesk:feedprogress", {
+      detail: { pct: Math.max(0, Math.min(100, Math.round(pct))), done: !!done }
+    }));
+  }catch(e){}
+}
+
+function extractTags(title, desc, sourceCat){
   var tags = [];
   var t = ((title || "") + " " + (desc || "")).toLowerCase();
-  var sportSignal = /\b(voetbal|football|soccer|eredivisie|eerste divisie|knvb|ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|n\.e\.c\.|sparta|willem ii|go ahead|pec zwolle|rkc|fortuna sittard|excelsior|almere city|heracles|voetbalzone|voetbalnieuws|voetbalprimeur|match|wedstrijd|goal|doelpunt|keeper|doelman|coach|trainer|speler|selectie|toernooi|competitie|champions league|europa league|conference league|knvb beker|johan cruijff schaal|fifa|uefa|wk|ek|kickboxing|glory|mma|ufc|boksen|boks|vechtsport|formule 1|f1|grand prix|motogp|olympische|tennis|wimbledon|roland garros|us open|australian open|basketbal|nba|nfl|nhl|mlb|wielrennen|tour de france|giro|vuelta|darts|schaatsen|zwemmen|atletiek|hockey|handbal|volleybal|honkbal|rugby|cricket|golf|surfen|ski|snowboard)\b/.test(t);
-  if(sportSignal && !/\b(airstrike|missile strike|invasion|massacre|shelling)\b/.test(t)){
+
+  if(sourceCat === "nl") tags.push("nl");
+  if(sourceCat === "be" || sourceCat === "de" || sourceCat === "fr" || sourceCat === "it" || sourceCat === "uk") tags.push("europe");
+  if(sourceCat === "us") tags.push("vs");
+  if(sourceCat === "maroc") tags.push("maroc");
+  if(sourceCat === "eg" || sourceCat === "sa" || sourceCat === "ae" || sourceCat === "qa" || sourceCat === "il" || sourceCat === "mideast") tags.push("mideast");
+  if(sourceCat === "ukraine" || sourceCat === "gaza" || sourceCat === "yemen" || sourceCat === "iran" || sourceCat === "sudan" || sourceCat === "war") tags.push("war");
+  if(sourceCat === "sport") tags.push("sport");
+
+  var sportStrong = /\b(eredivisie|eerste divisie|knvb|johan cruijff schaal|champions league|europa league|conference league|wk voetbal|ek voetbal|formule 1|grand prix|motogp|tour de france|giro d'italia|vuelta|wimbledon|roland garros|us open tennis|australian open|olympische spelen|glory kickboxing|ufc|nba|nfl|nhl|mlb)\b/.test(t);
+  var sportTeam = /\b(ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|sparta rotterdam|willem ii|go ahead eagles|pec zwolle|rkc waalwijk|fortuna sittard|excelsior|almere city|heracles|n\.e\.c\.|real madrid|barcelona|atletico madrid|manchester united|manchester city|liverpool|chelsea|arsenal|tottenham|juventus|inter milan|ac milan|bayern münchen|borussia dortmund|paris saint-germain|psg)\b/.test(t);
+  var warBlock = /\b(airstrike|raketaanval|invasion|invasie|massacre|bloedbad|shelling|beschieting|offensief|oorlog|war)\b/.test(t);
+  if((sportStrong || sportTeam) && !warBlock && tags.indexOf("sport") === -1){
     tags.push("sport");
   }
-  if(/\b(gaza|rafah|khan younis|hamas|palestin|netanyahu|tel aviv|jerusalem|idf|hebron|jenin|nablus|ramallah|west bank)\b/.test(t)) tags.push("gaza", "mideast", "war");
-  if(/\b(lebanon|lebanese|beirut|hezbollah|nasrallah|hizbullah|sidon|tripoli|tyre)\b/.test(t)) tags.push("lebanon", "mideast", "war");
-  if(/\b(iran|iranian|tehran|irgc|khamenei|persian gulf|pezeshkian)\b/.test(t)) tags.push("iran", "mideast", "war");
-  if(/\b(syria|syrian|damascus|assad|idlib|aleppo|homs|raqqa|sharaa)\b/.test(t)) tags.push("syria", "mideast", "war");
-  if(/\b(yemen|yemeni|houthi|sanaa|aden|taiz|hodeidah)\b/.test(t)) tags.push("yemen", "mideast", "war");
-  if(/\b(ukraine|ukrainian|kyiv|kiev|zelensky|kharkiv|odesa|donbas|crimea|donetsk|luhansk|mariupol|putin|kremlin|moscow|russia)\b/.test(t)) tags.push("ukraine", "war");
-  if(/\b(sudan|sudanese|khartoum|darfur|rsf|omdurman)\b/.test(t)) tags.push("sudan", "war");
-  if(/\b(morocco|moroccan|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|western sahara|sahara)\b/.test(t)) tags.push("maroc");
-  if(/\b(airstrike|air strike|missile|invasion|invaded|ceasefire|cease-fire|military|soldier|troops|combat|offensive|bombing|shelling|artillery|tank|drone strike|hostage|massacre|war crime)\b/.test(t)){
-    if(tags.indexOf("war") === -1) tags.push("war");
+
+  var mideastContent = /\b(gaza|rafah|khan younis|hamas|hezbollah|idf|netanyahu|westelijke jordaanoever|palestijn|palestinian|israelisch|israeli|iran|irgc|tehran|khamenei|syrië|syria|damascus|assad|libanon|lebanon|beirut|jemen|yemen|houthi|irak|iraq|bagdad|saudi-arabië|riyadh|qatar|doha|aboe dhabi|dubai|jordanië|amman|jeruzalem|jerusalem|tel aviv|beiroet)\b/.test(t);
+  if(mideastContent && tags.indexOf("mideast") === -1) tags.push("mideast");
+
+  var warScore = 0;
+  if(/\b(airstrike|air strike|raketaanval|missile strike|drone strike|luchtaanval|invasion|invaded|invasie|massacre|bloedbad|genocide|ceasefire|staakt-het-vuren|offensive|offensief|bombing|bombardement|shelling|beschieting|artillery|artillerie|war crime|oorlogsmisdaad|chemical attack|gifgasaanval)\b/.test(t)) warScore += 3;
+  if(/\b(killed|gedood|doden|slachtoffers|gewonden|troops|troepen|soldiers|soldaat|militairen|military|combat|gevecht|tank|tanks|frontlinie|frontline)\b/.test(t)) warScore += 1;
+  if(/\b(oekraïne|ukraine|zelensky|zelenski|kyiv|kiev|kharkiv|odesa|donbas|crimea|donetsk|luhansk|marioepol|mariupol|poetin|putin|kremlin|moskou)\b/.test(t)) warScore += 2;
+  if(warScore >= 2 && tags.indexOf("war") === -1) tags.push("war");
+
+  var nlContent = /\b(nederland|nederlands|dutch|holland|amsterdam|rotterdam|den haag|the hague|utrecht|eindhoven|groningen|tilburg|almere|breda|nijmegen|haarlem|arnhem|apeldoorn|enschede|amersfoort|zwolle|leeuwarden|maastricht|tweede kamer|eerste kamer|kabinet|minister-president|premier rutte|mark rutte|geert wilders|d66|vvd|cda|pvda|groenlinks|forum voor democratie|sp partij|christenunie|sgr|bbb|nieuw sociaal contract|gemeente|provincie|randstad|noord-holland|zuid-holland|flevoland|gelderland|overijssel|drenthe|friesland|zeeland|limburg|noord-brabant)\b/.test(t);
+  if(nlContent && tags.indexOf("nl") === -1) tags.push("nl");
+
+  if(/\b(marokko|morocco|maroc|rabat|casablanca|marrakech|agadir|fes|tanger|sahara|marokkaans|marokkaanse)\b/.test(t) && tags.indexOf("maroc") === -1){
+    tags.push("maroc");
   }
+
+  var europeStrong = /\b(europese unie|european union|europese commissie|european commission|europese parlement|european parliament|brussel|brussels|nato|europese raad|eurozone|schengen|europese centrale bank|europese verkiezing)\b/.test(t);
+  var europeCountry = /\b(duitsland|germany|frankrijk|france|spanje|spain|españa|italië|italy|verenigd koninkrijk|united kingdom|engeland|england|polen|poland|oostenrijk|austria|zwitserland|switzerland|zweden|sweden|noorwegen|norway|denemarken|denmark|finland|ierland|ireland|portugal|griekenland|greece|tsjechië|czech|hongarije|hungary|roemenië|romania|bulgarije|bulgaria|belgië|belgium)\b/.test(t);
+  if((europeStrong || europeCountry) && tags.indexOf("europe") === -1 && tags.indexOf("nl") === -1){
+    tags.push("europe");
+  }
+
   return tags.filter(function(v, i, a){ return a.indexOf(v) === i; });
 }
 
 function ensureTags(items){
   return items.map(function(it){
-    if(!it.tags || !Array.isArray(it.tags) || it.tags.length === 0){
-      it.tags = extractTags(it.title, it.desc || "", it.cat);
-    }
+    it.tags = extractTags(it.title, it.desc || "", it.cat);
     return it;
   });
 }
@@ -298,8 +356,7 @@ function normalizeItem(it){
   };
 }
 
-/* ===== PROXY + GOOGLE NEWS ===== */
-window.__proxyHealth = {};
+if(!window.__proxyHealth) window.__proxyHealth = {};
 var PROXY_COOLDOWN_MS = 30000;
 var PROXY_FAIL_THRESHOLD = 5;
 var googleNewsSem = { active: 0, max: 2, queue: [] };
@@ -348,7 +405,7 @@ async function fetchFeedWithFallback(feedUrl){
     var proxies;
     if(isGoogleNews && CONFIG.googleNewsProxies && CONFIG.googleNewsProxies.length) proxies = CONFIG.googleNewsProxies;
     else if(CONFIG.proxies && CONFIG.proxies.length) proxies = CONFIG.proxies;
-    else proxies = [CONFIG.proxy];
+    else proxies = [CONFIG.proxies[0]];
     var lastErr = null;
     for(var i = 0; i < proxies.length; i++){
       var p = proxies[i];
@@ -376,14 +433,20 @@ async function fetchFeedWithFallback(feedUrl){
   }
 }
 
-/* ===== VERTALING ===== */
 var TRANSLATION_SEM = { active: 0, max: 3, queue: [] };
 
 function titleHashKey(lang, title) {
   var str = (lang || "xx") + "|" + (title || "");
-  var h = 5381;
-  for (var i = 0; i < str.length; i++) { h = ((h << 5) + h) ^ str.charCodeAt(i); }
-  return "tr_" + (h >>> 0).toString(36);
+  var h1 = 5381;
+  var h2 = 52711;
+  for (var i = 0; i < str.length; i++) {
+    var c = str.charCodeAt(i);
+    h1 = ((h1 << 5) + h1) ^ c;
+    h2 = ((h2 << 5) + h2 + c) | 0;
+  }
+  var a = (h1 >>> 0).toString(36);
+  var b = (h2 >>> 0).toString(36);
+  return "tr_" + a + "_" + b;
 }
 function translationAcquire() {
   return new Promise(function(resolve){
@@ -420,7 +483,7 @@ async function fetchTranslation(text, sourceLang) {
         }
       }
     }
-  } catch(e) {}
+  }catch(e){}
   try {
     var proxy = CONFIG.proxies[0];
     var googleUrl = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" +
@@ -437,7 +500,7 @@ async function fetchTranslation(text, sourceLang) {
         if(out2 && out2.length > 1) return out2;
       }
     }
-  } catch(e) {}
+  }catch(e){}
   return null;
 }
 async function translateItem(item) {
@@ -504,21 +567,19 @@ function getDisplayTitle(it) {
 }
 window.__setTranslate = function(enabled){
   State.translateEnabled = !!enabled;
-  try { localStorage.setItem("wardesk_translate", enabled ? "1" : "0"); } catch(e){}
+  try { localStorage.setItem("wardesk_translate", enabled ? "1" : "0"); }catch(e){}
   var btn = document.getElementById("toggleTranslate");
   if(btn) btn.classList.toggle("toggle-on", enabled);
   State._lastRenderHash = "";
   renderNews();
-  if(window.showToast) window.showToast(enabled ? "🌐 Vertaling aan" : "🌐 Vertaling uit");
+  if(window.showToast) window.showToast(enabled ? "Vertaling aan" : "Vertaling uit");
   if(enabled){
     var toShow = filterItems().slice(0, 100);
     translateVisibleItems(toShow);
   }
 };
 
-/* ===== FAVORIETEN ===== */
 function isFavorite(link){ return !!State.favorites[link]; }
-
 function toggleFavorite(link, btnEl){
   if(State.favorites[link]){
     delete State.favorites[link];
@@ -535,13 +596,11 @@ function toggleFavorite(link, btnEl){
     renderNews();
   }
 }
-
 function updateFavoritesCount(){
   var el = document.getElementById("favCount");
   if(el) el.textContent = Object.keys(State.favorites).length;
 }
 
-/* ===== NOTIFICATIES ===== */
 async function requestNotificationPermission(){
   if(!("Notification" in window)) return false;
   if(Notification.permission === "granted") return true;
@@ -557,27 +616,23 @@ window.__setNotifications = async function(enabled){
     var ok = await requestNotificationPermission();
     if(!ok){
       if(window.showToast) window.showToast("Notificaties geweigerd door browser");
-      var btn = document.getElementById("toggleNotifications");
-      if(btn) btn.classList.remove("toggle-on");
       return;
     }
     State.notificationsEnabled = true;
-    try { localStorage.setItem("wardesk_notifications", "1"); } catch(e){}
-    var btn = document.getElementById("toggleNotifications");
-    if(btn) btn.classList.add("toggle-on");
-    if(window.showToast) window.showToast("🔔 Breaking notificaties aan");
+    try { localStorage.setItem("wardesk_notifications", "1"); }catch(e){}
+    if(window.showToast) window.showToast("Breaking notificaties aan");
     try {
       new Notification("WAR DESK", {
-        body: "Notificaties zijn ingeschakeld. Je krijgt een melding bij grote breaking events.",
-        tag: "wardesk-test"
+        body: "Notificaties zijn ingeschakeld.",
+        tag: "wardesk-test",
+        icon: "./icons/icon-192.png",
+        badge: "./icons/icon-96.png"
       });
-    } catch(e) {}
+    }catch(e){}
   } else {
     State.notificationsEnabled = false;
-    try { localStorage.setItem("wardesk_notifications", "0"); } catch(e){}
-    var btn = document.getElementById("toggleNotifications");
-    if(btn) btn.classList.remove("toggle-on");
-    if(window.showToast) window.showToast("🔔 Notificaties uit");
+    try { localStorage.setItem("wardesk_notifications", "0"); }catch(e){}
+    if(window.showToast) window.showToast("Notificaties uit");
   }
 };
 
@@ -587,26 +642,20 @@ function sendBreakingNotification(group){
   if(Notification.permission !== "granted") return;
   if(group.sources.length < 5) return;
   try {
-    var title = "🚨 Breaking · " + group.sources.length + " bronnen";
+    var title = "Breaking - " + group.sources.length + " bronnen";
     var body = group.items[0].title.slice(0, 180);
     var notif = new Notification(title, {
       body: body,
       tag: "wardesk-breaking-" + Math.floor(Date.now() / 60000),
-      badge: undefined
+      icon: "./icons/icon-192.png",
+      badge: "./icons/icon-96.png"
     });
-    notif.onclick = function(){
-      try { window.focus(); } catch(e){}
-      notif.close();
-    };
-  } catch(e) {
-    console.warn("[WAR DESK] notificatie fout:", e);
-  }
+    notif.onclick = function(){ try { window.focus(); }catch(e){} notif.close(); };
+  }catch(e) { console.warn("[WAR DESK] notificatie fout:", e); }
 }
 
-/* ===== LOAD FEEDS ===== */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
-  window.__proxyHealth = {};
   var itemsAtStart = State.items.slice();
   var minKeep = itemsAtStart.length;
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
@@ -616,8 +665,9 @@ async function loadAllFeeds(){
   var collected = [];
   var collectedLinks = {};
   var tried = 0;
-  var bar = document.getElementById("progressBar");
-  if(bar){ bar.classList.add("show"); bar.style.width = "10%"; }
+
+  emitProgress(3);
+
   window.__wdDiagCount = 0;
   var lastProgressiveCount = 0;
   var progressiveTimer = setInterval(function(){
@@ -666,7 +716,7 @@ async function loadAllFeeds(){
       if(window.__wdDebug && window.__wdDiagCount < 5 && window.wdLog){
         window.__wdDiagCount++;
         var pTag = proxyIdx === 0 ? "p1" : ("p" + (proxyIdx + 1));
-        window.wdLog.info("✓ " + f.n + " [" + shape + "/" + pTag + "] items=" + items.length + " nieuw=" + added);
+        window.wdLog.info(f.n + " [" + shape + "/" + pTag + "] items=" + items.length + " nieuw=" + added);
       }
       State.loadedSources++;
       if(State.health[f.n]) State.health[f.n].fails = 0;
@@ -679,8 +729,10 @@ async function loadAllFeeds(){
       State.health[f.n].last = Date.now();
       if(State.health[f.n].fails >= CONFIG.failThreshold) State.disabled[f.n] = true;
     }
-    if(bar && session === State.loadSession){
-      bar.style.width = (10 + Math.round((tried / active.length) * 85)) + "%";
+
+    if(session === State.loadSession){
+      var pct = 3 + Math.round((tried / Math.max(1, active.length)) * 92);
+      emitProgress(pct);
     }
   }
 
@@ -705,10 +757,9 @@ async function loadAllFeeds(){
   if(itemsEl) itemsEl.textContent = State.items.length;
   NewsDB.saveItems(State.items);
   NewsDB.saveHealth(State.health);
-  if(bar){
-    bar.style.width = "100%";
-    setTimeout(function(){ bar.classList.remove("show"); bar.style.width = "0%"; }, 400);
-  }
+
+  emitProgress(100, true);
+
   detectBreaking();
   renderNews();
   if(State.translateEnabled){
@@ -717,7 +768,7 @@ async function loadAllFeeds(){
   }
   if(window.__wdDebug && window.wdLog){
     window.wdLog[State.items.length ? "ok" : "warn"](
-      "loadAllFeeds klaar — " + State.items.length + " items uit " + State.loadedSources + "/" + State.totalSources + " bronnen"
+      "loadAllFeeds klaar - " + State.items.length + " items uit " + State.loadedSources + "/" + State.totalSources + " bronnen"
     );
   }
 }
@@ -767,7 +818,6 @@ function detectBreaking(){
     clearTimeout(banner._timer);
     banner._timer = setTimeout(function(){ banner.classList.remove("show"); }, 30000);
   }
-  /* Notificatie alleen bij 5+ bronnen EN als de app op de achtergrond is */
   if(State.notificationsEnabled && document.hidden){
     sendBreakingNotification(g);
   }
@@ -778,12 +828,12 @@ function filterItems(){
   if(State.currentCat === "favorites"){
     list = list.filter(function(it){ return !!State.favorites[it.link]; });
   } else if(State.currentCat !== "all"){
-    var cats = CAT_GROUPS[State.currentCat] || [State.currentCat];
-    list = list.filter(function(it){
-      var matchCat = cats.indexOf(it.cat) >= 0;
-      var matchTags = it.tags && it.tags.some(function(t){ return cats.indexOf(t) >= 0; });
-      return matchCat || matchTags;
-    });
+    var cats = (window.CAT_GROUPS && CAT_GROUPS[State.currentCat]) || [State.currentCat];
+    if(cats.length){
+      list = list.filter(function(it){
+        return it.tags && it.tags.some(function(t){ return cats.indexOf(t) >= 0; });
+      });
+    }
   }
   if(State.currentSearch){
     var q = State.currentSearch;
@@ -821,10 +871,15 @@ function renderNews(){
   var title = document.getElementById("newsTitle");
   var count = document.getElementById("newsCount");
   var titles = {
-    all: "Laatste berichten", war: "Oorlog & conflict",
-    mideast: "Midden-Oosten", europe: "Europa",
-    nl: "Nederland", sport: "Sport",
-    favorites: "⭐ Favorieten"
+    all: "Laatste berichten",
+    war: "Oorlog & conflict",
+    mideast: "Midden-Oosten",
+    europe: "Europa",
+    nl: "Nederland",
+    maroc: "Marokko",
+    vs: "Verenigde Staten",
+    sport: "Sport",
+    favorites: "Favorieten"
   };
   var catLabel = titles[State.currentCat] || "Laatste berichten";
   if(title) title.textContent = catLabel;
@@ -835,7 +890,7 @@ function renderNews(){
       renderSkeletons(grid);
     } else if(State.currentCat === "favorites"){
       grid.innerHTML = '<div class="empty-state">' +
-        '<div class="empty-icon">⭐</div>' +
+        '<div class="empty-icon">☆</div>' +
         '<div class="empty-msg">Nog geen favorieten</div>' +
         '<div class="empty-hint">Tik op het ster-icoon bij een artikel om het te bewaren</div>' +
         '</div>';
@@ -869,7 +924,7 @@ function renderNews(){
     html += '<span class="card-source">' + esc(it.source) + '</span>';
     html += '<span class="card-sep">·</span>';
     html += '<span>' + ago(it.date) + '</span>';
-    if(multi) html += '<span class="card-multi">' + sources.length + '× bronnen</span>';
+    if(multi) html += '<span class="card-multi">' + sources.length + ' bronnen</span>';
     html += '</div>';
     html += '<h3 class="card-title" dir="' + titleDir + '">' + esc(disp.title) + '</h3>';
     if(isTranslated){
@@ -943,18 +998,23 @@ function startAutoRefresh(){
 
 async function initNews(){
   await NewsDB.open();
-  try { State.translateEnabled = localStorage.getItem("wardesk_translate") === "1"; } catch(e){}
-  try { State.notificationsEnabled = localStorage.getItem("wardesk_notifications") === "1"; } catch(e){}
+  NewsDB.pruneOldReads().catch(function(){});
+
+  try{
+    if(localStorage.getItem("wardesk_tags_version") !== window.TAGS_VERSION){
+      await NewsDB.saveItems([]);
+      localStorage.setItem("wardesk_tags_version", window.TAGS_VERSION);
+      console.log("[WAR DESK] Tags-versie gewijzigd — cache geleegd");
+    }
+  }catch(e){}
+
+  try { State.translateEnabled = localStorage.getItem("wardesk_translate") === "1"; }catch(e){}
+  try { State.notificationsEnabled = localStorage.getItem("wardesk_notifications") === "1"; }catch(e){}
   State.health = {};
   State.disabled = {};
   State.readMap = await NewsDB.loadReadMap();
   State.favorites = await NewsDB.loadFavorites();
   updateFavoritesCount();
-
-  var btn = document.getElementById("toggleTranslate");
-  if(btn) btn.classList.toggle("toggle-on", State.translateEnabled);
-  var btn2 = document.getElementById("toggleNotifications");
-  if(btn2) btn2.classList.toggle("toggle-on", State.notificationsEnabled);
 
   var grid = document.getElementById("feedGrid");
   if(grid && !State.items.length) renderSkeletons(grid);
@@ -983,7 +1043,7 @@ window.__hardRefresh = async function(){
   if(!window.NewsAPI) return;
   if(!confirm('Verversen?\n\nAlle bronnen worden opnieuw geladen. Dit kan 30-60 seconden duren.')) return;
   try{
-    if(window.showToast) window.showToast("🔄 Verversen gestart...");
+    if(window.showToast) window.showToast("Verversen gestart...");
     await NewsDB.saveItems([]);
     State.disabled = {};
     State.health = {};
@@ -991,7 +1051,7 @@ window.__hardRefresh = async function(){
     State.totalSources = 0;
     State.failedSources = [];
     await NewsAPI.reload();
-    if(window.showToast) window.showToast("✓ Verversen klaar");
+    if(window.showToast) window.showToast("Verversen klaar");
   }catch(e){
     console.error("[WAR DESK] hard refresh fout:", e);
     if(window.showToast) window.showToast("Verversen mislukt");

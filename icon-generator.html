@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>WAR DESK · Icon Generator</title>
+<style>
+  body{background:#0a1226;color:#e6ebf5;font-family:system-ui,sans-serif;padding:2rem;max-width:800px;margin:0 auto}
+  h1{color:#e2a857;font-size:1.4rem}
+  button{padding:1rem 2rem;font-size:1rem;background:linear-gradient(135deg,#f5c176,#8a5c26);color:#070c16;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+  button:hover{filter:brightness(1.1)}
+  #out{margin-top:1.5rem;display:flex;flex-wrap:wrap;gap:.6rem}
+  #out a{background:#141e3a;padding:.6rem 1rem;color:#e2a857;text-decoration:none;border-radius:6px;border:1px solid #26344f;font-size:.85rem}
+  #out a:hover{border-color:#e2a857}
+</style>
+</head>
+<body>
+  <h1>WAR DESK · Icon Generator</h1>
+  <p>Klik op de knop om alle PNG-formaten te genereren. Plaats de downloads in de map <code>/icons/</code>.</p>
+  <button id="go">⬇ Genereer alle PNG's</button>
+  <div id="out"></div>
+  <script>
+    const sizes = [72,96,128,144,152,180,192,384,512];
+    const maskableSizes = [192,512];
+    let iconsReady = 0;
+    const img1 = new Image(); img1.crossOrigin = "anonymous";
+    const img2 = new Image(); img2.crossOrigin = "anonymous";
+    function onReady(){
+      iconsReady++;
+      if(iconsReady < 2) return;
+      document.getElementById("go").onclick = generate;
+    }
+    img1.onload = onReady; img1.src = "icon.svg";
+    img2.onload = onReady; img2.src = "icon-maskable.svg";
+    function generate(){
+      const out = document.getElementById("out");
+      out.innerHTML = "";
+      sizes.forEach(s => exportPNG(img1, s, `icon-${s}.png`, out));
+      maskableSizes.forEach(s => exportPNG(img2, s, `icon-maskable-${s}.png`, out));
+    }
+    function exportPNG(img, size, name, parent){
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0, size, size);
+      c.toBlob(b => {
+        const url = URL.createObjectURL(b);
+        const a = document.createElement("a");
+        a.href = url; a.download = name;
+        a.textContent = name;
+        parent.appendChild(a);
+      }, "image/png");
+    }
+  </script>
+</body>
+</html>

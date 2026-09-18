@@ -1,5 +1,9 @@
 /* ============================================================
-   WAR DESK v4.1 — Conflictkaart (amber labels, donkere base)
+   WAR DESK v5.0 — Conflictkaart
+   - CartoDB Dark Matter (donker) + CartoDB Positron (licht)
+   - Thema-koppeling via body class observer
+   - Tijd-modus (06:00-19:00 = licht)
+   - Fetch cancel + detail cache TTL + filter persistent
    ============================================================ */
 
 (function(){
@@ -8,20 +12,36 @@
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[MAP]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
 
-  LOG("v4.1 geladen");
+  LOG("v5.0 geladen");
+
+  var TILES = {
+    dark: {
+      url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      subdomains: "abcd",
+      attribution: "© OpenStreetMap © CARTO"
+    },
+    light: {
+      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      subdomains: "abcd",
+      attribution: "© OpenStreetMap © CARTO"
+    }
+  };
 
   var MAP = {
     instance: null,
     cluster: null,
-    tileLayer: null,
-    labelLayer: null,
+    tileLayers: {},
     events: [],
     currentFilter: "all",
     refreshTimer: null,
     isFullscreen: false,
     worker: "https://newsfeed2.hassanbadri814.workers.dev/?url=",
-    api: "https://war-tracker.com/api/v1/events?limit=100",
-    detailCache: {}
+    apiBase: "https://war-tracker.com/api/v1/events",
+    detailCache: {},
+    currentTheme: "dark",
+    themeObserver: null,
+    detailAbort: null,
+    initialized: false
   };
 
   var TYPES = {
@@ -51,30 +71,89 @@
     return ICONS.other;
   }
 
-  /* ===== INJECT STYLES ===== */
+  /* ============================================================
+     THEMA DETECTIE + TIJDMODUS
+     ============================================================ */
+  function detectTheme(){
+    return document.body.classList.contains("light") ? "light" : "dark";
+  }
+
+  function switchTile(theme){
+    if(!MAP.instance) return;
+    var cfg = TILES[theme] || TILES.dark;
+
+    if(!MAP.tileLayers[theme]){
+      MAP.tileLayers[theme] = L.tileLayer(cfg.url, {
+        maxZoom: 20,
+        subdomains: cfg.subdomains,
+        attribution: cfg.attribution
+      });
+    }
+
+    Object.keys(MAP.tileLayers).forEach(function(k){
+      var layer = MAP.tileLayers[k];
+      if(k === theme){
+        if(!MAP.instance.hasLayer(layer)) layer.addTo(MAP.instance);
+      } else {
+        if(MAP.instance.hasLayer(layer)) MAP.instance.removeLayer(layer);
+      }
+    });
+  }
+
+  function observeThemeChanges(){
+    if(MAP.themeObserver) return;
+    MAP.themeObserver = new MutationObserver(function(mutations){
+      mutations.forEach(function(m){
+        if(m.attributeName === "class"){
+          var newTheme = detectTheme();
+          if(newTheme !== MAP.currentTheme){
+            MAP.currentTheme = newTheme;
+            switchTile(newTheme);
+          }
+        }
+      });
+    });
+    MAP.themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  }
+
+  function checkTimeMode(){
+    if(!window.CONFIG || !CONFIG.themeAutoSwitch) return;
+    var manualUntil = 0;
+    try { manualUntil = parseInt(localStorage.getItem("wardesk_theme_manual_until") || "0", 10); } catch(e){}
+    if(Date.now() < manualUntil) return;
+
+    var hour = new Date().getHours();
+    var shouldBeLight = hour >= CONFIG.themeLightStart && hour < CONFIG.themeDarkStart;
+    var isLight = document.body.classList.contains("light");
+
+    if(shouldBeLight !== isLight){
+      document.documentElement.classList.toggle("light", shouldBeLight);
+      document.body.classList.toggle("light", shouldBeLight);
+      try { localStorage.setItem("wardesk_theme", shouldBeLight ? "light" : "dark"); } catch(e){}
+      LOG("Tijd-modus: thema →", shouldBeLight ? "licht" : "donker");
+    }
+  }
+
+  function markManualTheme(){
+    try {
+      var until = Date.now() + 8 * 3600 * 1000;
+      localStorage.setItem("wardesk_theme_manual_until", String(until));
+    } catch(e){}
+  }
+
+  /* ============================================================
+     STYLES
+     ============================================================ */
   function injectMapStyles(){
-    if(document.getElementById("wdMapStyles")) return;
+    if($("wdMapStyles")) return;
     var s = document.createElement("style");
     s.id = "wdMapStyles";
     s.textContent =
-      /* --- Leaflet basis --- */
       ".leaflet-control-attribution{display:none!important}" +
       ".leaflet-container{background:#05080f!important}" +
+      "body.light .leaflet-container{background:#f5f5f5!important}" +
 
-      /* --- Kaart-tegels: donkere base --- */
-      ".wd-tiles-base{" +
-        "filter:brightness(0.6) contrast(1.25) saturate(0.35)!important;" +
-        "transform:translateZ(0);" +
-      "}" +
-
-      /* --- Kaart-tegels: amber/gouden labels --- */
-      ".wd-tiles-labels{" +
-        "filter:sepia(1) saturate(3.2) hue-rotate(-15deg) brightness(1.7) contrast(1.1)!important;" +
-        "mix-blend-mode:screen;" +
-        "transform:translateZ(0);" +
-      "}" +
-
-      /* --- Marker --- */
+      /* Marker */
       ".wd-marker{background:transparent!important;border:none!important}" +
       ".wd-marker-inner{position:relative;width:16px;height:16px;display:grid;place-items:center}" +
       ".wd-marker-icon{width:14px;height:14px;display:grid;place-items:center;position:relative;z-index:2;" +
@@ -85,7 +164,7 @@
         "animation:wdMarkerPulse 2.6s ease-out infinite}" +
       "@keyframes wdMarkerPulse{0%{transform:scale(.5);opacity:.35}100%{transform:scale(2.2);opacity:0}}" +
 
-      /* --- Clusters --- */
+      /* Clusters */
       ".marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:transparent!important}" +
       ".marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{" +
         "background:linear-gradient(135deg,#8a5c26,#e2a857)!important;" +
@@ -103,7 +182,7 @@
       ".marker-cluster-large{margin-left:-13px!important;margin-top:-13px!important}" +
       ".marker-cluster div span{font-size:.56rem!important;line-height:1!important;letter-spacing:-.02em!important}" +
 
-      /* --- Fullscreen --- */
+      /* Fullscreen */
       ".map-wrap.fullscreen .map-legend{display:none!important}" +
       ".map-wrap.fullscreen .map-controls .map-ctrl[data-role='full']{display:none!important}" +
       ".wd-map-close{display:none;position:absolute;top:.8rem;right:.8rem;z-index:600;" +
@@ -117,19 +196,22 @@
       ".map-wrap.fullscreen .wd-map-close{display:grid!important}" +
       ".map-wrap.fullscreen .map-controls{top:.8rem;left:.8rem;right:auto}" +
 
-      /* --- Detail modal subtiel --- */
+      /* Detail modal */
       ".wd-detail-modal{z-index:10050!important}" +
       ".wd-detail-box{" +
         "background:linear-gradient(180deg,#0f1728,#0a101c)!important;" +
         "border:1px solid rgba(255,255,255,.06)!important;" +
         "box-shadow:0 30px 80px -30px rgba(0,0,0,.95)!important;" +
       "}" +
+      "body.light .wd-detail-box{background:linear-gradient(180deg,#ffffff,#fafafa)!important;border-color:rgba(0,0,0,.08)!important}" +
       ".wd-detail-head{border-bottom:1px solid rgba(255,255,255,.05)!important}" +
       ".wd-detail-type{box-shadow:0 0 12px rgba(0,0,0,.4)}" +
       ".wd-detail-close{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important}" +
       ".wd-detail-meta{color:#8a94a8!important;border-bottom:1px solid rgba(255,255,255,.05)!important}" +
       ".wd-detail-text{color:#e6ebf5!important;font-size:.9rem!important;line-height:1.65!important}" +
+      "body.light .wd-detail-text{color:#1a1a1a!important}" +
       ".wd-detail-foot{border-top:1px solid rgba(255,255,255,.05)!important;background:rgba(0,0,0,.2)!important}" +
+      "body.light .wd-detail-foot{background:rgba(0,0,0,.03)!important}" +
       ".wd-detail-btn{" +
         "background:transparent!important;" +
         "border:1px solid rgba(255,255,255,.08)!important;" +
@@ -146,16 +228,19 @@
         "background:rgba(226,168,87,.16)!important;" +
         "border-color:rgba(226,168,87,.45)!important;" +
       "}";
+
     document.head.appendChild(s);
   }
 
-  /* ===== FULLSCREEN ===== */
+  /* ============================================================
+     FULLSCREEN
+     ============================================================ */
   function enterFullscreen(){
     var wrap = document.querySelector(".map-wrap");
     if(!wrap || wrap.classList.contains("fullscreen")) return;
     wrap.classList.add("fullscreen");
     MAP.isFullscreen = true;
-    document.body.style.overflow = "hidden";
+    document.body.dataset.wdMapFullscreen = "1";
     if(MAP.instance) setTimeout(function(){ MAP.instance.invalidateSize(); }, 250);
   }
 
@@ -164,7 +249,7 @@
     if(!wrap) return;
     wrap.classList.remove("fullscreen");
     MAP.isFullscreen = false;
-    document.body.style.overflow = "";
+    delete document.body.dataset.wdMapFullscreen;
     if(MAP.instance) setTimeout(function(){ MAP.instance.invalidateSize(); }, 250);
   }
 
@@ -183,10 +268,11 @@
     wrap.appendChild(btn);
   }
 
-  /* ===== DETAIL MODAL ===== */
+  /* ============================================================
+     DETAIL MODAL + CACHE
+     ============================================================ */
   function ensureDetailModal(){
-    var existing = $("wdDetailModal");
-    if(existing) return;
+    if($("wdDetailModal")) return;
 
     var modal = document.createElement("div");
     modal.id = "wdDetailModal";
@@ -214,6 +300,40 @@
     $("wdDetailCloseBtn").addEventListener("click", closeDetail);
   }
 
+  function cacheDetail(id, text){
+    MAP.detailCache[id] = { text: text, t: Date.now() };
+    cleanupDetailCache();
+  }
+
+  function getCachedDetail(id){
+    var entry = MAP.detailCache[id];
+    if(!entry) return null;
+    if(Date.now() - entry.t > CONFIG.detailCacheTTL){
+      delete MAP.detailCache[id];
+      return null;
+    }
+    return entry.text;
+  }
+
+  function cleanupDetailCache(){
+    var now = Date.now();
+    var ids = Object.keys(MAP.detailCache);
+    var toRemove = [];
+    ids.forEach(function(id){
+      if(now - MAP.detailCache[id].t > CONFIG.detailCacheTTL) toRemove.push(id);
+    });
+    toRemove.forEach(function(id){ delete MAP.detailCache[id]; });
+
+    ids = Object.keys(MAP.detailCache);
+    if(ids.length > CONFIG.detailCacheMax){
+      ids.sort(function(a, b){
+        return MAP.detailCache[a].t - MAP.detailCache[b].t;
+      });
+      var excess = ids.slice(0, ids.length - CONFIG.detailCacheMax);
+      excess.forEach(function(id){ delete MAP.detailCache[id]; });
+    }
+  }
+
   function openDetail(event){
     ensureDetailModal();
     var modal = $("wdDetailModal");
@@ -236,16 +356,25 @@
 
   async function loadFullText(event, textEl){
     if(!textEl) return;
-    if(MAP.detailCache[event.id]){
-      textEl.textContent = MAP.detailCache[event.id];
+
+    var cached = getCachedDetail(event.id);
+    if(cached){
+      textEl.textContent = cached;
       return;
     }
+
+    if(MAP.detailAbort){
+      try { MAP.detailAbort.abort(); } catch(e){}
+    }
+    MAP.detailAbort = new AbortController();
+    var signal = MAP.detailAbort.signal;
+
     textEl.style.opacity = ".55";
     try{
       var detailUrl = "https://war-tracker.com/api/v1/events/" + encodeURIComponent(event.id);
       var ctrl = new AbortController();
       var timer = setTimeout(function(){ ctrl.abort(); }, 15000);
-      var r = await fetch(MAP.worker + encodeURIComponent(detailUrl), {signal: ctrl.signal});
+      var r = await fetch(MAP.worker + encodeURIComponent(detailUrl), { signal: signal });
       clearTimeout(timer);
       if(!r.ok) throw new Error("HTTP " + r.status);
       var data = await r.json();
@@ -260,21 +389,28 @@
       }
       if(!fullText) fullText = event.fullDescription || event.title || "(geen beschrijving)";
 
-      MAP.detailCache[event.id] = fullText;
+      cacheDetail(event.id, fullText);
       if(textEl.textContent !== fullText) textEl.textContent = fullText;
       textEl.style.opacity = "1";
     }catch(e){
+      if(e.name === "AbortError") return;
       LOG("Detail fetch fout:", e.message);
       textEl.style.opacity = "1";
     }
   }
 
   function closeDetail(){
+    if(MAP.detailAbort){
+      try { MAP.detailAbort.abort(); } catch(e){}
+      MAP.detailAbort = null;
+    }
     var modal = $("wdDetailModal");
     if(modal) modal.classList.remove("show");
   }
 
-  /* ===== DATA ===== */
+  /* ============================================================
+     DATA
+     ============================================================ */
   async function fetchEvents(){
     LOG("Fetch events...");
     var list = $("liveList");
@@ -282,10 +418,13 @@
       list.innerHTML = '<div class="live-empty">Events worden geladen...</div>';
     }
 
+    var limit = (window.CONFIG && CONFIG.warTrackerLimit) ? CONFIG.warTrackerLimit : 100;
+    var apiUrl = MAP.apiBase + "?limit=" + limit;
+
     try{
       var ctrl = new AbortController();
       var timer = setTimeout(function(){ ctrl.abort(); }, 30000);
-      var r = await fetch(MAP.worker + encodeURIComponent(MAP.api), {signal: ctrl.signal});
+      var r = await fetch(MAP.worker + encodeURIComponent(apiUrl), {signal: ctrl.signal});
       clearTimeout(timer);
       if(!r.ok) throw new Error("HTTP " + r.status);
       var data = await r.json();
@@ -333,7 +472,9 @@
     }
   }
 
-  /* ===== MARKERS ===== */
+  /* ============================================================
+     MARKERS — met incremental updates
+     ============================================================ */
   function renderMarkers(){
     if(!MAP.cluster) return;
     MAP.cluster.clearLayers();
@@ -390,7 +531,9 @@
     MAP.cluster.addLayers(markers);
   }
 
-  /* ===== LEGEND ===== */
+  /* ============================================================
+     LEGEND
+     ============================================================ */
   function renderLegend(){
     var el = $("legendItems");
     if(!el) return;
@@ -416,7 +559,9 @@
     }).join("");
   }
 
-  /* ===== LIVE LIST ===== */
+  /* ============================================================
+     LIVE LIST
+     ============================================================ */
   function renderLiveList(){
     var list = $("liveList");
     var countEl = $("liveCount");
@@ -462,7 +607,9 @@
     });
   }
 
-  /* ===== HELPERS ===== */
+  /* ============================================================
+     HELPERS
+     ============================================================ */
   function escapeHtml(s){
     return (s || "").replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
@@ -472,13 +619,16 @@
     var t = new Date(d).getTime();
     if(isNaN(t)) return "";
     var diff = (Date.now() - t) / 1000;
+    if(diff < 0) return "nu";
     if(diff < 60) return "nu";
     if(diff < 3600) return Math.floor(diff / 60) + " min";
     if(diff < 86400) return Math.floor(diff / 3600) + " u";
     return Math.floor(diff / 86400) + " d";
   }
 
-  /* ===== KAART ===== */
+  /* ============================================================
+     KAART INIT
+     ============================================================ */
   function initMap(){
     if(MAP.instance || typeof L === "undefined") return;
     var mapEl = $("map");
@@ -495,19 +645,8 @@
       preferCanvas: true
     });
 
-    /* Base: donkere ondergrond */
-    MAP.tileLayer = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 16, crossOrigin: true }
-    ).addTo(MAP.instance);
-    try{ MAP.tileLayer.getContainer().classList.add("wd-tiles-base"); }catch(e){}
-
-    /* Reference: steden/landen labels (amber via CSS) */
-    MAP.labelLayer = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 16, crossOrigin: true, opacity: 0.95 }
-    ).addTo(MAP.instance);
-    try{ MAP.labelLayer.getContainer().classList.add("wd-tiles-labels"); }catch(e){}
+    MAP.currentTheme = detectTheme();
+    switchTile(MAP.currentTheme);
 
     MAP.cluster = L.markerClusterGroup({
       maxClusterRadius: 45,
@@ -520,6 +659,8 @@
       chunkDelay: 50
     });
     MAP.instance.addLayer(MAP.cluster);
+
+    observeThemeChanges();
   }
 
   function bindControls(){
@@ -549,10 +690,23 @@
         document.querySelectorAll(".live-filter").forEach(function(b){ b.classList.remove("active"); });
         btn.classList.add("active");
         MAP.currentFilter = btn.dataset.cat;
+        try { localStorage.setItem("wardesk_map_filter", MAP.currentFilter); } catch(e){}
         renderMarkers();
         renderLiveList();
       });
     });
+  }
+
+  function restoreFilter(){
+    try {
+      var saved = localStorage.getItem("wardesk_map_filter");
+      if(saved && ["all","conflict","political","other"].indexOf(saved) >= 0){
+        MAP.currentFilter = saved;
+        document.querySelectorAll(".live-filter").forEach(function(b){
+          b.classList.toggle("active", b.dataset.cat === saved);
+        });
+      }
+    } catch(e){}
   }
 
   window.__mapRefresh = function(){ fetchEvents(); };
@@ -588,6 +742,7 @@
     }, 300000);
   }
 
+  /* Init */
   window.addEventListener("DOMContentLoaded", function(){
     setTimeout(function(){
       injectMapStyles();
@@ -596,7 +751,21 @@
       bindControls();
       bindFilters();
       hookViewSwitch();
+      restoreFilter();
       startAutoRefresh();
+
+      /* Thema-knop → markeer als handmatig */
+      var themeBtn = $("btnTheme");
+      if(themeBtn){
+        themeBtn.addEventListener("click", function(){
+          setTimeout(markManualTheme, 100);
+        });
+      }
+
+      /* Thema-observer + tijd-modus */
+      observeThemeChanges();
+      checkTimeMode();
+      setInterval(checkTimeMode, 60000);
 
       var mapTab = document.querySelector('.tab[data-view="map"]');
       var viewMap = document.getElementById("viewMap");

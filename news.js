@@ -1,9 +1,8 @@
 /* ============================================================
-   WAR DESK v19.8 — Nieuws logica
-   Fix: health reset per sessie (geen valse disable)
-   Fix: Google News semaphore (max 2 gelijktijdig, geen 408)
+   WAR DESK v19.9 — Nieuws logica
+   Health-reset per sessie + semaphore + smart proxy routing
    ============================================================ */
-window.__newsVersion = "v19.8-health-reset-semaphore";
+window.__newsVersion = "v19.9-timeout-fallback";
 
 window.State = {
   items: [],
@@ -263,15 +262,13 @@ function normalizeItem(it){
 }
 
 /* ============================================================
-   PROXY FALLBACK
+   PROXY FALLBACK + GOOGLE NEWS SEMAPHORE
    ============================================================ */
 window.__proxyHealth = {};
 
 var PROXY_COOLDOWN_MS = 30000;
 var PROXY_FAIL_THRESHOLD = 5;
 
-/* ===== GOOGLE NEWS SEMAPHORE =====
-   Max 2 gelijktijdige Google News requests om 408 rate-limits te vermijden */
 var googleNewsSem = { active: 0, max: 2, queue: [] };
 
 function googleNewsAcquire(){
@@ -334,7 +331,6 @@ function parseResponse(txt){
 async function fetchFeedWithFallback(feedUrl){
   var isGoogleNews = /news\.google\.com/.test(feedUrl);
 
-  /* Semaphore alleen voor Google News */
   if(isGoogleNews) await googleNewsAcquire();
 
   try {
@@ -376,7 +372,6 @@ async function fetchFeedWithFallback(feedUrl){
   }
 }
 
-/* ===== LOAD FEEDS ===== */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
@@ -680,7 +675,6 @@ function startAutoRefresh(){
     var atTop = window.scrollY < 200;
     if(idle < CONFIG.pauseOnScrollMs && !atTop) return;
     if(State.isScrolling) return;
-    /* Reset disabled per refresh-cyclus: elke bron krijgt weer een kans */
     State.disabled = {};
     loadAllFeeds();
   }, CONFIG.autoRefreshMs);
@@ -689,8 +683,6 @@ function startAutoRefresh(){
 async function initNews(){
   await NewsDB.open();
 
-  /* FIX: health wordt NIET geladen uit DB — elke sessie begint schoon.
-     Dit voorkomt dat bronnen onterecht uitgeschakeld blijven door oude fails. */
   State.health = {};
   State.disabled = {};
 

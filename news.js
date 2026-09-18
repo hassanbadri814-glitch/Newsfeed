@@ -1,11 +1,11 @@
 /* ============================================================
-   WAR DESK v20.5 — Nieuws logica
-   - FIX: tags herberekenen bij cached items zonder tags
-   - Auto-refresh uit als autoRefreshMs = 0
+   WAR DESK v20.6 — Nieuws logica
+   - Hard refresh wist State.items NIET meer
+   - Progressive timer sneller (1000ms)
+   - Safety: nooit minder items tonen dan bij start
    - Merge-based progressive rendering
-   - Hard refresh functie
    ============================================================ */
-window.__newsVersion = "v20.5-tag-fix";
+window.__newsVersion = "v20.6-no-empty-refresh";
 
 window.State = {
   items: [],
@@ -166,7 +166,6 @@ function extractTags(title, desc, fallback){
   return tags.filter(function(v, i, a){ return a.indexOf(v) === i; });
 }
 
-/* ===== FIX: herbereken tags voor items zonder tags ===== */
 function ensureTags(items){
   return items.map(function(it){
     if(!it.tags || !Array.isArray(it.tags) || it.tags.length === 0){
@@ -382,14 +381,16 @@ async function fetchFeedWithFallback(feedUrl){
 }
 
 /* ============================================================
-   LOAD FEEDS — met merge-based progressive rendering
+   LOAD FEEDS — merge-based progressive rendering
    ============================================================ */
 async function loadAllFeeds(){
   var session = ++State.loadSession;
 
   window.__proxyHealth = {};
 
+  /* Snapshot van bestaande items — deze worden NOOIT verwijderd */
   var itemsAtStart = State.items.slice();
+  var minKeep = itemsAtStart.length;
 
   var active = FEEDS.filter(function(f){ return !State.disabled[f.n]; });
   State.totalSources = active.length;
@@ -407,6 +408,7 @@ async function loadAllFeeds(){
 
   window.__wdDiagCount = 0;
 
+  /* ===== PROGRESSIVE RENDERING ===== */
   var lastProgressiveCount = 0;
   var progressiveTimer = setInterval(function(){
     if(session !== State.loadSession){
@@ -416,14 +418,21 @@ async function loadAllFeeds(){
     if(collected.length <= lastProgressiveCount) return;
     lastProgressiveCount = collected.length;
 
-    State.items = dedupe(collected.concat(itemsAtStart));
+    var merged = dedupe(collected.concat(itemsAtStart));
+
+    /* SAFETY: nooit minder items tonen dan we begonnen zijn */
+    if(merged.length < minKeep){
+      merged = itemsAtStart.slice();
+    }
+
+    State.items = merged;
 
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = State.items.length;
 
     State._lastRenderHash = "";
     renderNews();
-  }, 1500);
+  }, 1000);
 
   async function processOne(f){
     if(session !== State.loadSession) return;
@@ -502,7 +511,11 @@ async function loadAllFeeds(){
 
   if(session !== State.loadSession) return;
 
+  /* Finale merge */
   State.items = dedupe(collected.concat(itemsAtStart));
+  if(State.items.length < minKeep){
+    State.items = itemsAtStart.slice();
+  }
 
   var srcEl = document.getElementById("statSources");
   if(srcEl) srcEl.textContent = State.loadedSources + "/" + State.totalSources;
@@ -726,7 +739,6 @@ function renderNews(){
   });
 }
 
-/* ===== AUTO-REFRESH: UIT als autoRefreshMs 0 of negatief is ===== */
 function startAutoRefresh(){
   clearInterval(State.refreshTimer);
   if(!CONFIG.autoRefreshMs || CONFIG.autoRefreshMs <= 0) return;
@@ -755,7 +767,6 @@ async function initNews(){
 
   var cached = await NewsDB.loadItems();
   if(cached.length){
-    /* FIX: herbereken tags voor alle cached items */
     State.items = ensureTags(cached);
     var itemsEl = document.getElementById("statItems");
     if(itemsEl) itemsEl.textContent = State.items.length;
@@ -778,14 +789,20 @@ async function initNews(){
   });
 }
 
+/* ============================================================
+   HARD REFRESH — wist cache maar behoudt UI-items
+   ============================================================ */
 window.__hardRefresh = async function(){
   if(!window.NewsAPI) return;
-  if(!confirm('Alle artikelen wissen en opnieuw laden?\n\nDit kan 30-60 seconden duren.')) return;
+  if(!confirm('Verversen?\n\nAlle bronnen worden opnieuw geladen. Dit kan 30-60 seconden duren.')) return;
 
   try{
-    if(window.showToast) window.showToast("🔄 Hard refresh gestart...");
+    if(window.showToast) window.showToast("🔄 Verversen gestart...");
 
-    State.items = [];
+    /* Wis alleen de database-cache. State.items blijft intact zodat de UI
+       nooit leeg wordt tijdens het laden. */
+    await NewsDB.saveItems([]);
+
     State.disabled = {};
     State.health = {};
     State.loadedSources = 0;
@@ -793,22 +810,12 @@ window.__hardRefresh = async function(){
     State.failedSources = [];
     State._lastRenderHash = "";
 
-    await NewsDB.saveItems([]);
-
-    var grid = document.getElementById("feedGrid");
-    if(grid) renderSkeletons(grid);
-
-    var itemsEl = document.getElementById("statItems");
-    if(itemsEl) itemsEl.textContent = "0";
-    var srcEl = document.getElementById("statSources");
-    if(srcEl) srcEl.textContent = "0/0";
-
     await NewsAPI.reload();
 
-    if(window.showToast) window.showToast("✓ Hard refresh klaar");
+    if(window.showToast) window.showToast("✓ Verversen klaar");
   }catch(e){
     console.error("[WAR DESK] hard refresh fout:", e);
-    if(window.showToast) window.showToast("Hard refresh mislukt");
+    if(window.showToast) window.showToast("Verversen mislukt");
   }
 };
 

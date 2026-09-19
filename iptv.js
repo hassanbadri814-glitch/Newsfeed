@@ -1,5 +1,7 @@
 /* ============================================================
    WAR DESK v4.2 — IPTV
+   - saveCreds debounced (max 1 write per 500ms)
+   - 1 visibilitychange handler (was 2)
    ============================================================ */
 
 (function(){
@@ -405,6 +407,9 @@
     }
   }
 
+  /* ============================================================
+     Debounced saveCreds — max 1 write per 500ms
+     ============================================================ */
   function saveCredsNow(){
     IPTV.server = (($("iptvServer") || {}).value || "").trim();
     IPTV.user = (($("iptvUser") || {}).value || "").trim();
@@ -920,9 +925,14 @@
     }
   }
 
+  /* ============================================================
+     1 enkele visibilitychange handler (was 2)
+     ============================================================ */
   document.addEventListener("visibilitychange", function(){
     if(document.hidden){
+      /* Creds opslaan */
       saveCredsImmediate();
+      /* VLC detectie */
       if(IPTV.vlcOpenTime && Date.now() - IPTV.vlcOpenTime < 5000){
         IPTV.vlcDidHide = true;
         clearTimeout(IPTV.vlcWatchdog);

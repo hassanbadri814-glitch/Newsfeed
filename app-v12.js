@@ -1,15 +1,16 @@
 /* ============================================================
-   WAR DESK v12.0 — App Orchestration (Met Touch Gestures)
+   WAR DESK v12.1 — App Orchestration (Met Touch Gestures)
    - Swipe navigation tussen tabs
    - Klok pauzeert op achtergrond
    - VOD-view + Escape fix
+   - FIX v12.1: Dubbele VODAPI.init() aanroep verwijderd
    ============================================================ */
 
 (function(){
   "use strict";
 
   const $ = (id) => document.getElementById(id);
-  const APP_VERSION = window.APP_VERSION || "v12.0";
+  const APP_VERSION = window.APP_VERSION || "v12.1";
 
   const ready = (fn) => {
     if(document.readyState !== "loading") fn();
@@ -80,9 +81,7 @@
       tab.addEventListener("click", () => {
         const view = tab.dataset.view;
         showView(view);
-        if(view === "vod" && window.VODAPI && typeof VODAPI.init === "function"){
-          setTimeout(() => { try{ VODAPI.init(); }catch(e){} }, 100);
-        }
+        // VODAPI.init() wordt NIET hier aangeroepen — vod-v24.js doet dit zelf via setupVodWatcher()
       });
     });
 

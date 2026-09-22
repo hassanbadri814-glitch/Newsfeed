@@ -3,6 +3,7 @@
    - Chunked rendering voor 500+ kanalen
    - Geïntegreerd met window.appStore (Reactive)
    - Behoudt window.IPTVAPI voor compatibiliteit
+   - FIX v8.0.1: state race condition verwijderd
    ============================================================ */
 
 (function(){
@@ -12,8 +13,9 @@
   var LOG = function(){ try{ console.log.apply(console, ["[IPTV]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
   LOG("v8.0 geladen");
 
-  // Gebruik de store (via de Brug)
-  var state = window.appStore ? window.appStore.state : null;
+  // IPTV heeft een eigen state object; window.State wordt niet direct gebruikt.
+  // (Oude regel `var state = window.appStore ? window.appStore.state : null;` verwijderd
+  //  omdat deze null werd als store.js nog niet geladen was.)
 
   var IPTV = {
     server: "", user: "", pass: "",
@@ -1208,7 +1210,6 @@
     }
   }
 
-  // DE BRUG: IPTVAPI voor compatibiliteit
   window.IPTVAPI = { init: init, state: IPTV };
 
   function start(){ init(); }
@@ -1216,5 +1217,5 @@
   else document.addEventListener("DOMContentLoaded", function(){ setTimeout(start, 200); });
   window.addEventListener("load", function(){ setTimeout(start, 500); });
 
-  console.log("[WAR DESK] iptv-v8.js v8.0 geladen");
+  console.log("[WAR DESK] iptv-v8.js v8.0.1 geladen");
 })();

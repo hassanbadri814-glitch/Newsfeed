@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="application-name" content="WAR DESK">
-<title>WAR DESK v14.6</title>
+<title>WAR DESK v14.7</title>
 
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="manifest" href="manifest.json">
@@ -61,7 +61,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 
-<link rel="stylesheet" href="styles.css?v=14.6">
+<link rel="stylesheet" href="styles.css?v=14.7">
 
 <style>
 html[data-font-size="small"]  { font-size: 14px; }
@@ -296,7 +296,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       </div>
       <div class="brand-text">
         <span class="name">WAR DESK</span>
-        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.6</span></span>
+        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.7</span></span>
       </div>
     </div>
     <div class="header-stats">
@@ -565,7 +565,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
 
     <div class="sheet-section">
       <div class="sheet-about">
-        WAR DESK <span class="version" id="appVersionMenu">v14.6</span><br>
+        WAR DESK <span class="version" id="appVersionMenu">v14.7</span><br>
         Live nieuws + IPTV + Kaart (Midden-Oosten) + VOD
       </div>
     </div>
@@ -836,52 +836,24 @@ document.addEventListener("DOMContentLoaded", function(){
   }
 });
 
-/* ============================================================
-   FIX: MENU OPENEN EN SLUITEN
-   ============================================================ */
-document.addEventListener("DOMContentLoaded", function(){
-  var btnMenu = document.getElementById("btnMenu");
-  var sheet = document.getElementById("sheet");
-  var sheetOverlay = document.getElementById("sheetOverlay");
-  var sheetClose = document.getElementById("sheetClose");
-
-  function openSheet() {
-    if(sheet) sheet.classList.add("open");
-    if(sheetOverlay) sheetOverlay.classList.add("open");
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeSheet() {
-    if(sheet) sheet.classList.remove("open");
-    if(sheetOverlay) sheetOverlay.classList.remove("open");
-    document.body.style.overflow = "";
-  }
-
-  if(btnMenu) btnMenu.addEventListener("click", openSheet);
-  if(sheetClose) sheetClose.addEventListener("click", closeSheet);
-  if(sheetOverlay) sheetOverlay.addEventListener("click", closeSheet);
-
-  document.querySelectorAll(".sheet-item").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      if(btn.onclick) return;
-      closeSheet();
-    });
-  });
-});
+// ============================================================
+// FIX v14.7: Inline menu-handler VERWIJDERD.
+// app-v12.js regelt nu het openen/sluiten van het menu.
+// ============================================================
 </script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>
 
-<script src="config.js?v=14.6" defer></script>
-<script src="store.js?v=14.6" defer></script>
-<script src="news-v27.js?v=14.6" defer></script>
-<script src="app-v12.js?v=14.6" defer></script>
-<script src="persist-v4.js?v=14.6" defer></script>
-<script src="refresh-v12.js?v=14.6" defer></script>
-<script src="iptv-v8.js?v=14.6" defer></script>
-<script src="map-v11.10.js?v=14.6" defer></script>
-<script src="vod-v24.js?v=14.6" defer></script>
+<script src="config.js?v=14.7" defer></script>
+<script src="store.js?v=14.7" defer></script>
+<script src="news-v27.js?v=14.7" defer></script>
+<script src="app-v12.js?v=14.7" defer></script>
+<script src="persist-v4.js?v=14.7" defer></script>
+<script src="refresh-v12.js?v=14.7" defer></script>
+<script src="iptv-v8.js?v=14.7" defer></script>
+<script src="map-v11.10.js?v=14.7" defer></script>
+<script src="vod-v24.js?v=14.7" defer></script>
 
 <script>
 (function(){
@@ -914,7 +886,6 @@ document.addEventListener("DOMContentLoaded", function(){
      ============================================================ -->
 <script>
 (function(){
-  // Onthoud de huidige tab in sessionStorage (per sessie)
   document.querySelectorAll('.bottom-tabs .tab').forEach(function(tab){
     tab.addEventListener('click', function(){
       var view = tab.getAttribute('data-view');
@@ -924,7 +895,6 @@ document.addEventListener("DOMContentLoaded", function(){
     });
   });
 
-  // Bij laden: herstel de tab uit sessionStorage
   function restoreTab(){
     var savedTab;
     try { savedTab = sessionStorage.getItem('wardesk_active_tab'); } catch(e){}

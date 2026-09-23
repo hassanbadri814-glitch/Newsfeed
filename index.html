@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net/npm/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: *; connect-src 'self' *; media-src 'self' blob: *; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
 <meta name="theme-color" content="#070c16" id="themeColorMeta">
 <meta name="description" content="WAR DESK — Live monitor voor wereldwijde conflicten, nieuws, IPTV en VOD.">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -10,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="application-name" content="WAR DESK">
-<title>WAR DESK v14.10</title>
+<title>WAR DESK v14.13</title>
 
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="manifest" href="manifest.json">
@@ -60,6 +61,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 
 <link rel="stylesheet" href="styles.css?v=14.9">
 
@@ -296,7 +298,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       </div>
       <div class="brand-text">
         <span class="name">WAR DESK</span>
-        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.10</span></span>
+        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.13</span></span>
       </div>
     </div>
     <div class="header-stats">
@@ -565,7 +567,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
 
     <div class="sheet-section">
       <div class="sheet-about">
-        WAR DESK <span class="version" id="appVersionMenu">v14.10</span><br>
+        WAR DESK <span class="version" id="appVersionMenu">v14.13</span><br>
         Live nieuws + IPTV + Kaart (Midden-Oosten) + VOD
       </div>
     </div>
@@ -841,11 +843,15 @@ document.addEventListener("DOMContentLoaded", function(){
 // FIX v14.8: NewsAPI.init() wordt alleen door index.html hieronder aangeroepen.
 // FIX v14.9: styles.css versie verhoogd (Fase 3B — GPU-optimalisatie).
 // FIX v14.10: vod-v24.js versie verhoogd (Fase 3C — VOD polling optimalisatie).
+// FIX v14.12: MapLibre GL + OpenFreeMap — geen API key meer nodig voor kaart.
+// FIX v14.13: Content Security Policy toegevoegd (Fase 2 — XSS-bescherming).
 // ============================================================
 </script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.20/leaflet-maplibre-gl.js" defer></script>
 
 <script src="config.js?v=14.8" defer></script>
 <script src="store.js?v=14.8" defer></script>
@@ -854,7 +860,7 @@ document.addEventListener("DOMContentLoaded", function(){
 <script src="persist-v4.js?v=14.8" defer></script>
 <script src="refresh-v12.js?v=14.8" defer></script>
 <script src="iptv-v8.js?v=14.8" defer></script>
-<script src="map-v11.10.js?v=14.8" defer></script>
+<script src="map-v11.10.js?v=14.12" defer></script>
 <script src="vod-v24.js?v=14.9" defer></script>
 
 <script>

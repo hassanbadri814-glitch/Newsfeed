@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net/npm/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: *; connect-src 'self' *; media-src 'self' blob: *; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: *; connect-src 'self' *; media-src 'self' blob: *; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
 <meta name="theme-color" content="#070c16" id="themeColorMeta">
 <meta name="description" content="WAR DESK — Live monitor voor wereldwijde conflicten, nieuws, IPTV en VOD.">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="application-name" content="WAR DESK">
-<title>WAR DESK v14.13</title>
+<title>WAR DESK v14.17</title>
 
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="manifest" href="manifest.json">
@@ -21,6 +21,7 @@
 <link rel="apple-touch-icon" sizes="144x144" href="./icons/icon-144.png">
 
 <script>
+// ===== Vroege setup: theme + debug buffer =====
 (function(){
   try {
     var t = localStorage.getItem("wardesk_theme");
@@ -32,7 +33,7 @@
     var fs = localStorage.getItem("wardesk_font_size") || "medium";
     var ac = localStorage.getItem("wardesk_accent_color") || "goud";
     var map = { amber:"goud", blue:"saffier", green:"smaragd", red:"koraal", mono:"parel" };
-    if (map[ac]) { ac = map[ac]; localStorage.setItem("wardesk_accent_color", ac); }
+    if (map[ac]) { ac = map[ac]; try{ localStorage.setItem("wardesk_accent_color", ac); }catch(e){} }
     if (["goud","saffier","smaragd","kobalt","koraal","parel"].indexOf(ac) < 0) ac = "goud";
     if (["small","medium","large","xlarge"].indexOf(fs) < 0) fs = "medium";
     document.documentElement.setAttribute("data-font-size", fs);
@@ -41,6 +42,38 @@
       document.documentElement.setAttribute("data-oled", "true");
     }
   } catch(e) {}
+
+  window.__wdLogBuffer = window.__wdLogBuffer || [];
+  window.__wdLogListener = window.__wdLogListener || null;
+
+  if (typeof window.WD_DEBUG === "undefined") {
+    try {
+      window.WD_DEBUG = (localStorage.getItem("wardesk_debug") === "1") || /[?&]debug=1/.test(location.search);
+    } catch(e) { window.WD_DEBUG = false; }
+  }
+
+  window.wdLog = window.wdLog || {
+    info: function(){
+      var a = Array.prototype.slice.call(arguments);
+      if (window.WD_DEBUG) { try{ console.log.apply(console, a); }catch(e){} }
+      if (window.__wdLogListener) { try{ window.__wdLogListener("info", a); }catch(e){} }
+      else { try{ window.__wdLogBuffer.push({type:"info", msg: a.join(" "), t: Date.now()}); }catch(e){} }
+    },
+    warn: function(){
+      var a = Array.prototype.slice.call(arguments);
+      if (window.WD_DEBUG) { try{ console.warn.apply(console, a); }catch(e){} }
+      if (window.__wdLogListener) { try{ window.__wdLogListener("warn", a); }catch(e){} }
+      else { try{ window.__wdLogBuffer.push({type:"warn", msg: a.join(" "), t: Date.now()}); }catch(e){} }
+    },
+    error: function(){
+      var a = Array.prototype.slice.call(arguments);
+      try{ console.error.apply(console, a); }catch(e){}
+      if (window.__wdLogListener) { try{ window.__wdLogListener("err", a); }catch(e){} }
+      else { try{ window.__wdLogBuffer.push({type:"err", msg: a.join(" "), t: Date.now()}); }catch(e){} }
+    },
+    err: function(){ window.wdLog.error.apply(null, arguments); }
+  };
+
   window.__wdUpdateThemeColor = function(){
     var meta = document.getElementById("themeColorMeta");
     if (!meta) return;
@@ -63,7 +96,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 
-<link rel="stylesheet" href="styles.css?v=14.9">
+<link rel="stylesheet" href="styles.css?v=14.16">
 
 <style>
 html[data-font-size="small"]  { font-size: 14px; }
@@ -78,9 +111,7 @@ html[data-accent="kobalt"]  { --amber:#8b7fff; --amber-2:#b3aaff; --amber-3:#3a2
 html[data-accent="koraal"]  { --amber:#ff6b7a; --amber-2:#ff9ba6; --amber-3:#991b2c; --accent-glow:rgba(255,107,122,.35); }
 html[data-accent="parel"]   { --amber:#e8eaf0; --amber-2:#ffffff; --amber-3:#6b7280; --accent-glow:rgba(232,234,240,.35); }
 
-html[data-oled="true"] {
-  --bg:#000000; --bg-2:#050505; --bg-3:#0d0d0d; --card:#080808;
-}
+html[data-oled="true"] { --bg:#000000; --bg-2:#050505; --bg-3:#0d0d0d; --card:#080808; }
 
 #wdDebugBtn, #wdDebugPanel { display: none !important; }
 html.wd-debug-on #wdDebugBtn{display:grid !important;position:fixed;bottom:80px;right:15px;z-index:9999999;width:44px;height:44px;border-radius:50%;background:#e63950;color:#fff;border:2px solid #fff;font-size:1.2rem;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.6);cursor:pointer;place-items:center;font-family:monospace}
@@ -114,162 +145,30 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
 .map-ctrl svg, .iptv-btn svg, .brand-mark svg { width:18px; height:18px; }
 .brand-mark svg { width:22px; height:22px; }
 
-/* ============================================================
-   FIXES: Onderbalk, VOD grid, Menu, VOD Modal
-   ============================================================ */
+.bottom-tabs { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; z-index: 9999999 !important; display: flex !important; justify-content: space-around !important; background: var(--bg-2, #070c16) !important; border-top: 1px solid var(--line-2, #1a2332) !important; padding: 4px 0 !important; padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px)) !important; box-shadow: 0 -4px 12px rgba(0,0,0,0.2) !important; }
+#viewNews, #viewMap, #viewIptv, #viewVod { padding-bottom: 75px !important; min-height: auto !important; overflow-y: auto !important; }
 
-.bottom-tabs {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 9999999 !important;
-  display: flex !important;
-  justify-content: space-around !important;
-  background: var(--bg-2, #070c16) !important;
-  border-top: 1px solid var(--line-2, #1a2332) !important;
-  padding: 4px 0 !important;
-  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px)) !important;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.2) !important;
-}
-
-#viewNews, #viewMap, #viewIptv, #viewVod {
-  padding-bottom: 75px !important;
-  min-height: auto !important;
-  overflow-y: auto !important;
-}
-
-.vod-grid {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
-  gap: 12px !important;
-  padding: 12px !important;
-  width: 100% !important;
-}
-
-.vod-poster {
-  display: flex !important;
-  flex-direction: column !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  cursor: pointer !important;
-  text-align: left !important;
-  transition: transform 0.2s !important;
-}
-
+.vod-grid { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important; gap: 12px !important; padding: 12px !important; width: 100% !important; }
+.vod-poster { display: flex !important; flex-direction: column !important; background: transparent !important; border: none !important; padding: 0 !important; cursor: pointer !important; text-align: left !important; transition: transform 0.2s !important; }
 .vod-poster:active { transform: scale(0.96) !important; }
-
-.vod-poster-img {
-  width: 100% !important;
-  aspect-ratio: 2 / 3 !important;
-  border-radius: 8px !important;
-  overflow: hidden !important;
-  background: #222 !important;
-  position: relative !important;
-  border: 1px solid var(--line-2, #1a2332) !important;
-}
-
-.vod-poster-img img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: block !important;
-}
-
-.vod-poster-fallback {
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  font-size: 2rem !important;
-  font-weight: 800 !important;
-  color: #fff !important;
-  background: linear-gradient(135deg, #1e3a5f, #3b6ba8) !important;
-}
-
+.vod-poster-img { width: 100% !important; aspect-ratio: 2 / 3 !important; border-radius: 8px !important; overflow: hidden !important; background: #222 !important; position: relative !important; border: 1px solid var(--line-2, #1a2332) !important; }
+.vod-poster-img img { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; }
+.vod-poster-fallback { position: absolute !important; inset: 0 !important; display: grid !important; place-items: center !important; font-size: 2rem !important; font-weight: 800 !important; color: #fff !important; background: linear-gradient(135deg, #1e3a5f, #3b6ba8) !important; }
 .vod-poster-body { padding: 6px 2px !important; }
 .vod-poster-name { font-size: 0.8rem !important; font-weight: 600 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; color: var(--ink-1, #fff) !important; margin-bottom: 2px !important; }
 .vod-poster-meta { font-size: 0.7rem !important; color: var(--ink-3, #888) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
 
-.sheet-overlay {
-  position: fixed !important;
-  inset: 0 !important;
-  background: rgba(0,0,0,0.6) !important;
-  z-index: 10000000 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition: opacity 0.3s !important;
-}
-.sheet-overlay.open {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-.sheet {
-  position: fixed !important;
-  bottom: -100% !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 10000001 !important;
-  background: var(--bg-2, #070c16) !important;
-  border-radius: 20px 20px 0 0 !important;
-  transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  max-height: 85vh !important;
-  overflow-y: auto !important;
-  padding-bottom: env(safe-area-inset-bottom, 20px) !important;
-  border-top: 1px solid var(--line-2, #1a2332) !important;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.5) !important;
-}
-.sheet.open {
-  bottom: 0 !important;
-}
+.sheet-overlay { position: fixed !important; inset: 0 !important; background: rgba(0,0,0,0.6) !important; z-index: 10000000 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; }
+.sheet-overlay.open { opacity: 1 !important; pointer-events: auto !important; }
+.sheet { position: fixed !important; bottom: -100% !important; left: 0 !important; right: 0 !important; z-index: 10000001 !important; background: var(--bg-2, #070c16) !important; border-radius: 20px 20px 0 0 !important; transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; max-height: 85vh !important; overflow-y: auto !important; padding-bottom: env(safe-area-inset-bottom, 20px) !important; border-top: 1px solid var(--line-2, #1a2332) !important; box-shadow: 0 -10px 40px rgba(0,0,0,0.5) !important; }
+.sheet.open { bottom: 0 !important; }
 
-.vod-detail-modal {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 99999999 !important;
-  background: rgba(0,0,0,0.7) !important;
-  display: flex !important;
-  align-items: flex-end !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition: opacity 0.3s !important;
-}
-.vod-detail-modal.show {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-.vod-detail-box {
-  background: var(--bg-2, #070c16) !important;
-  border-radius: 20px 20px 0 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  max-height: 85vh !important;
-  overflow-y: auto !important;
-  border: none !important;
-  border-top: 1px solid var(--line-2, #1a2332) !important;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.8) !important;
-  padding-bottom: env(safe-area-inset-bottom, 20px) !important;
-  transform: translateY(100%) !important;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.vod-detail-modal.show .vod-detail-box {
-  transform: translateY(0) !important;
-}
-
-.vod-detail-body {
-  padding: 16px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-}
-.vod-detail-poster img {
-  max-width: 120px !important;
-  border-radius: 8px !important;
-  display: block !important;
-}
+.vod-detail-modal { position: fixed !important; inset: 0 !important; z-index: 99999999 !important; background: rgba(0,0,0,0.7) !important; display: flex !important; align-items: flex-end !important; justify-content: center !important; padding: 0 !important; opacity: 0 !important; pointer-events: none !important; transition: opacity 0.3s !important; }
+.vod-detail-modal.show { opacity: 1 !important; pointer-events: auto !important; }
+.vod-detail-box { background: var(--bg-2, #070c16) !important; border-radius: 20px 20px 0 0 !important; width: 100% !important; max-width: 100% !important; max-height: 85vh !important; overflow-y: auto !important; border: none !important; border-top: 1px solid var(--line-2, #1a2332) !important; box-shadow: 0 -10px 40px rgba(0,0,0,0.8) !important; padding-bottom: env(safe-area-inset-bottom, 20px) !important; transform: translateY(100%) !important; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+.vod-detail-modal.show .vod-detail-box { transform: translateY(0) !important; }
+.vod-detail-body { padding: 16px !important; display: flex !important; flex-direction: column !important; gap: 12px !important; }
+.vod-detail-poster img { max-width: 120px !important; border-radius: 8px !important; display: block !important; }
 </style>
 </head>
 <body>
@@ -298,7 +197,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       </div>
       <div class="brand-text">
         <span class="name">WAR DESK</span>
-        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.13</span></span>
+        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.17</span></span>
       </div>
     </div>
     <div class="header-stats">
@@ -315,13 +214,10 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
 </header>
 
 <main class="main">
-
   <section class="view" id="viewNews">
     <div class="section-head">
       <h2 id="newsTitle">Laatste berichten</h2>
-      <div class="section-head-actions">
-        <span class="section-count" id="newsCount">—</span>
-      </div>
+      <div class="section-head-actions"><span class="section-count" id="newsCount">—</span></div>
     </div>
     <div class="feed-grid" id="feedGrid"></div>
   </section>
@@ -336,10 +232,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
           <button class="map-ctrl" id="mapLocate" aria-label="Mijn locatie">◎</button>
           <button class="map-ctrl" id="mapFull" aria-label="Volledig scherm">⛶</button>
         </div>
-        <div class="map-legend" id="mapLegend">
-          <div class="legend-title">Type</div>
-          <div id="legendItems"></div>
-        </div>
+        <div class="map-legend" id="mapLegend"><div class="legend-title">Type</div><div id="legendItems"></div></div>
       </div>
       <div class="live-feed">
         <div class="live-head">
@@ -352,9 +245,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
           <button class="live-filter" data-cat="political">Politiek</button>
           <button class="live-filter" data-cat="other">Overig</button>
         </div>
-        <div class="live-list" id="liveList">
-          <div class="live-empty">Events worden geladen...</div>
-        </div>
+        <div class="live-list" id="liveList"><div class="live-empty">Events worden geladen...</div></div>
       </div>
     </div>
   </section>
@@ -366,7 +257,6 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       <button class="btn-mini" id="iptvViewToggle" aria-label="Weergave" hidden>⊞</button>
       <button class="btn-mini" id="iptvToggleSetup" aria-label="Instellingen">⚙</button>
     </div>
-
     <div class="iptv-setup" id="iptvSetup">
       <div class="iptv-setup-title">Xtream Codes Login</div>
       <div class="iptv-row"><input type="url" id="iptvServer" placeholder="Server (http://provider.com:80)" autocomplete="off"></div>
@@ -384,44 +274,24 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       </div>
       <div class="iptv-status" id="iptvStatus"></div>
     </div>
-
     <div class="iptv-search-wrap" id="iptvSearchWrap" hidden>
-      <span class="iptv-search-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      </span>
+      <span class="iptv-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
       <input type="search" id="iptvSearch" placeholder="Zoek kanaal of groep..." autocomplete="off">
-      <button class="iptv-search-clear" id="iptvSearchClear" aria-label="Wissen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+      <button class="iptv-search-clear" id="iptvSearchClear" aria-label="Wissen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-
     <div class="iptv-pills" id="iptvPills"></div>
-
-    <div class="iptv-grid" id="iptvGrid">
-      <div class="empty-state">
-        <div class="empty-icon">📡</div>
-        <div class="empty-msg">Vul je Xtream gegevens in</div>
-      </div>
-    </div>
+    <div class="iptv-grid" id="iptvGrid"><div class="empty-state"><div class="empty-icon">📡</div><div class="empty-msg">Vul je Xtream gegevens in</div></div></div>
     <div id="iptvLoadMoreWrap"></div>
-
     <div class="iptv-visible-count" id="iptvVisibleCount"></div>
   </section>
 
   <section class="view" id="viewVod" hidden>
-    <div class="section-head">
-      <h2>VOD</h2>
-      <span class="section-count" id="vodCount">Films &amp; Series</span>
-    </div>
-
+    <div class="section-head"><h2>VOD</h2><span class="section-count" id="vodCount">Films &amp; Series</span></div>
     <div class="vod-search-wrap">
-      <svg class="vod-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-      </svg>
+      <svg class="vod-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="search" id="vodSearchInput" placeholder="Zoek films of series..." autocomplete="off" aria-label="Zoek in films en series">
       <button class="vod-search-clear" id="vodSearchClear" aria-label="Wissen">✕</button>
     </div>
-
     <div class="vod-page">
       <aside class="vod-sidebar" id="vodSidebar"></aside>
       <div class="vod-content">
@@ -430,24 +300,15 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
         <div id="vodLoadMoreWrap"></div>
       </div>
     </div>
-
     <button class="vod-scroll-top" id="vodScrollTop" aria-label="Naar boven">↑</button>
   </section>
 </main>
 
 <nav class="bottom-tabs" role="tablist">
-  <button class="tab active" data-view="news" role="tab" aria-selected="true">
-    <span class="tab-icon">📰</span><span class="tab-label">Nieuws</span>
-  </button>
-  <button class="tab" data-view="map" role="tab" aria-selected="false">
-    <span class="tab-icon">🗺️</span><span class="tab-label">Kaart</span>
-  </button>
-  <button class="tab" data-view="iptv" role="tab" aria-selected="false">
-    <span class="tab-icon">📡</span><span class="tab-label">IPTV</span>
-  </button>
-  <button class="tab" data-view="vod" role="tab" aria-selected="false">
-    <span class="tab-icon">🎬</span><span class="tab-label">VOD</span>
-  </button>
+  <button class="tab active" data-view="news" role="tab" aria-selected="true"><span class="tab-icon">📰</span><span class="tab-label">Nieuws</span></button>
+  <button class="tab" data-view="map" role="tab" aria-selected="false"><span class="tab-icon">🗺️</span><span class="tab-label">Kaart</span></button>
+  <button class="tab" data-view="iptv" role="tab" aria-selected="false"><span class="tab-icon">📡</span><span class="tab-label">IPTV</span></button>
+  <button class="tab" data-view="vod" role="tab" aria-selected="false"><span class="tab-icon">🎬</span><span class="tab-label">VOD</span></button>
 </nav>
 
 <div class="sheet-overlay" id="sheetOverlay"></div>
@@ -455,12 +316,9 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
   <div class="sheet-handle"></div>
   <div class="sheet-header">
     <h3>Menu</h3>
-    <button class="sheet-close" id="sheetClose" aria-label="Sluiten">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
+    <button class="sheet-close" id="sheetClose" aria-label="Sluiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
   <div class="sheet-content">
-
     <div class="sheet-section">
       <div class="sheet-title">Categorieën</div>
       <div class="chips-row">
@@ -475,7 +333,6 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
         <button class="sheet-item" data-cat="favorites">Favorieten (<span id="favCount">0</span>)</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Sortering</div>
       <div class="segmented">
@@ -483,14 +340,12 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
         <button class="sheet-item" id="sortNewest">Nieuwste eerst</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Weergave</div>
       <div class="segmented">
         <button class="sheet-item active" id="viewCards">Kaarten</button>
         <button class="sheet-item" id="viewList">Lijst</button>
       </div>
-
       <div class="accent-picker-row" id="accentPickerRow" role="button" tabindex="0" style="margin-top:.6rem">
         <span class="accent-label">Accentkleur</span>
         <span class="accent-preview" id="accentPreview" data-color="goud"></span>
@@ -504,21 +359,18 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
         <button class="accent-dot" data-color="koraal" aria-label="Koraal"></button>
         <button class="accent-dot" data-color="parel" aria-label="Parel"></button>
       </div>
-
       <div class="segmented font-segmented" style="margin-top:.6rem">
         <button class="sheet-item" data-font="small" onclick="if(window.__setFontSize)window.__setFontSize('small')">Aa Klein</button>
         <button class="sheet-item active" data-font="medium" onclick="if(window.__setFontSize)window.__setFontSize('medium')">Aa Medium</button>
         <button class="sheet-item" data-font="large" onclick="if(window.__setFontSize)window.__setFontSize('large')">Aa Groot</button>
         <button class="sheet-item" data-font="xlarge" onclick="if(window.__setFontSize)window.__setFontSize('xlarge')">Aa XL</button>
       </div>
-
       <div class="toggle-row" id="toggleOledRow" style="margin-top:.6rem" onclick="if(window.__setOled)window.__setOled(!window.__isOledActive())">
         <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><rect x="5" y="7" width="14" height="8" rx="1" fill="currentColor" opacity="0.3"/></svg>
         <span class="toggle-label">Diepzwart (OLED-modus)</span>
         <div class="toggle-switch" id="toggleOled"></div>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Zoeken</div>
       <div class="search-field">
@@ -526,7 +378,6 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
         <input type="search" id="searchInput" placeholder="Zoek in artikelen..." autocomplete="off">
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Meldingen</div>
       <div class="toggle-row" id="toggleNotificationsRow" onclick="if(window.__setNotifications)window.__setNotifications(!window.State.notificationsEnabled)">
@@ -540,7 +391,6 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
         <div class="toggle-switch" id="toggleTranslate"></div>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Kaart</div>
       <div class="action-row">
@@ -548,14 +398,12 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
         <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';var t=document.querySelector('.tab[data-view=\'map\']');if(t)t.click();setTimeout(function(){if(window.__mapResetView)window.__mapResetView()},400)">Midden-Oosten</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">Onderhoud</div>
       <div class="action-row">
         <button class="sheet-item" onclick="document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';setTimeout(function(){if(window.__hardRefresh)window.__hardRefresh()},200)">Ververs alles</button>
       </div>
     </div>
-
     <div class="sheet-section">
       <div class="sheet-title">IPTV Account</div>
       <div class="action-row">
@@ -564,14 +412,9 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
         <button class="sheet-item" onclick="if(!confirm('Kanalen verwijderen?'))return;document.getElementById('sheet').classList.remove('open');document.getElementById('sheetOverlay').classList.remove('open');document.body.style.overflow='';if(window.__iptvClearChannels)window.__iptvClearChannels()">Verwijder kanalen</button>
       </div>
     </div>
-
     <div class="sheet-section">
-      <div class="sheet-about">
-        WAR DESK <span class="version" id="appVersionMenu">v14.13</span><br>
-        Live nieuws + IPTV + Kaart (Midden-Oosten) + VOD
-      </div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v14.17</span><br>Live nieuws + IPTV + Kaart (Midden-Oosten) + VOD</div>
     </div>
-
   </div>
 </div>
 
@@ -580,21 +423,11 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
     <div class="iptv-player-head">
       <span id="iptvPlayerTitle">—</span>
       <div class="iptv-player-head-actions">
-        <button class="iptv-player-ico" id="iptvPlayerPlay" aria-label="Afspelen">
-          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        </button>
-        <button class="iptv-player-ico" id="iptvPlayerStop" aria-label="Stoppen">
-          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>
-        </button>
-        <button class="iptv-player-ico" id="iptvPlayerPip" aria-label="Picture-in-Picture">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/><rect x="14" y="14" width="8" height="6" rx="1" fill="currentColor"/></svg>
-        </button>
-        <button class="iptv-player-ico" id="iptvPlayerFs" aria-label="Volledig scherm">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-        </button>
-        <button class="iptv-player-ico" id="iptvPlayerClose" aria-label="Sluiten">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+        <button class="iptv-player-ico" id="iptvPlayerPlay" aria-label="Afspelen"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+        <button class="iptv-player-ico" id="iptvPlayerStop" aria-label="Stoppen"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="5" y="5" width="14" height="14" rx="1"/></svg></button>
+        <button class="iptv-player-ico" id="iptvPlayerPip" aria-label="Picture-in-Picture"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/><rect x="14" y="14" width="8" height="6" rx="1" fill="currentColor"/></svg></button>
+        <button class="iptv-player-ico" id="iptvPlayerFs" aria-label="Volledig scherm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        <button class="iptv-player-ico" id="iptvPlayerClose" aria-label="Sluiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
     </div>
     <div class="iptv-player-video-wrap">
@@ -604,13 +437,8 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
     <div class="iptv-player-foot">
       <span class="iptv-player-foot-status" id="iptvPlayerStatus">—</span>
       <div class="iptv-player-foot-actions">
-        <select class="iptv-quality-select" id="iptvQualitySelect" disabled>
-          <option value="auto">Auto</option>
-        </select>
-        <button class="iptv-copy-btn" id="iptvCopyUrl">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          <span>URL</span>
-        </button>
+        <select class="iptv-quality-select" id="iptvQualitySelect" disabled><option value="auto">Auto</option></select>
+        <button class="iptv-copy-btn" id="iptvCopyUrl"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>URL</span></button>
       </div>
     </div>
   </div>
@@ -621,18 +449,11 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
     <div class="iptv-groups-panel-head">
       <h3>Alle groepen</h3>
       <div class="iptv-groups-panel-head-actions">
-        <button class="iptv-groups-sort" id="iptvGroupsSort">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/></svg>
-          <span id="iptvGroupsSortLabel">Aantal</span>
-        </button>
-        <button class="iptv-groups-close" id="iptvGroupsPanelClose" aria-label="Sluiten">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+        <button class="iptv-groups-sort" id="iptvGroupsSort"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/></svg><span id="iptvGroupsSortLabel">Aantal</span></button>
+        <button class="iptv-groups-close" id="iptvGroupsPanelClose" aria-label="Sluiten"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
     </div>
-    <div class="iptv-groups-search">
-      <input type="search" id="iptvGroupsSearch" placeholder="Zoek groep..." autocomplete="off">
-    </div>
+    <div class="iptv-groups-search"><input type="search" id="iptvGroupsSearch" placeholder="Zoek groep..." autocomplete="off"></div>
     <div class="iptv-groups-panel-list" id="iptvGroupsList"></div>
   </div>
 </div>
@@ -651,10 +472,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       </div>
     </div>
     <div class="vod-detail-foot">
-      <button class="vod-detail-btn" id="vodDetailOpenStremio">
-        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        <span>Open in Stremio</span>
-      </button>
+      <button class="vod-detail-btn" id="vodDetailOpenStremio"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>Open in Stremio</span></button>
       <button class="vod-detail-btn secondary" id="vodDetailCloseBtn">Sluiten</button>
     </div>
   </div>
@@ -664,10 +482,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
 
 <button id="wdDebugBtn" title="Debug">🐞</button>
 <div id="wdDebugPanel">
-  <div class="head">
-    <h2>🐞 Debug Log</h2>
-    <button class="close" id="wdDebugClose">Sluiten</button>
-  </div>
+  <div class="head"><h2>🐞 Debug Log</h2><button class="close" id="wdDebugClose">Sluiten</button></div>
   <div class="actions">
     <button id="wdDebugClear">Clear</button>
     <button id="wdDebugReload">Herlaad</button>
@@ -681,7 +496,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
   window.__setFontSize = function(size){
     if(["small","medium","large","xlarge"].indexOf(size) < 0) return;
     document.documentElement.setAttribute("data-font-size", size);
-    try { localStorage.setItem("wardesk_font_size", size); } catch(e){}
+    if(window.WDStorage) WDStorage.set("font_size", size);
     document.querySelectorAll("[data-font]").forEach(function(b){
       b.classList.toggle("active", b.dataset.font === size);
     });
@@ -689,7 +504,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
   window.__setAccentColor = function(color){
     if(["goud","saffier","smaragd","kobalt","koraal","parel"].indexOf(color) < 0) return;
     document.documentElement.setAttribute("data-accent", color);
-    try { localStorage.setItem("wardesk_accent_color", color); } catch(e){}
+    if(window.WDStorage) WDStorage.set("accent_color", color);
     document.querySelectorAll("[data-color]").forEach(function(b){
       b.classList.toggle("active", b.dataset.color === color);
     });
@@ -705,7 +520,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
     var on = !!enabled;
     if(on) document.documentElement.setAttribute("data-oled", "true");
     else document.documentElement.removeAttribute("data-oled");
-    try { localStorage.setItem("wardesk_oled_mode", on ? "1" : "0"); }catch(e){}
+    if(window.WDStorage) WDStorage.set("oled_mode", on ? "1" : "0");
     var row = document.getElementById("toggleOledRow");
     if(row) row.classList.toggle("active", on);
     if(window.__wdUpdateThemeColor) window.__wdUpdateThemeColor();
@@ -762,25 +577,24 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
   });
 })();
 
+// ===== Debug-panel: buffer + listener =====
 (function(){
   "use strict";
-  var DEBUG = /[?&]debug=1/.test(location.search);
-  try{ if(localStorage.getItem("wardesk_debug") === "1") DEBUG = true; }catch(e){}
-  window.__wdDebug = DEBUG;
+
+  var DEBUG = window.WD_DEBUG;
   window.__wdLog = [];
   var logEl = null, panel = null;
+  var MAX_ENTRIES = 500;
+
   function fmtTime(){ return new Date().toTimeString().slice(0,8); }
+
   function add(type, msg){
-    var entry = { time: fmtTime(), type: type, msg: typeof msg === "string" ? msg : JSON.stringify(msg) };
+    var entry = { time: fmtTime(), type: type, msg: typeof msg === "string" ? msg : String(msg) };
     window.__wdLog.push(entry);
-    if(window.__wdLog.length > 500) window.__wdLog.shift();
+    if(window.__wdLog.length > MAX_ENTRIES) window.__wdLog.shift();
     if(logEl) render();
-    try{
-      if(type === "err") console.error("[WD]", msg);
-      else if(type === "warn") console.warn("[WD]", msg);
-      else if(DEBUG) console.log("[WD]", msg);
-    }catch(e){}
   }
+
   function render(){
     if(!logEl) return;
     if(!window.__wdLog.length){ logEl.innerHTML = '<div class="empty">Nog geen logs</div>'; return; }
@@ -791,8 +605,25 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
     }
     logEl.innerHTML = html;
   }
-  function escapeHtml(s){ return (s || "").replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  window.wdLog = { info:function(m){add("info",m)}, ok:function(m){add("ok",m)}, warn:function(m){add("warn",m)}, err:function(m){add("err",m)} };
+
+  function escapeHtml(s){
+    return (s || "").replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  window.__wdLogListener = function(type, args){
+    add(type, args.join(" "));
+  };
+
+  if (window.__wdLogBuffer && window.__wdLogBuffer.length) {
+    for (var i = 0; i < window.__wdLogBuffer.length; i++) {
+      var e = window.__wdLogBuffer[i];
+      add(e.type || "info", e.msg || "");
+    }
+    window.__wdLogBuffer = [];
+  }
+
   window.addEventListener("error", function(e){
     var msg = (e.error && e.error.message) || e.message || "onbekende fout";
     var src = e.filename ? " (" + e.filename.split("/").pop() + ":" + e.lineno + ")" : "";
@@ -803,24 +634,39 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
     var msg = (r && r.message) ? r.message : String(r || "onbekende promise-fout");
     add("err", "Promise: " + msg);
   });
+
   document.addEventListener("DOMContentLoaded", function(){
     if(DEBUG){
       document.documentElement.classList.add("wd-debug-on");
       logEl = document.getElementById("wdDebugLog");
       panel = document.getElementById("wdDebugPanel");
-      document.getElementById("wdDebugBtn").addEventListener("click", function(){ panel.classList.toggle("show"); render(); });
-      document.getElementById("wdDebugClose").addEventListener("click", function(){ panel.classList.remove("show"); });
-      document.getElementById("wdDebugClear").addEventListener("click", function(){ window.__wdLog=[]; render(); });
-      document.getElementById("wdDebugReload").addEventListener("click", function(){ location.reload(); });
-      document.getElementById("wdDebugInfo").addEventListener("click", function(){
-        add("info", "URL: " + location.href);
-        add("info", "Online: " + navigator.onLine);
-        add("info", "Versie: " + (window.APP_VERSION || "?"));
-        add("info", "Items: " + (window.State && window.State.items ? window.State.items.length : "?"));
-        add("info", "Thema: " + (document.body.classList.contains("light") ? "licht" : "donker"));
-        add("info", "Accent: " + (document.documentElement.getAttribute("data-accent") || "goud"));
-        add("info", "OLED: " + (window.__isOledActive() ? "aan" : "uit"));
-      });
+
+      if(document.getElementById("wdDebugBtn")){
+        document.getElementById("wdDebugBtn").addEventListener("click", function(){
+          panel.classList.toggle("show");
+          render();
+        });
+      }
+      if(document.getElementById("wdDebugClose")){
+        document.getElementById("wdDebugClose").addEventListener("click", function(){ panel.classList.remove("show"); });
+      }
+      if(document.getElementById("wdDebugClear")){
+        document.getElementById("wdDebugClear").addEventListener("click", function(){ window.__wdLog=[]; render(); });
+      }
+      if(document.getElementById("wdDebugReload")){
+        document.getElementById("wdDebugReload").addEventListener("click", function(){ location.reload(); });
+      }
+      if(document.getElementById("wdDebugInfo")){
+        document.getElementById("wdDebugInfo").addEventListener("click", function(){
+          add("info", "URL: " + location.href);
+          add("info", "Online: " + navigator.onLine);
+          add("info", "Versie: " + (window.APP_VERSION || "?"));
+          add("info", "Items: " + (window.State && window.State.items ? window.State.items.length : "?"));
+          add("info", "Thema: " + (document.body.classList.contains("light") ? "licht" : "donker"));
+          add("info", "Accent: " + (document.documentElement.getAttribute("data-accent") || "goud"));
+          add("info", "OLED: " + (window.__isOledActive() ? "aan" : "uit"));
+        });
+      }
     }
     add("info", "WAR DESK start");
     add("info", "Versie: " + (window.APP_VERSION || "?"));
@@ -837,15 +683,6 @@ document.addEventListener("DOMContentLoaded", function(){
     });
   }
 });
-
-// ============================================================
-// FIX v14.7: Inline menu-handler VERWIJDERD.
-// FIX v14.8: NewsAPI.init() wordt alleen door index.html hieronder aangeroepen.
-// FIX v14.9: styles.css versie verhoogd (Fase 3B — GPU-optimalisatie).
-// FIX v14.10: vod-v24.js versie verhoogd (Fase 3C — VOD polling optimalisatie).
-// FIX v14.12: MapLibre GL + OpenFreeMap — geen API key meer nodig voor kaart.
-// FIX v14.13: Content Security Policy toegevoegd (Fase 2 — XSS-bescherming).
-// ============================================================
 </script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -853,15 +690,16 @@ document.addEventListener("DOMContentLoaded", function(){
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.20/leaflet-maplibre-gl.js" defer></script>
 
-<script src="config.js?v=14.8" defer></script>
-<script src="store.js?v=14.8" defer></script>
-<script src="news-v27.js?v=14.8" defer></script>
-<script src="app-v12.js?v=14.8" defer></script>
-<script src="persist-v4.js?v=14.8" defer></script>
-<script src="refresh-v12.js?v=14.8" defer></script>
-<script src="iptv-v8.js?v=14.8" defer></script>
-<script src="map-v11.10.js?v=14.12" defer></script>
-<script src="vod-v24.js?v=14.9" defer></script>
+<script src="storage.js?v=14.16" defer></script>
+<script src="config.js?v=14.16" defer></script>
+<script src="store.js?v=14.16" defer></script>
+<script src="news-v27.js?v=14.16" defer></script>
+<script src="app-v12.js?v=14.16" defer></script>
+<script src="persist-v4.js?v=14.16" defer></script>
+<script src="refresh-v12.js?v=14.16" defer></script>
+<script src="iptv-v8.js?v=14.17" defer></script>
+<script src="map-v11.10.js?v=14.17" defer></script>
+<script src="vod-v24.js?v=14.16" defer></script>
 
 <script>
 (function(){
@@ -870,14 +708,14 @@ document.addEventListener("DOMContentLoaded", function(){
     if (!ok) {
       if (!boot._tries) boot._tries = 0;
       if (boot._tries++ < 40) { setTimeout(boot, 100); return; }
-      console.warn("[WAR DESK] NewsAPI niet gevonden na 4s");
+      wdLog.warn("[WAR DESK] NewsAPI niet gevonden na 4s");
       var grid = document.getElementById("feedGrid");
       if (grid && !grid.children.length) {
         grid.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--ink-3)">Kon nieuws niet laden. Ververs de pagina.</div>';
       }
       return;
     }
-    window.NewsAPI.init().catch(function(err){ console.warn("[WAR DESK] init error:", err); });
+    window.NewsAPI.init().catch(function(err){ wdLog.warn("[WAR DESK] init error:", err); });
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
@@ -887,31 +725,25 @@ document.addEventListener("DOMContentLoaded", function(){
 })();
 </script>
 
-<!-- ============================================================
-     TAB ONTHOUDEN: sessionStorage
-     - Overleeft refresh (F5) → blijft op huidige tab
-     - Wordt gewist bij app sluiten → start op Nieuws
-     ============================================================ -->
 <script>
 (function(){
   document.querySelectorAll('.bottom-tabs .tab').forEach(function(tab){
     tab.addEventListener('click', function(){
       var view = tab.getAttribute('data-view');
-      if (view) {
-        try { sessionStorage.setItem('wardesk_active_tab', view); } catch(e){}
+      if (view && window.WDStorage) {
+        WDStorage.session.set('active_tab', view);
       }
     });
   });
 
   function restoreTab(){
-    var savedTab;
-    try { savedTab = sessionStorage.getItem('wardesk_active_tab'); } catch(e){}
+    var savedTab = window.WDStorage ? WDStorage.session.get('active_tab') : null;
     if (savedTab && savedTab !== 'news') {
       setTimeout(function(){
         var tabBtn = document.querySelector('.bottom-tabs .tab[data-view="' + savedTab + '"]');
         if (tabBtn) {
           tabBtn.click();
-          console.log('[TAB] Hersteld naar:', savedTab);
+          wdLog.info('[TAB] Hersteld naar:', savedTab);
         }
       }, 900);
     }

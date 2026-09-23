@@ -1,14 +1,14 @@
 /* ============================================================
-   WAR DESK v12.1 — Ronde verversingsknop
-   - Update-timer pauzeert op achtergrond (batterij)
-   - FIX v12.1: wdLog in plaats van console.log
+   WAR DESK v12.2 — Ronde verversingsknop
+   - FIX v12.1: wdLog
+   - FIX v12.2: E3 _wrapped guard robuuster
    ============================================================ */
 
 (function(){
   "use strict";
 
   var $ = function(id){ return document.getElementById(id); };
-  var APP_VERSION = window.APP_VERSION || "v14.14";
+  var APP_VERSION = window.APP_VERSION || "v14.18";
 
   function initRefresh(){
     var lastUpdate = null;
@@ -140,21 +140,33 @@
 
     refreshBtn.addEventListener("click", doRefresh);
 
-    if(window.NewsAPI && typeof NewsAPI.reload === "function" && !NewsAPI._wrapped){
-      var origReload = NewsAPI.reload;
-      NewsAPI._originalReload = origReload;
-      NewsAPI._wrapped = true;
-      NewsAPI.reload = function(){
-        var p = origReload.apply(this, arguments);
-        if(p && p.then){
-          return p.then(function(result){
-            lastUpdate = Date.now();
-            tickUpdate();
-            return result;
-          });
-        }
-        return p;
-      };
+    /* ============================================================
+       E3 FIX: robuustere _wrapped guard
+       - Als al gewrapped → sla over
+       - Bewaar originele reload op vaste plek
+       ============================================================ */
+    if(window.NewsAPI && typeof NewsAPI.reload === "function"){
+      if(NewsAPI.__refreshHooked) {
+        wdLog.info("[WAR DESK] refresh-v12: reload al gehookt, skip");
+      } else {
+        var origReload = NewsAPI.reload;
+        NewsAPI.__originalReload = origReload;
+        NewsAPI.__refreshHooked = true;
+
+        NewsAPI.reload = function(){
+          var p = origReload.apply(this, arguments);
+          if(p && typeof p.then === "function"){
+            return p.then(function(result){
+              lastUpdate = Date.now();
+              tickUpdate();
+              return result;
+            });
+          }
+          return p;
+        };
+
+        wdLog.info("[WAR DESK] refresh-v12: reload gehookt");
+      }
     }
 
     var attempts = 0;

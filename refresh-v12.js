@@ -1,14 +1,14 @@
 /* ============================================================
-   WAR DESK v17.2 — Ronde verversingsknop
-   - v12: Update-timer pauzeert op achtergrond (batterij)
-   - Luistert naar "wardesk:feedprogress" van news.js
+   WAR DESK v12.1 — Ronde verversingsknop
+   - Update-timer pauzeert op achtergrond (batterij)
+   - FIX v12.1: wdLog in plaats van console.log
    ============================================================ */
 
 (function(){
   "use strict";
 
   var $ = function(id){ return document.getElementById(id); };
-  var APP_VERSION = window.APP_VERSION || "v11.0";
+  var APP_VERSION = window.APP_VERSION || "v14.14";
 
   function initRefresh(){
     var lastUpdate = null;
@@ -58,9 +58,6 @@
       el.textContent = fmtAgo(Date.now() - lastUpdate);
     }
 
-    /* ============================================================
-       v12: UPDATE-TIMER PAUZEERT OP ACHTERGROND
-       ============================================================ */
     var updateTimer = null;
 
     function startUpdateTimer(){
@@ -171,7 +168,7 @@
       if(attempts > 200) clearInterval(waitInit);
     }, 500);
 
-    console.log("[WAR DESK] refresh-v12.js " + APP_VERSION + " geladen");
+    wdLog.info("[WAR DESK] refresh-v12.js " + APP_VERSION + " geladen");
   }
 
   if(document.readyState !== "loading") initRefresh();

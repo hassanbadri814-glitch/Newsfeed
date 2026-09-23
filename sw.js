@@ -1,29 +1,19 @@
 /* ============================================================
-   WAR DESK Service Worker v2.0
+   WAR DESK Service Worker v2.1
    - Network-first voor HTML/JS/CSS/JSON (updates komen door)
    - Cache-first voor images/fonts/icons (snelheid)
    - Fallback naar cache als netwerk faalt
+   - FIX v2.1: precache alleen essentieel, versie gelijk aan app (B6+B18)
    ============================================================ */
 
-const CACHE_NAME = 'wardesk-v15';
+const CACHE_NAME = 'wardesk-v14.17';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
-  './styles.css',
-  './config.js',
-  './store.js',
-  './news-v27.js',
-  './app-v12.js',
-  './persist-v4.js',
-  './refresh-v12.js',
-  './iptv-v8.js',
-  './map-v11.10.js',
-  './vod-v24.js',
-  './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  './manifest.json'
 ];
 
-// INSTALL — precache alle assets (fail-safe per bestand)
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -41,7 +31,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// ACTIVATE — verwijder oude caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(names =>
@@ -57,28 +46,23 @@ self.addEventListener('activate', event => {
   );
 });
 
-// FETCH — network-first voor code, cache-first voor assets
 self.addEventListener('fetch', event => {
   const req = event.request;
 
-  // Alleen GET requests
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
 
-  // Cross-origin: alleen bekende CDN's cachen
   if (url.origin !== location.origin) {
-    const isAsset = /fonts\.(googleapis|gstatic)\.com|unpkg\.com|jsdelivr\.net|cdnjs\.cloudflare\.com/.test(url.host);
+    const isAsset = /fonts\.(googleapis|gstatic)\.com|unpkg\.com|jsdelivr\.net|cdnjs\.cloudflare\.com|tiles\.openfreemap\.org|basemaps\.cartocdn\.com/.test(url.host);
     if (!isAsset) return;
   }
 
-  // Bepaal strategie
   const isCode = /\.(html|js|css|json)$/i.test(url.pathname)
               || url.pathname === '/'
               || url.pathname.endsWith('/');
 
   if (isCode) {
-    // NETWORK-FIRST (updates komen direct door)
     event.respondWith(
       fetch(req)
         .then(res => {
@@ -89,18 +73,15 @@ self.addEventListener('fetch', event => {
           return res;
         })
         .catch(() => {
-          // Offline: gebruik cache, of index.html als fallback
           return caches.match(req).then(r => r || caches.match('./index.html'));
         })
     );
     return;
   }
 
-  // CACHE-FIRST voor afbeeldingen/fonts/icons
   event.respondWith(
     caches.match(req).then(cached => {
       if (cached) {
-        // Update op de achtergrond (stale-while-revalidate)
         fetch(req).then(res => {
           if (res && res.status === 200) {
             caches.open(CACHE_NAME).then(cache => cache.put(req, res.clone()));

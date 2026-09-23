@@ -1,17 +1,15 @@
 /* ============================================================
-   WAR DESK v24.3 — VOD (Robust init + Click Fix + Back Button Fix)
-   - Meerdere manieren om te initialiseren (tab-click, observer, polling)
-   - Chunked rendering voor grote catalogi
-   - Terug-knop sluit modal, niet de app
-   - FASE 3C: polling interval 500ms → 1000ms, max 60 pogingen (was 600)
+   WAR DESK v24.6 — VOD (Robust init + Click Fix + Back Button Fix)
+   - FIX v24.5: A3 (history replaceState), A4 (lege ID fallback)
+   - FIX v24.6: E5 (zoek-debounce 250ms)
    ============================================================ */
 
 (function(){
   "use strict";
 
   var $ = function(id){ return document.getElementById(id); };
-  var LOG = function(){ try{ console.log.apply(console, ["[VOD]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
-  LOG("v24.3 geladen");
+  var LOG = function(){ try{ wdLog.info.apply(null, ["[VOD]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
+  LOG("v24.6 geladen");
 
   var CINEMETA_BASE = "https://v3-cinemeta.strem.io";
 
@@ -418,7 +416,7 @@
         var grid2 = $("vodGrid");
         if(grid2){ grid2.innerHTML = ""; showSkeletons(); }
         loadCatalog(false);
-      }, 500);
+      }, 250);
     });
 
     if(clearBtn){
@@ -466,7 +464,9 @@
 
     modal.classList.add("show");
 
-    if (!history.state || !history.state.vodModal) {
+    if (history.state && history.state.vodModal) {
+      history.replaceState({ vodModal: true }, '');
+    } else {
       history.pushState({ vodModal: true }, '');
     }
 
@@ -477,7 +477,21 @@
       type = item.type === "series" ? "series" : "movie";
     }
 
-    var metaUrl = buildMetaUrl(type, item.imdb_id || item.id);
+    var metaId = item.imdb_id || item.id;
+    if (!metaId) {
+      LOG("Geen metaId beschikbaar voor:", item.name);
+      $("vodDetailMeta").textContent = item.releaseInfo || item.year || "";
+      $("vodDetailText").textContent = item.description || "(geen beschrijving beschikbaar)";
+      var dlBtn0 = $("vodDetailOpenStremio");
+      if(dlBtn0){
+        dlBtn0.onclick = function(){
+          if(window.showToast) window.showToast("Geen Stremio-link beschikbaar");
+        };
+      }
+      return;
+    }
+
+    var metaUrl = buildMetaUrl(type, metaId);
 
     try{
       var data = await fetchJson(metaUrl);
@@ -511,7 +525,7 @@
       $("vodDetailMeta").textContent = "";
       $("vodDetailText").textContent = item.description || "(geen beschrijving)";
       if(window.showToast) window.showToast("Kon details niet laden.");
-      var dl2 = buildStremioLink(type, item.imdb_id || item.id);
+      var dl2 = buildStremioLink(type, metaId);
       var dlBtn2 = $("vodDetailOpenStremio");
       if(dlBtn2){
         dlBtn2.onclick = function(){
@@ -586,10 +600,6 @@
   
   window.VODAPI = { init: init, state: VOD };
 
-  /* ============================================================
-     ROBUST INIT: 4 manieren om VOD te initialiseren
-     FASE 3C: polling interval 1000ms (was 500ms), max 60 pogingen (was 600)
-     ============================================================ */
   function setupVodWatcher() {
     var vodView = document.getElementById("viewVod");
     if (!vodView) {
@@ -598,7 +608,6 @@
     }
     LOG("setupVodWatcher - wacht op VOD tab");
 
-    // 1. MutationObserver - detecteert wanneer hidden/class/style verandert
     try {
       var observer = new MutationObserver(function() {
         if (!vodView.hidden && getComputedStyle(vodView).display !== "none") {
@@ -616,7 +625,6 @@
       LOG("MutationObserver faalde:", e.message);
     }
 
-    // 2. Click listener op de VOD tab
     document.querySelectorAll(".bottom-tabs .tab").forEach(function(tab){
       tab.addEventListener("click", function(){
         if (tab.dataset.view === "vod") {
@@ -630,7 +638,6 @@
       });
     });
 
-    // 3. Polling fallback — FASE 3C: 1000ms interval, max 60 pogingen (1 min)
     var checkCount = 0;
     var MAX_CHECKS = 60;
     var POLL_INTERVAL_MS = 1000;
@@ -653,7 +660,6 @@
       }
     }, POLL_INTERVAL_MS);
 
-    // 4. Directe check (als view al zichtbaar is)
     if (!vodView.hidden && getComputedStyle(vodView).display !== "none") {
       LOG("🚀 VOD view al zichtbaar - init direct");
       init();
@@ -668,5 +674,5 @@
     });
   }
 
-  console.log("[WAR DESK] vod-v24.js v24.3 geladen");
+  wdLog.info("[WAR DESK] vod-v24.js v24.6 geladen");
 })();

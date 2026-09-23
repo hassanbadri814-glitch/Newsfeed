@@ -1,8 +1,10 @@
 /* ============================================================
-   WAR DESK v11.10 — Conflictkaart (Alleen Midden-Oosten + retry)
+   WAR DESK v11.12 — Conflictkaart (OpenFreeMap, geen API key)
    - Wacht op State.items voordat events worden gebouwd
    - Retry elke seconde tot max 30s
    - Toont de laatste 2 artikelen per regio als aparte markers
+   - FASE 2: Stadia/CartoDB vervangen door OpenFreeMap (gratis, geen account)
+   - Vector tiles via MapLibre GL + Leaflet plugin
    ============================================================ */
 
 (function(){
@@ -20,7 +22,7 @@
     }catch(e){}
   };
 
-  LOG("v11.10 geladen — alleen Midden-Oosten + retry + 2 artikelen per regio");
+  LOG("v11.12 geladen — OpenFreeMap tiles + Midden-Oosten filter");
 
   var LOCATIONS = {
     "mideast": { lat: 31.77, lng: 35.22, country: "Midden-Oosten" },
@@ -85,16 +87,20 @@
     _waitTries: 0
   };
 
-  function buildStadiaUrl(style){
-    var key = (window.CONFIG && CONFIG.stadiaKey) ? CONFIG.stadiaKey : "";
-    var base = "https://tiles.stadiamaps.com/tiles/" + style + "/{z}/{x}/{y}{r}.png";
-    if(key) base += "?api_key=" + encodeURIComponent(key);
-    return base;
-  }
-
+  /* ============================================================
+     FASE 2: OpenFreeMap vector tiles (gratis, geen API key)
+     - dark = donker thema
+     - positron = licht thema
+     ============================================================ */
   var TILES = {
-    dark: { url: buildStadiaUrl("alidade_smooth_dark"), attribution: "© Stadia Maps © OpenMapTiles © OpenStreetMap" },
-    light: { url: buildStadiaUrl("alidade_smooth"), attribution: "© Stadia Maps © OpenMapTiles © OpenStreetMap" }
+    dark: {
+      style: "https://tiles.openfreemap.org/styles/dark",
+      attribution: "© OpenFreeMap © OpenMapTiles © OpenStreetMap"
+    },
+    light: {
+      style: "https://tiles.openfreemap.org/styles/positron",
+      attribution: "© OpenFreeMap © OpenMapTiles © OpenStreetMap"
+    }
   };
 
   function detectTheme(){
@@ -116,21 +122,32 @@
   function switchTile(theme){
     if(!MAP.instance) return;
     var cfg = TILES[theme] || TILES.dark;
-    if(!MAP.tileLayers[theme]){
-      MAP.tileLayers[theme] = L.tileLayer(cfg.url, {
-        maxZoom: 20,
-        attribution: cfg.attribution,
-        crossOrigin: true
-      });
+
+    // Verwijder bestaande lagen
+    if(MAP.tileLayers.dark && MAP.instance.hasLayer(MAP.tileLayers.dark)){
+      MAP.instance.removeLayer(MAP.tileLayers.dark);
     }
-    Object.keys(MAP.tileLayers).forEach(function(k){
-      var layer = MAP.tileLayers[k];
-      if(k === theme){
-        if(!MAP.instance.hasLayer(layer)) layer.addTo(MAP.instance);
+    if(MAP.tileLayers.light && MAP.instance.hasLayer(MAP.tileLayers.light)){
+      MAP.instance.removeLayer(MAP.tileLayers.light);
+    }
+
+    // Maak nieuwe laag aan
+    if(!MAP.tileLayers[theme]){
+      if(L.maplibreGL){
+        MAP.tileLayers[theme] = L.maplibreGL({
+          style: cfg.style,
+          attribution: cfg.attribution
+        });
       } else {
-        if(MAP.instance.hasLayer(layer)) MAP.instance.removeLayer(layer);
+        LOG("⚠️ MapLibre GL niet geladen — val terug op OSM raster tiles");
+        MAP.tileLayers[theme] = L.tileLayer(
+          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          { maxZoom: 19, attribution: "© OpenStreetMap" }
+        );
       }
-    });
+    }
+
+    MAP.tileLayers[theme].addTo(MAP.instance);
   }
 
   function observeThemeChanges(){
@@ -531,7 +548,7 @@
     if(MAP.instance || typeof L === "undefined") return;
     var mapEl = $("map");
     if(!mapEl) return;
-    LOG("Init Leaflet map");
+    LOG("Init Leaflet map (OpenFreeMap)");
     MAP.instance = L.map("map", {
       center: [29.5, 42.0],
       zoom: 4,
@@ -715,5 +732,5 @@
 
   window.MAPAPI = { refresh: refreshFromNews, state: MAP };
 
-  console.log("[WAR DESK] map-v11.10.js geladen");
+  console.log("[WAR DESK] map-v11.10.js v11.12 geladen (OpenFreeMap tiles)");
 })();

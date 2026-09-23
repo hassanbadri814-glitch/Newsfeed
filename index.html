@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="application-name" content="WAR DESK">
-<title>WAR DESK v14.7</title>
+<title>WAR DESK v14.10</title>
 
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="manifest" href="manifest.json">
@@ -61,7 +61,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 
-<link rel="stylesheet" href="styles.css?v=14.7">
+<link rel="stylesheet" href="styles.css?v=14.9">
 
 <style>
 html[data-font-size="small"]  { font-size: 14px; }
@@ -296,7 +296,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       </div>
       <div class="brand-text">
         <span class="name">WAR DESK</span>
-        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.7</span></span>
+        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.10</span></span>
       </div>
     </div>
     <div class="header-stats">
@@ -565,7 +565,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
 
     <div class="sheet-section">
       <div class="sheet-about">
-        WAR DESK <span class="version" id="appVersionMenu">v14.7</span><br>
+        WAR DESK <span class="version" id="appVersionMenu">v14.10</span><br>
         Live nieuws + IPTV + Kaart (Midden-Oosten) + VOD
       </div>
     </div>
@@ -838,22 +838,24 @@ document.addEventListener("DOMContentLoaded", function(){
 
 // ============================================================
 // FIX v14.7: Inline menu-handler VERWIJDERD.
-// app-v12.js regelt nu het openen/sluiten van het menu.
+// FIX v14.8: NewsAPI.init() wordt alleen door index.html hieronder aangeroepen.
+// FIX v14.9: styles.css versie verhoogd (Fase 3B — GPU-optimalisatie).
+// FIX v14.10: vod-v24.js versie verhoogd (Fase 3C — VOD polling optimalisatie).
 // ============================================================
 </script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>
 
-<script src="config.js?v=14.7" defer></script>
-<script src="store.js?v=14.7" defer></script>
-<script src="news-v27.js?v=14.7" defer></script>
-<script src="app-v12.js?v=14.7" defer></script>
-<script src="persist-v4.js?v=14.7" defer></script>
-<script src="refresh-v12.js?v=14.7" defer></script>
-<script src="iptv-v8.js?v=14.7" defer></script>
-<script src="map-v11.10.js?v=14.7" defer></script>
-<script src="vod-v24.js?v=14.7" defer></script>
+<script src="config.js?v=14.8" defer></script>
+<script src="store.js?v=14.8" defer></script>
+<script src="news-v27.js?v=14.8" defer></script>
+<script src="app-v12.js?v=14.8" defer></script>
+<script src="persist-v4.js?v=14.8" defer></script>
+<script src="refresh-v12.js?v=14.8" defer></script>
+<script src="iptv-v8.js?v=14.8" defer></script>
+<script src="map-v11.10.js?v=14.8" defer></script>
+<script src="vod-v24.js?v=14.9" defer></script>
 
 <script>
 (function(){

@@ -1,5 +1,6 @@
 /* ============================================================
-   WAR DESK v1.0 — Reactive State Store (GEEN modules)
+   WAR DESK v1.1 — Reactive State Store
+   - FIX v1.1: wdLog in plaats van console.log
    ============================================================ */
 
 (function(){
@@ -13,16 +14,14 @@
         if (target[key] === value) return true;
         target[key] = value;
         
-        // Trigger specifieke listeners
         if (listeners[key]) {
           listeners[key].forEach(function(fn) { 
-            try { fn(value); } catch(e) { console.error("[Store] listener error:", e); }
+            try { fn(value); } catch(e) { wdLog.error("[Store] listener error:", e); }
           });
         }
-        // Trigger algemene listeners
         if (listeners['*']) {
           listeners['*'].forEach(function(fn) { 
-            try { fn(key, value); } catch(e) { console.error("[Store] listener error:", e); }
+            try { fn(key, value); } catch(e) { wdLog.error("[Store] listener error:", e); }
           });
         }
         return true;
@@ -42,7 +41,6 @@
     };
   };
 
-  // Maak de store aan
   var appStore = createStore({
     items: [],
     currentCat: "all",
@@ -71,9 +69,8 @@
     translationPending: {}
   });
 
-  // DE BRUG: maak beschikbaar voor oude scripts
   window.appStore = appStore;
-  window.State = appStore.state; // Backward compatibility!
+  window.State = appStore.state;
 
-  console.log("[WAR DESK] store.js geladen");
+  wdLog.info("[WAR DESK] store.js v1.1 geladen");
 })();

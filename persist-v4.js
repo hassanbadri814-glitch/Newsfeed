@@ -1,42 +1,35 @@
 /* ============================================================
-   WAR DESK v4.0 — State persistentie
-   - v4: Start altijd op Nieuws (geen tab-herstel meer)
-   - VALID_CATS uitgebreid met maroc + vs
+   WAR DESK v4.3 — State persistentie
+   - Start altijd op Nieuws (geen tab-herstel)
+   - FIX v4.1: wdLog
+   - FIX v4.2: WDStorage
+   - FIX v4.3: dead code weg (B8) + currentSearch bewaren (B9)
    ============================================================ */
 
 (function(){
   "use strict";
 
-  var KEY = "wardesk_ui_state_v1";
-  var VIEW_KEY = "wardesk_active_view_v1";
   var VALID_CATS = ["all","war","mideast","europe","nl","maroc","vs","sport","favorites"];
   var VALID_SORTS = ["importance","newest"];
   var VALID_VIEWS = ["cards","list"];
 
   function save(){
     try{
-      if(!window.State) return;
-      localStorage.setItem(KEY, JSON.stringify({
+      if(!window.State || !window.WDStorage) return;
+      WDStorage.setJSON("ui_state", {
         cat: State.currentCat,
         sort: State.currentSort,
-        view: State.viewMode
-      }));
+        view: State.viewMode,
+        search: State.currentSearch || ""
+      });
     }catch(e){}
   }
 
   function load(){
     try{
-      var raw = localStorage.getItem(KEY);
-      return raw ? JSON.parse(raw) : null;
+      if(!window.WDStorage) return null;
+      return WDStorage.getJSON("ui_state", null);
     }catch(e){ return null; }
-  }
-
-  function saveView(viewName){
-    try{ localStorage.setItem(VIEW_KEY, viewName); }catch(e){}
-  }
-
-  function loadView(){
-    try{ return localStorage.getItem(VIEW_KEY) || "news"; }catch(e){ return "news"; }
   }
 
   function applyToUI(saved){
@@ -53,6 +46,12 @@
     var vc = $("viewCards"), vl = $("viewList");
     if(vc) vc.classList.toggle("active", (saved.view || "cards") === "cards");
     if(vl) vl.classList.toggle("active", (saved.view || "cards") === "list");
+
+    // B9: herstel zoekterm in UI
+    if(saved.search){
+      var sInput = $("searchInput");
+      if(sInput) sInput.value = saved.search;
+    }
   }
 
   function restore(){
@@ -61,13 +60,8 @@
     State.currentCat = VALID_CATS.indexOf(saved.cat) >= 0 ? saved.cat : "all";
     State.currentSort = VALID_SORTS.indexOf(saved.sort) >= 0 ? saved.sort : "importance";
     State.viewMode = VALID_VIEWS.indexOf(saved.view) >= 0 ? saved.view : "cards";
+    State.currentSearch = typeof saved.search === "string" ? saved.search : "";
     return true;
-  }
-
-  /* v4: restoreActiveView is niet meer in gebruik — app start altijd op Nieuws */
-  function restoreActiveView(){
-    /* Bewust leeg: we forceren altijd de Nieuws-tab bij opstarten */
-    return;
   }
 
   function initPersist(){
@@ -78,12 +72,6 @@
       var target = e.target.closest("[data-cat], #sortImportance, #sortNewest, #viewCards, #viewList");
       if(target){ setTimeout(save, 200); }
     }, true);
-
-    document.querySelectorAll(".bottom-tabs .tab").forEach(function(tab){
-      tab.addEventListener("click", function(){
-        if(tab.dataset.view) saveView(tab.dataset.view);
-      });
-    });
 
     window.addEventListener("pagehide", save);
     window.addEventListener("beforeunload", save);
@@ -102,8 +90,7 @@
         restore();
         applyToUI(load());
         try{ if(NewsAPI.render) NewsAPI.render(); }catch(e){}
-        /* v4: restoreActiveView() bewust NIET aangeroepen — altijd Nieuws */
-        console.log("[WAR DESK] State hersteld (start altijd op Nieuws)");
+        wdLog.info("[WAR DESK] State hersteld (start altijd op Nieuws)");
       }
       if(attempts > 200) clearInterval(waitInterval);
     }, 100);
@@ -112,5 +99,5 @@
   if(document.readyState !== "loading") initPersist();
   else document.addEventListener("DOMContentLoaded", initPersist);
 
-  console.log("[WAR DESK] persist-v4.js v4.0 geladen");
+  wdLog.info("[WAR DESK] persist-v4.js v4.3 geladen");
 })();

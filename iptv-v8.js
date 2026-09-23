@@ -1,8 +1,8 @@
 /* ============================================================
-   WAR DESK v8.0.4 — IPTV (High Performance)
-   - Chunked rendering voor 500+ kanalen
-   - FIX v8.0.3: wdLog + WDStorage
-   - FIX v8.0.4: bindUI try/catch (B10) + VLC heuristiek (B20)
+   WAR DESK v8.0.7 — IPTV (High Performance)
+   - FIX v8.0.5: A7 (HLS CDN vs browser)
+   - FIX v8.0.6: E4 (kwaliteitsgroep ranking), E7 (token check)
+   - FIX v8.0.7: N6 (veiligere logo fallback)
    ============================================================ */
 
 (function(){
@@ -10,7 +10,7 @@
 
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ wdLog.info.apply(null, ["[IPTV]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
-  LOG("v8.0.4 geladen");
+  LOG("v8.0.7 geladen");
 
   var IPTV = {
     server: "", user: "", pass: "",
@@ -62,7 +62,23 @@
     });
     var keys = Object.keys(matches);
     if(!keys.length) return null;
-    keys.sort(function(a, b){ return counts[b] - counts[a]; });
+
+    var qualityRank = { "8k": 4, "4k": 3, "fhd": 3, "hd": 2, "premium": 1 };
+    function rankOf(name){
+      var t = (name || "").toLowerCase();
+      var best = 0;
+      Object.keys(qualityRank).forEach(function(k){
+        if(t.indexOf(k) >= 0) best = Math.max(best, qualityRank[k]);
+      });
+      return best;
+    }
+    keys.sort(function(a, b){
+      var ra = rankOf(a);
+      var rb = rankOf(b);
+      if(ra !== rb) return rb - ra;
+      return counts[b] - counts[a];
+    });
+    LOG("Groep gekozen:", keys[0], "uit", keys.length, "NL groepen");
     return keys[0];
   }
 
@@ -459,9 +475,6 @@
     saveCredsNow();
   }
 
-  /* ============================================================
-     B10 FIX: bindUI try/catch — één falende listener blokkeert niet de rest
-     ============================================================ */
   function bindUI(){
     try {
       LOG("bindUI start");
@@ -794,11 +807,10 @@
         var c = list[i];
         var color = groupColor(c.group, c.name);
         var initial = (c.name || "?").charAt(0).toUpperCase();
-        var logoHtml;
-        if(c.logo){
-          logoHtml = '<img src="' + esc(c.logo) + '" loading="lazy" alt="" data-initial="' + esc(initial) + '" onerror="this.replaceWith(document.createTextNode(this.dataset.initial))">';
-        } else {
-          logoHtml = esc(initial);
+        var hasLogo = !!c.logo;
+        var logoHtml = '<span class="iptv-ch-initial" style="display:' + (hasLogo ? 'none' : 'grid') + '">' + esc(initial) + '</span>';
+        if(hasLogo){
+          logoHtml += '<img src="' + esc(c.logo) + '" loading="lazy" alt="" onerror="this.style.display=\'none\'; var p=this.previousElementSibling; if(p) p.style.display=\'grid\'; return false;">';
         }
         var workingDot = isWorking(c) ? '<span class="iptv-ch-working" title="Recent werkend"></span>' : '';
         var html = '<button class="iptv-ch" data-idx="' + i + '" style="--ch-color:' + color + '">';
@@ -980,7 +992,10 @@
           document.head.appendChild(s);
         });
       }
-      return tryLoad(0);
+      return tryLoad(0).then(function(result){
+        if (!result) LOG("⚠️ Alle HLS.js CDNs faalden");
+        return result;
+      });
     })();
 
     return IPTV.hlsPromise;
@@ -1013,9 +1028,6 @@
     }
   }
 
-  /* ============================================================
-     B20 FIX: vlcDidHide heuristiek — 3.5s i.p.v. 2s
-     ============================================================ */
   document.addEventListener("visibilitychange", function(){
     if(document.hidden){
       saveCredsImmediate();
@@ -1080,6 +1092,7 @@
 
     var markAndUpdate = function(){
       if(myToken !== IPTV._playToken) return;
+      if(IPTV.currentChannel && IPTV.currentChannel.id !== ch.id) return;
       markWorking(ch);
       var btns = document.querySelectorAll(".iptv-ch");
       for(var i = 0; i < btns.length; i++){
@@ -1147,6 +1160,10 @@
               if(window.showToast) window.showToast("Streamfout: " + data.details);
             }
           });
+        } else if(!ok){
+          if(spinner) spinner.classList.remove("show");
+          if(status) status.textContent = "Kon HLS.js niet laden — check verbinding";
+          if(window.showToast) window.showToast("Kon HLS.js niet laden. Controleer je verbinding.");
         } else {
           if(spinner) spinner.classList.remove("show");
           if(status) status.textContent = "HLS niet ondersteund. Gebruik VLC.";
@@ -1219,5 +1236,5 @@
   else document.addEventListener("DOMContentLoaded", function(){ setTimeout(start, 200); });
   window.addEventListener("load", function(){ setTimeout(start, 500); });
 
-  wdLog.info("[WAR DESK] iptv-v8.js v8.0.4 geladen");
+  wdLog.info("[WAR DESK] iptv-v8.js v8.0.7 geladen");
 })();

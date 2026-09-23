@@ -1,19 +1,19 @@
 /* ============================================================
-   WAR DESK v27.4 — Nieuws Logica
-   - FIX v27.3: wdLog + WDStorage
-   - FIX v27.4: dead code weg (B7), tag-versie fix (B12), state fallback (B5)
+   WAR DESK v27.6 — Nieuws Logica
+   - FIX v27.5: A1 scroll-jump, A5 translation limiet, A6 quota
+   - FIX v27.6: C1 quota prune, C2 score refresh, C3 health load, C4 tags sync
    ============================================================ */
 
 (function(){
   "use strict";
 
-  window.__newsVersion = "v27.4";
+  window.__newsVersion = "v27.6";
   const MYMEMORY_EMAIL = "";
   const $ = (id) => document.getElementById(id);
 
   const state = window.appStore ? window.appStore.state : window.State;
   if (!state) {
-    try { console.error("[WAR DESK] news-v27.js: State ontbreekt — kan niet starten"); } catch(e){}
+    try { console.error("[WAR DESK] news-v27.js: State ontbreekt — kan niet starten"); }catch(e){}
     return;
   }
 
@@ -50,6 +50,28 @@
       }
     });
   }, { rootMargin: '200px 0px', threshold: 0.01 });
+
+  // ==================== A5: LRU limiet voor translations ====================
+  const TRANSLATION_MAX = 500;
+  function pruneTranslations() {
+    const keys = Object.keys(state.translations || {});
+    if (keys.length <= TRANSLATION_MAX) return;
+    const toRemove = keys.slice(0, 200);
+    toRemove.forEach(k => { try{ delete state.translations[k]; }catch(e){} });
+    wdLog.info("[NEWS] Translations gepruned: " + toRemove.length + " verwijderd");
+  }
+
+  // ==================== A6 + C1: Quota-monitoring ====================
+  async function checkStorageQuota() {
+    try {
+      if (!navigator.storage || !navigator.storage.estimate) return { ok: true, pct: 0 };
+      const est = await navigator.storage.estimate();
+      const usage = est.usage || 0;
+      const quota = est.quota || 0;
+      const pct = quota > 0 ? usage / quota : 0;
+      return { ok: pct < 0.85, pct: pct, usage: usage, quota: quota };
+    } catch(e) { return { ok: true, pct: 0 }; }
+  }
 
   // ==================== INDEXEDDB ====================
   const NewsDB = (function(){
@@ -128,15 +150,39 @@
         }catch(e){ res([]); }
       });
     }
+
+    async function pruneToQuota() {
+      if (!db) return 0;
+      const quota = await checkStorageQuota();
+      if (quota.ok) return 0;
+      const all = await getAll("items");
+      if (!all.length) return 0;
+      all.sort((a, b) => tm(a.date) - tm(b.date));
+      const toRemove = Math.floor(all.length * 0.3);
+      return new Promise(res => {
+        try{
+          const tx = db.transaction("items", "readwrite");
+          const store = tx.objectStore("items");
+          for (let i = 0; i < toRemove; i++) {
+            store.delete(all[i].link);
+          }
+          tx.oncomplete = () => {
+            wdLog.warn("[NEWS] Quota vol — " + toRemove + " oudste items verwijderd");
+            res(toRemove);
+          };
+          tx.onerror = () => res(0);
+        }catch(e){ res(0); }
+      });
+    }
+
     async function saveItems(items){
       if(!db) return;
+      await pruneToQuota();
       const max = window.CONFIG?.maxCacheItems ?? 3000;
       const topItems = items.slice(0, max);
-
       const wantedLinks = new Set(topItems.map(it => it.link).filter(Boolean));
       const existingKeys = await getAllKeys("items");
       const existingSet = new Set(existingKeys);
-
       return new Promise(res => {
         try{
           const tx = db.transaction("items", "readwrite");
@@ -159,7 +205,6 @@
       });
     }
 
-    // B12: herbereken tags voor alle items zonder ze te wissen
     async function retagAll(extractFn){
       if(!db) return 0;
       const all = await getAll("items");
@@ -206,8 +251,9 @@
         }catch(e){ res(false); }
       });
     }
+
     return {
-      open, put, del, get, getAll, getAllKeys, saveItems, retagAll, pruneOldReads,
+      open, put, del, get, getAll, getAllKeys, saveItems, retagAll, pruneOldReads, pruneToQuota,
       loadItems: () => getAll("items").then(items => items.sort((a,b) => tm(b.date) - tm(a.date))),
       saveRead: (link) => put("meta", {k:"read_" + link, v: Date.now()}),
       loadReadMap: () => getAll("meta").then(all => {
@@ -216,6 +262,7 @@
         return map;
       }),
       saveHealth: (health) => put("meta", {k:"health", v: health}),
+      loadHealth: () => get("meta", "health").then(rec => rec?.v || {}),
       saveTranslation: (key, value) => put("translations", {k: key, v: value, t: Date.now()}),
       loadTranslation: (key) => get("translations", key).then(rec => rec?.v || null),
       saveFavorite: (link) => put("meta", {k:"fav_" + link, v: Date.now()}),
@@ -288,6 +335,14 @@
     score += Math.max(0, 40 - ageMin / 2);
     return score;
   };
+
+  function refreshAllScores() {
+    if (!state.items || !state.items.length) return;
+    state.items.forEach(it => {
+      it._score = scoreArticle(it);
+    });
+    wdLog.info("[NEWS] Scores herberekend voor " + state.items.length + " items");
+  }
 
   const titleKey = (title) => (title || "").toLowerCase().replace(/[^\w\s]/g, "")
     .split(/\s+/).filter(w => w.length > 3)
@@ -508,6 +563,7 @@
     try {
       const translated = await fetchTranslation(item.title, item.lang);
       if(translated){
+        pruneTranslations();
         state.translations[key] = translated;
         NewsDB.saveTranslation(key, translated).catch(() => {});
         return translated;
@@ -650,6 +706,7 @@
 
     window.__wdDiagCount = 0;
     let lastProgressiveCount = 0;
+
     const progressiveTimer = setInterval(() => {
       if(session !== state.loadSession || state._loadFeedsDone){
         clearInterval(progressiveTimer);
@@ -662,7 +719,7 @@
       state.items = merged;
       const itemsEl = $("statItems");
       if(itemsEl) itemsEl.textContent = state.items.length;
-      renderNews();
+      if (window.scrollY < 300) renderNews();
     }, 1000);
 
     state._loadFeedsDone = false;
@@ -1022,8 +1079,8 @@
   async function initNews(){
     await NewsDB.open();
     NewsDB.pruneOldReads().catch(() => {});
+    NewsDB.pruneToQuota().catch(() => {});
 
-    // B12: bij tag-versie wijziging → herbereken tags, niet wissen
     try{
       var storedTagsVersion = window.WDStorage ? WDStorage.get("tags_version") : null;
       if(storedTagsVersion !== window.TAGS_VERSION){
@@ -1040,8 +1097,15 @@
     try {
       state.notificationsEnabled = (window.WDStorage ? WDStorage.get("notifications") : null) === "1";
     }catch(e){}
-    state.health = {};
+
+    try {
+      state.health = await NewsDB.loadHealth();
+      wdLog.info("[WAR DESK] Health geladen: " + Object.keys(state.health).length + " feeds");
+    } catch(e) {
+      state.health = {};
+    }
     state.disabled = {};
+
     state.readMap = await NewsDB.loadReadMap();
     state.favorites = await NewsDB.loadFavorites();
     updateFavoritesCount();
@@ -1052,6 +1116,7 @@
     const cached = await NewsDB.loadItems();
     if(cached.length){
       state.items = ensureTags(cached);
+      refreshAllScores();
       const itemsEl = $("statItems");
       if(itemsEl) itemsEl.textContent = state.items.length;
       renderNews();
@@ -1090,11 +1155,13 @@
 
   setInterval(() => {
     if(document.hidden) return;
-    if(state.translations && Object.keys(state.translations).length > 1000){
-      state.translations = {};
-      wdLog.info('[NEWS] Translation cache cleared');
-    }
-  }, 3600000);
+    pruneTranslations();
+  }, 600000);
+
+  setInterval(() => {
+    if(document.hidden) return;
+    refreshAllScores();
+  }, 600000);
 
   window.NewsAPI = {
     init: initNews,

@@ -1,14 +1,12 @@
 /* ============================================================
-   WAR DESK v14.16 — Configuratie
+   WAR DESK v14.21 — Configuratie
    - Centrale APP_VERSION
-   - Centrale wdLog functie (uniform, met buffer + listener)
-   - FIX v14.16: geen dubbele wdLog definities meer (B1)
+   - Centrale wdLog functie
    ============================================================ */
 
-window.APP_VERSION = "v14.16";
+window.APP_VERSION = "v14.21";
 window.TAGS_VERSION = "4";
 
-/* ===== Debug status ===== */
 if (typeof window.WD_DEBUG === "undefined") {
   window.WD_DEBUG = (function(){
     try {
@@ -19,11 +17,9 @@ if (typeof window.WD_DEBUG === "undefined") {
   })();
 }
 
-/* ===== Log buffer + listener patroon ===== */
 window.__wdLogBuffer = window.__wdLogBuffer || [];
 window.__wdLogListener = window.__wdLogListener || null;
 
-/* ===== Uniforme wdLog ===== */
 window.wdLog = {
   info: function(){
     var args = Array.prototype.slice.call(arguments);
@@ -57,7 +53,6 @@ window.wdLog = {
   }
 };
 
-/* ===== CONFIG ===== */
 window.CONFIG = {
   perFeed: 12,
   autoRefreshMs: 0,
@@ -74,9 +69,7 @@ window.CONFIG = {
   detailCacheMax: 500,
   detailCacheTTL: 7200000,
 
-  get stadiaKey() {
-    return "";
-  },
+  stadiaKey: "",
 
   iptvMaxRecent: 10,
   iptvChannelsDisplayMax: 500,
@@ -120,8 +113,13 @@ window.HIGH_PRIORITY = [
 
 window.KEYWORDS_HIGH = [
   "killed","dead","deaths","massacre","nuclear","invasion",
-  "airstrike","ceasefire","assassinated","declared war"
+  "airstrike","ceasefire","assassinated","declared war",
+  "explosion","bombing","missile","rocket attack","shooting",
+  "hostage","emergency","evacuation","collapse","crash",
+  "state of emergency","martial law","coup","terrorist",
+  "earthquake","tsunami","pandemic","outbreak","cyberattack"
 ];
+
 window.KEYWORDS_MED = [
   "explosion","missile","bombing","hostage","shooting",
   "crash","collapse","wounded","injured"

@@ -6,7 +6,7 @@
    - FIX v2.1: precache alleen essentieel, versie gelijk aan app (B6+B18)
    ============================================================ */
 
-const CACHE_NAME = 'wardesk-v14.17';
+const CACHE_NAME = 'wardesk-v14.18';
 const PRECACHE_ASSETS = [
   './',
   './index.html',

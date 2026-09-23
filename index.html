@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: *; connect-src 'self' *; media-src 'self' blob: *; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#070c16" id="themeColorMeta">
 <meta name="description" content="WAR DESK — Live monitor voor wereldwijde conflicten, nieuws, IPTV en VOD.">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="WAR DESK">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="application-name" content="WAR DESK">
-<title>WAR DESK v14.17</title>
+<title>WAR DESK v14.21</title>
 
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="manifest" href="manifest.json">
@@ -21,7 +22,6 @@
 <link rel="apple-touch-icon" sizes="144x144" href="./icons/icon-144.png">
 
 <script>
-// ===== Vroege setup: theme + debug buffer =====
 (function(){
   try {
     var t = localStorage.getItem("wardesk_theme");
@@ -42,6 +42,18 @@
       document.documentElement.setAttribute("data-oled", "true");
     }
   } catch(e) {}
+
+  try {
+    var mq = matchMedia("(prefers-color-scheme:light)");
+    mq.addEventListener("change", function(e){
+      try {
+        if (!localStorage.getItem("wardesk_theme")) {
+          document.documentElement.classList.toggle("light", e.matches);
+          if (document.body) document.body.classList.toggle("light", e.matches);
+        }
+      } catch(err){}
+    });
+  } catch(e){}
 
   window.__wdLogBuffer = window.__wdLogBuffer || [];
   window.__wdLogListener = window.__wdLogListener || null;
@@ -96,7 +108,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 
-<link rel="stylesheet" href="styles.css?v=14.16">
+<link rel="stylesheet" href="styles.css?v=14.21">
 
 <style>
 html[data-font-size="small"]  { font-size: 14px; }
@@ -197,14 +209,14 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       </div>
       <div class="brand-text">
         <span class="name">WAR DESK</span>
-        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.17</span></span>
+        <span class="tag">LIVE MONITOR · <span class="version-badge" id="appVersion">v14.21</span></span>
       </div>
     </div>
     <div class="header-stats">
-      <div class="hstat"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
-      <div class="hstat amber"><span class="hstat-label">Bronnen</span><span class="hstat-value" id="statSources">0/0</span></div>
-      <div class="hstat coral"><span class="hstat-label">Events</span><span class="hstat-value" id="statEvents">0</span></div>
-      <div class="hstat green"><span class="hstat-label">Items</span><span class="hstat-value" id="statItems">0</span></div>
+      <div class="hstat hstat-clock"><span class="hstat-label">Klok</span><span class="hstat-value" id="clock">--:--:--</span></div>
+      <div class="hstat amber hstat-sources"><span class="hstat-label">Bronnen</span><span class="hstat-value" id="statSources">0/0</span></div>
+      <div class="hstat coral hstat-events"><span class="hstat-label">Events</span><span class="hstat-value" id="statEvents">0</span></div>
+      <div class="hstat green hstat-items"><span class="hstat-label">Items</span><span class="hstat-value" id="statItems">0</span></div>
     </div>
     <div class="header-actions">
       <button class="btn-mini" id="btnTheme" aria-label="Thema wisselen">◐</button>
@@ -413,7 +425,7 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
       </div>
     </div>
     <div class="sheet-section">
-      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v14.17</span><br>Live nieuws + IPTV + Kaart (Midden-Oosten) + VOD</div>
+      <div class="sheet-about">WAR DESK <span class="version" id="appVersionMenu">v14.21</span><br>Live nieuws + IPTV + Kaart (Midden-Oosten) + VOD</div>
     </div>
   </div>
 </div>
@@ -577,10 +589,8 @@ svg { max-width:100%; max-height:100%; flex-shrink:0; }
   });
 })();
 
-// ===== Debug-panel: buffer + listener =====
 (function(){
   "use strict";
-
   var DEBUG = window.WD_DEBUG;
   window.__wdLog = [];
   var logEl = null, panel = null;
@@ -690,16 +700,17 @@ document.addEventListener("DOMContentLoaded", function(){
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.20/leaflet-maplibre-gl.js" defer></script>
 
-<script src="storage.js?v=14.16" defer></script>
-<script src="config.js?v=14.16" defer></script>
-<script src="store.js?v=14.16" defer></script>
-<script src="news-v27.js?v=14.16" defer></script>
-<script src="app-v12.js?v=14.16" defer></script>
-<script src="persist-v4.js?v=14.16" defer></script>
-<script src="refresh-v12.js?v=14.16" defer></script>
-<script src="iptv-v8.js?v=14.17" defer></script>
-<script src="map-v11.10.js?v=14.17" defer></script>
-<script src="vod-v24.js?v=14.16" defer></script>
+<script src="storage.js?v=14.21" defer></script>
+<script src="config.js?v=14.21" defer></script>
+<script src="utils.js?v=14.21" defer></script>
+<script src="store.js?v=14.21" defer></script>
+<script src="news-v27.js?v=14.21" defer></script>
+<script src="app-v12.js?v=14.21" defer></script>
+<script src="persist-v4.js?v=14.21" defer></script>
+<script src="refresh-v12.js?v=14.21" defer></script>
+<script src="iptv-v8.js?v=14.21" defer></script>
+<script src="map-v11.10.js?v=14.21" defer></script>
+<script src="vod-v24.js?v=14.21" defer></script>
 
 <script>
 (function(){

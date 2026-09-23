@@ -1,8 +1,9 @@
 /* ============================================================
-   WAR DESK v24.2 — VOD (Robust init + Click Fix + Back Button Fix)
+   WAR DESK v24.3 — VOD (Robust init + Click Fix + Back Button Fix)
    - Meerdere manieren om te initialiseren (tab-click, observer, polling)
    - Chunked rendering voor grote catalogi
    - Terug-knop sluit modal, niet de app
+   - FASE 3C: polling interval 500ms → 1000ms, max 60 pogingen (was 600)
    ============================================================ */
 
 (function(){
@@ -10,7 +11,7 @@
 
   var $ = function(id){ return document.getElementById(id); };
   var LOG = function(){ try{ console.log.apply(console, ["[VOD]"].concat(Array.prototype.slice.call(arguments))); }catch(e){} };
-  LOG("v24.2 geladen");
+  LOG("v24.3 geladen");
 
   var CINEMETA_BASE = "https://v3-cinemeta.strem.io";
 
@@ -587,6 +588,7 @@
 
   /* ============================================================
      ROBUST INIT: 4 manieren om VOD te initialiseren
+     FASE 3C: polling interval 1000ms (was 500ms), max 60 pogingen (was 600)
      ============================================================ */
   function setupVodWatcher() {
     var vodView = document.getElementById("viewVod");
@@ -628,8 +630,10 @@
       });
     });
 
-    // 3. Polling fallback
+    // 3. Polling fallback — FASE 3C: 1000ms interval, max 60 pogingen (1 min)
     var checkCount = 0;
+    var MAX_CHECKS = 60;
+    var POLL_INTERVAL_MS = 1000;
     var pollInterval = setInterval(function(){
       checkCount++;
       if (VOD._initialized) {
@@ -643,10 +647,11 @@
         clearInterval(pollInterval);
         return;
       }
-      if (checkCount > 600) {
+      if (checkCount >= MAX_CHECKS) {
+        LOG("⚠️ VOD polling timeout na " + MAX_CHECKS + " pogingen — gestopt");
         clearInterval(pollInterval);
       }
-    }, 500);
+    }, POLL_INTERVAL_MS);
 
     // 4. Directe check (als view al zichtbaar is)
     if (!vodView.hidden && getComputedStyle(vodView).display !== "none") {
@@ -663,5 +668,5 @@
     });
   }
 
-  console.log("[WAR DESK] vod-v24.js v24.2 geladen");
+  console.log("[WAR DESK] vod-v24.js v24.3 geladen");
 })();

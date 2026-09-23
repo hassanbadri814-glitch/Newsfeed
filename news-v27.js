@@ -1,17 +1,18 @@
 /* ============================================================
-   WAR DESK v27.0 — Nieuws Logica (Ultimate Performance)
+   WAR DESK v27.1 — Nieuws Logica (Ultimate Performance)
    - Intersection Observer voor lazy image loading
    - Modern JavaScript syntax (optional chaining, nullish coalescing)
    - Memory management & cleanup
    - Geïntegreerd met window.appStore (Reactive)
    - Behoudt window.NewsAPI voor compatibiliteit
+   - FIX v27.1: incrementele IndexedDB save + timers pauzeren op hidden
    ============================================================ */
 
 (function(){
   "use strict";
 
-  window.__newsVersion = "v27.0";
-  const MYMEMORY_EMAIL = "hassanbadri814@gmail.com";
+  window.__newsVersion = "v27.1";
+  const MYMEMORY_EMAIL = ""; // Fase 2: e-mail verwijderd. Wordt later vervangen door Worker.
   const $ = (id) => document.getElementById(id);
 
   // Gebruik de store (via de Brug)
@@ -122,26 +123,63 @@
         }catch(e){ res([]); }
       });
     }
-    function saveItems(items){
-      if(!db) return Promise.resolve();
+    // NIEUW: alleen keys ophalen (sneller dan getAll voor grote stores)
+    function getAllKeys(store){
+      if(!db) return Promise.resolve([]);
+      return new Promise(res => {
+        try{
+          const tx = db.transaction(store, "readonly");
+          const r = tx.objectStore(store).getAllKeys();
+          r.onsuccess = () => res(r.result || []);
+          r.onerror = () => res([]);
+        }catch(e){ res([]); }
+      });
+    }
+
+    // FASE 3: Incrementele save — geen clear() + herinsert meer
+    async function saveItems(items){
+      if(!db) return;
+      const max = window.CONFIG?.maxCacheItems ?? 3000;
+      const topItems = items.slice(0, max);
+
+      // Welke links moeten in de DB staan?
+      const wantedLinks = new Set(
+        topItems.map(it => it.link).filter(Boolean)
+      );
+
+      // Haal bestaande keys op
+      const existingKeys = await getAllKeys("items");
+      const existingSet = new Set(existingKeys);
+
       return new Promise(res => {
         try{
           const tx = db.transaction("items", "readwrite");
           const store = tx.objectStore("items");
-          store.clear();
-          const max = window.CONFIG?.maxCacheItems ?? 3000;
-          items.slice(0, max).forEach(it => {
-            store.put({
-              link: it.link, title: it.title, desc: it.desc, img: it.img,
-              date: it.date, source: it.source, cat: it.cat, lang: it.lang,
-              sources: it.sources, tags: it.tags || []
-            });
-          });
+
+          // Verwijder items die niet meer in topItems zitten
+          for(const key of existingKeys){
+            if(!wantedLinks.has(key)){
+              store.delete(key);
+            }
+          }
+
+          // Voeg alleen NIEUWE items toe (bestaande overslaan = sneller)
+          for(const it of topItems){
+            if(!existingSet.has(it.link)){
+              store.put({
+                link: it.link, title: it.title, desc: it.desc, img: it.img,
+                date: it.date, source: it.source, cat: it.cat, lang: it.lang,
+                sources: it.sources, tags: it.tags || []
+              });
+            }
+          }
+
           tx.oncomplete = () => res();
           tx.onerror = () => res();
         }catch(e){ res(); }
       });
     }
+
     function pruneOldReads(){
       if(!db) return Promise.resolve(false);
       return new Promise(res => {
@@ -167,7 +205,7 @@
       });
     }
     return {
-      open, put, del, get, getAll, saveItems, pruneOldReads,
+      open, put, del, get, getAll, getAllKeys, saveItems, pruneOldReads,
       loadItems: () => getAll("items").then(items => items.sort((a,b) => tm(b.date) - tm(a.date))),
       saveRead: (link) => put("meta", {k:"read_" + link, v: Date.now()}),
       loadReadMap: () => getAll("meta").then(all => {
@@ -428,7 +466,7 @@
     const cleanText = text.replace(/\s+/g, " ").trim().slice(0, 500);
     if(!cleanText) return null;
     try {
-      const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=${encodeURIComponent(sourceLang || "en")}|nl&de=${encodeURIComponent(MYMEMORY_EMAIL)}`;
+      const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=${encodeURIComponent(sourceLang || "en")}|nl` + (MYMEMORY_EMAIL ? `&de=${encodeURIComponent(MYMEMORY_EMAIL)}` : "");
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 8000);
       const r = await fetch(mmUrl, { signal: ctrl.signal });
@@ -618,7 +656,11 @@
     window.__wdDiagCount = 0;
     let lastProgressiveCount = 0;
     const progressiveTimer = setInterval(() => {
-      if(session !== state.loadSession){ clearInterval(progressiveTimer); return; }
+      // FASE 3: robuustere cleanup
+      if(session !== state.loadSession || state._loadFeedsDone){
+        clearInterval(progressiveTimer);
+        return;
+      }
       if(collected.length <= lastProgressiveCount) return;
       lastProgressiveCount = collected.length;
       const merged = dedupe([...collected, ...itemsAtStart]);
@@ -628,6 +670,9 @@
       if(itemsEl) itemsEl.textContent = state.items.length;
       renderNews();
     }, 1000);
+
+    // Zorg dat we de timer altijd opruimen, ook bij een crash
+    state._loadFeedsDone = false;
 
     async function processOne(f){
       if(session !== state.loadSession) return;
@@ -681,18 +726,23 @@
       }
     }
 
-    const queue = [...active];
-    const workers = [];
-    for(let i = 0; i < CONFIG.parallelWorkers; i++){
-      workers.push((async () => {
-        while(queue.length && session === state.loadSession){
-          const f = queue.shift();
-          if(f) await processOne(f);
-        }
-      })());
+    try {
+      const queue = [...active];
+      const workers = [];
+      for(let i = 0; i < CONFIG.parallelWorkers; i++){
+        workers.push((async () => {
+          while(queue.length && session === state.loadSession){
+            const f = queue.shift();
+            if(f) await processOne(f);
+          }
+        })());
+      }
+      await Promise.all(workers);
+    } finally {
+      state._loadFeedsDone = true;
+      clearInterval(progressiveTimer);
     }
-    await Promise.all(workers);
-    clearInterval(progressiveTimer);
+
     if(session !== state.loadSession) return;
     state.items = dedupe([...collected, ...itemsAtStart]);
     if(state.items.length < minKeep) state.items = [...itemsAtStart];
@@ -700,6 +750,8 @@
     if(srcEl) srcEl.textContent = `${state.loadedSources}/${state.totalSources}`;
     const itemsEl = $("statItems");
     if(itemsEl) itemsEl.textContent = state.items.length;
+
+    // FASE 3: incrementele save (geen clear + herinsert meer)
     NewsDB.saveItems(state.items);
     NewsDB.saveHealth(state.health);
 
@@ -981,9 +1033,10 @@
 
     try{
       if(localStorage.getItem("wardesk_tags_version") !== window.TAGS_VERSION){
+        // FASE 3: bij tag-versie wijziging alleen items wissen, niet hele DB
         await NewsDB.saveItems([]);
         localStorage.setItem("wardesk_tags_version", window.TAGS_VERSION);
-        console.log("[WAR DESK] Tags-versie gewijzigd — cache geleegd");
+        console.log("[WAR DESK] Tags-versie gewijzigd — item-cache geleegd");
       }
     }catch(e){}
 
@@ -1037,8 +1090,9 @@
     }
   };
 
-  // MEMORY MANAGEMENT: Cleanup translation cache na 1 uur
+  // ==================== FASE 3: TRANSLATION CACHE PAUZEERT OP ACHTERGROND ====================
   setInterval(() => {
+    if(document.hidden) return; // niet draaien als tab verborgen
     if(state.translations && Object.keys(state.translations).length > 1000){
       state.translations = {};
       console.log('[NEWS] Translation cache cleared');

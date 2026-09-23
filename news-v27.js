@@ -1,24 +1,22 @@
 /* ============================================================
-   WAR DESK v27.1 — Nieuws Logica (Ultimate Performance)
-   - Intersection Observer voor lazy image loading
-   - Modern JavaScript syntax (optional chaining, nullish coalescing)
-   - Memory management & cleanup
-   - Geïntegreerd met window.appStore (Reactive)
-   - Behoudt window.NewsAPI voor compatibiliteit
-   - FIX v27.1: incrementele IndexedDB save + timers pauzeren op hidden
+   WAR DESK v27.4 — Nieuws Logica
+   - FIX v27.3: wdLog + WDStorage
+   - FIX v27.4: dead code weg (B7), tag-versie fix (B12), state fallback (B5)
    ============================================================ */
 
 (function(){
   "use strict";
 
-  window.__newsVersion = "v27.1";
-  const MYMEMORY_EMAIL = ""; // Fase 2: e-mail verwijderd. Wordt later vervangen door Worker.
+  window.__newsVersion = "v27.4";
+  const MYMEMORY_EMAIL = "";
   const $ = (id) => document.getElementById(id);
 
-  // Gebruik de store (via de Brug)
   const state = window.appStore ? window.appStore.state : window.State;
+  if (!state) {
+    try { console.error("[WAR DESK] news-v27.js: State ontbreekt — kan niet starten"); } catch(e){}
+    return;
+  }
 
-  // ==================== HULPFUNCTIES (Modernized) ====================
   const tm = (d) => { const x = new Date(d); return isNaN(x) ? 0 : x.getTime(); };
   const ago = (d) => {
     const t = tm(d); if(!t) return "";
@@ -40,7 +38,6 @@
     }catch(e){}
   };
 
-  // ==================== INTERSECTION OBSERVER (Lazy Loading) ====================
   const imageObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -52,10 +49,7 @@
         observer.unobserve(img);
       }
     });
-  }, {
-    rootMargin: '200px 0px',
-    threshold: 0.01
-  });
+  }, { rootMargin: '200px 0px', threshold: 0.01 });
 
   // ==================== INDEXEDDB ====================
   const NewsDB = (function(){
@@ -123,7 +117,6 @@
         }catch(e){ res([]); }
       });
     }
-    // NIEUW: alleen keys ophalen (sneller dan getAll voor grote stores)
     function getAllKeys(store){
       if(!db) return Promise.resolve([]);
       return new Promise(res => {
@@ -135,19 +128,12 @@
         }catch(e){ res([]); }
       });
     }
-
-    // FASE 3: Incrementele save — geen clear() + herinsert meer
     async function saveItems(items){
       if(!db) return;
       const max = window.CONFIG?.maxCacheItems ?? 3000;
       const topItems = items.slice(0, max);
 
-      // Welke links moeten in de DB staan?
-      const wantedLinks = new Set(
-        topItems.map(it => it.link).filter(Boolean)
-      );
-
-      // Haal bestaande keys op
+      const wantedLinks = new Set(topItems.map(it => it.link).filter(Boolean));
       const existingKeys = await getAllKeys("items");
       const existingSet = new Set(existingKeys);
 
@@ -155,15 +141,9 @@
         try{
           const tx = db.transaction("items", "readwrite");
           const store = tx.objectStore("items");
-
-          // Verwijder items die niet meer in topItems zitten
           for(const key of existingKeys){
-            if(!wantedLinks.has(key)){
-              store.delete(key);
-            }
+            if(!wantedLinks.has(key)) store.delete(key);
           }
-
-          // Voeg alleen NIEUWE items toe (bestaande overslaan = sneller)
           for(const it of topItems){
             if(!existingSet.has(it.link)){
               store.put({
@@ -173,10 +153,32 @@
               });
             }
           }
-
           tx.oncomplete = () => res();
           tx.onerror = () => res();
         }catch(e){ res(); }
+      });
+    }
+
+    // B12: herbereken tags voor alle items zonder ze te wissen
+    async function retagAll(extractFn){
+      if(!db) return 0;
+      const all = await getAll("items");
+      if(!all.length) return 0;
+      return new Promise(res => {
+        try{
+          const tx = db.transaction("items", "readwrite");
+          const store = tx.objectStore("items");
+          let count = 0;
+          all.forEach(it => {
+            try{
+              it.tags = extractFn(it.title || "", it.desc || "", it.cat || "");
+              store.put(it);
+              count++;
+            }catch(e){}
+          });
+          tx.oncomplete = () => res(count);
+          tx.onerror = () => res(0);
+        }catch(e){ res(0); }
       });
     }
 
@@ -205,7 +207,7 @@
       });
     }
     return {
-      open, put, del, get, getAll, getAllKeys, saveItems, pruneOldReads,
+      open, put, del, get, getAll, getAllKeys, saveItems, retagAll, pruneOldReads,
       loadItems: () => getAll("items").then(items => items.sort((a,b) => tm(b.date) - tm(a.date))),
       saveRead: (link) => put("meta", {k:"read_" + link, v: Date.now()}),
       loadReadMap: () => getAll("meta").then(all => {
@@ -214,7 +216,6 @@
         return map;
       }),
       saveHealth: (health) => put("meta", {k:"health", v: health}),
-      loadHealth: () => get("meta", "health").then(rec => rec?.v || {}),
       saveTranslation: (key, value) => put("translations", {k: key, v: value, t: Date.now()}),
       loadTranslation: (key) => get("translations", key).then(rec => rec?.v || null),
       saveFavorite: (link) => put("meta", {k:"fav_" + link, v: Date.now()}),
@@ -243,9 +244,7 @@
     const sportStrong = /\b(eredivisie|eerste divisie|knvb|johan cruijff schaal|champions league|europa league|conference league|wk voetbal|ek voetbal|formule 1|grand prix|motogp|tour de france|giro d'italia|vuelta|wimbledon|roland garros|us open tennis|australian open|olympische spelen|glory kickboxing|ufc|nba|nfl|nhl|mlb)\b/.test(t);
     const sportTeam = /\b(ajax|psv|feyenoord|az alkmaar|fc utrecht|fc twente|vitesse|sc heerenveen|sparta rotterdam|willem ii|go ahead eagles|pec zwolle|rkc waalwijk|fortuna sittard|excelsior|almere city|heracles|n\.e\.c\.|real madrid|barcelona|atletico madrid|manchester united|manchester city|liverpool|chelsea|arsenal|tottenham|juventus|inter milan|ac milan|bayern münchen|borussia dortmund|paris saint-germain|psg)\b/.test(t);
     const warBlock = /\b(airstrike|raketaanval|invasion|invasie|massacre|bloedbad|shelling|beschieting|offensief|oorlog|war)\b/.test(t);
-    if((sportStrong || sportTeam) && !warBlock && !tags.includes("sport")){
-      tags.push("sport");
-    }
+    if((sportStrong || sportTeam) && !warBlock && !tags.includes("sport")) tags.push("sport");
 
     const mideastContent = /\b(gaza|rafah|khan younis|hamas|hezbollah|idf|netanyahu|westelijke jordaanoever|palestijn|palestinian|israelisch|israeli|iran|irgc|tehran|khamenei|syrië|syria|damascus|assad|libanon|lebanon|beirut|jemen|yemen|houthi|irak|iraq|bagdad|saudi-arabië|riyadh|qatar|doha|aboe dhabi|dubai|jordanië|amman|jeruzalem|jerusalem|tel aviv|beiroet)\b/.test(t);
     if(mideastContent && !tags.includes("mideast")) tags.push("mideast");
@@ -466,7 +465,7 @@
     const cleanText = text.replace(/\s+/g, " ").trim().slice(0, 500);
     if(!cleanText) return null;
     try {
-      const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=${encodeURIComponent(sourceLang || "en")}|nl` + (MYMEMORY_EMAIL ? `&de=${encodeURIComponent(MYMEMORY_EMAIL)}` : "");
+      const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=${encodeURIComponent(sourceLang || "en")}|nl`;
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 8000);
       const r = await fetch(mmUrl, { signal: ctrl.signal });
@@ -554,10 +553,9 @@
   };
   window.__setTranslate = (enabled) => {
     state.translateEnabled = !!enabled;
-    try{ localStorage.setItem("wardesk_translate", enabled ? "1" : "0"); }catch(e){}
+    if(window.WDStorage) WDStorage.set("translate", enabled ? "1" : "0");
     const btn = $("toggleTranslate");
     if(btn) btn.classList.toggle("toggle-on", enabled);
-    state._lastRenderHash = "";
     renderNews();
     if(window.showToast) window.showToast(enabled ? "Vertaling aan" : "Vertaling uit");
     if(enabled){
@@ -579,10 +577,7 @@
       if(btnEl){ btnEl.classList.add("active"); btnEl.textContent = "★"; }
     }
     updateFavoritesCount();
-    if(state.currentCat === "favorites"){
-      state._lastRenderHash = "";
-      renderNews();
-    }
+    if(state.currentCat === "favorites") renderNews();
   };
   const updateFavoritesCount = () => {
     const el = $("favCount");
@@ -608,7 +603,7 @@
         return;
       }
       state.notificationsEnabled = true;
-      try{ localStorage.setItem("wardesk_notifications", "1"); }catch(e){}
+      if(window.WDStorage) WDStorage.set("notifications", "1");
       if(window.showToast) window.showToast("Breaking notificaties aan");
       try {
         new Notification("WAR DESK", {
@@ -620,7 +615,7 @@
       }catch(e){}
     } else {
       state.notificationsEnabled = false;
-      try{ localStorage.setItem("wardesk_notifications", "0"); }catch(e){}
+      if(window.WDStorage) WDStorage.set("notifications", "0");
       if(window.showToast) window.showToast("Notificaties uit");
     }
   };
@@ -635,7 +630,7 @@
         badge: "./icons/icon-96.png"
       });
       notif.onclick = () => { try { window.focus(); }catch(e){} notif.close(); };
-    }catch(e) { console.warn("[WAR DESK] notificatie fout:", e); }
+    }catch(e) { wdLog.warn("[WAR DESK] notificatie fout:", e); }
   };
 
   // ==================== LOAD ALL FEEDS ====================
@@ -656,14 +651,13 @@
     window.__wdDiagCount = 0;
     let lastProgressiveCount = 0;
     const progressiveTimer = setInterval(() => {
-      // FASE 3: robuustere cleanup
       if(session !== state.loadSession || state._loadFeedsDone){
         clearInterval(progressiveTimer);
         return;
       }
       if(collected.length <= lastProgressiveCount) return;
       lastProgressiveCount = collected.length;
-      const merged = dedupe([...collected, ...itemsAtStart]);
+      let merged = dedupe([...collected, ...itemsAtStart]);
       if(merged.length < minKeep) merged = [...itemsAtStart];
       state.items = merged;
       const itemsEl = $("statItems");
@@ -671,7 +665,6 @@
       renderNews();
     }, 1000);
 
-    // Zorg dat we de timer altijd opruimen, ook bij een crash
     state._loadFeedsDone = false;
 
     async function processOne(f){
@@ -703,10 +696,10 @@
             added++;
           }
         });
-        if(window.__wdDebug && window.__wdDiagCount < 5 && window.wdLog){
+        if(window.WD_DEBUG && window.__wdDiagCount < 5){
           window.__wdDiagCount++;
           const pTag = proxyIdx === 0 ? "p1" : ("p" + (proxyIdx + 1));
-          window.wdLog.info(`${f.n} [${shape}/${pTag}] items=${items.length} nieuw=${added}`);
+          wdLog.info(`${f.n} [${shape}/${pTag}] items=${items.length} nieuw=${added}`);
         }
         state.loadedSources++;
         if(state.health[f.n]) state.health[f.n].fails = 0;
@@ -751,7 +744,6 @@
     const itemsEl = $("statItems");
     if(itemsEl) itemsEl.textContent = state.items.length;
 
-    // FASE 3: incrementele save (geen clear + herinsert meer)
     NewsDB.saveItems(state.items);
     NewsDB.saveHealth(state.health);
 
@@ -772,10 +764,10 @@
       if(window.showToast) window.showToast("Geen nieuwsbronnen beschikbaar.");
     }
 
-    if(window.__wdDebug && window.wdLog){
-      window.wdLog[state.items.length ? "ok" : "warn"](
-        `loadAllFeeds klaar - ${state.items.length} items uit ${state.loadedSources}/${state.totalSources} bronnen`
-      );
+    if(state.items.length){
+      wdLog.info(`loadAllFeeds klaar - ${state.items.length} items uit ${state.loadedSources}/${state.totalSources} bronnen`);
+    } else {
+      wdLog.warn(`loadAllFeeds klaar - 0 items uit ${state.loadedSources}/${state.totalSources} bronnen`);
     }
   }
 
@@ -1031,17 +1023,23 @@
     await NewsDB.open();
     NewsDB.pruneOldReads().catch(() => {});
 
+    // B12: bij tag-versie wijziging → herbereken tags, niet wissen
     try{
-      if(localStorage.getItem("wardesk_tags_version") !== window.TAGS_VERSION){
-        // FASE 3: bij tag-versie wijziging alleen items wissen, niet hele DB
-        await NewsDB.saveItems([]);
-        localStorage.setItem("wardesk_tags_version", window.TAGS_VERSION);
-        console.log("[WAR DESK] Tags-versie gewijzigd — item-cache geleegd");
+      var storedTagsVersion = window.WDStorage ? WDStorage.get("tags_version") : null;
+      if(storedTagsVersion !== window.TAGS_VERSION){
+        wdLog.info("[WAR DESK] Tags-versie gewijzigd — tags herberekenen...");
+        await NewsDB.retagAll(extractTags);
+        if(window.WDStorage) WDStorage.set("tags_version", window.TAGS_VERSION);
+        wdLog.info("[WAR DESK] Tags herberekend");
       }
     }catch(e){}
 
-    try { state.translateEnabled = localStorage.getItem("wardesk_translate") === "1"; }catch(e){}
-    try { state.notificationsEnabled = localStorage.getItem("wardesk_notifications") === "1"; }catch(e){}
+    try {
+      state.translateEnabled = (window.WDStorage ? WDStorage.get("translate") : null) === "1";
+    }catch(e){}
+    try {
+      state.notificationsEnabled = (window.WDStorage ? WDStorage.get("notifications") : null) === "1";
+    }catch(e){}
     state.health = {};
     state.disabled = {};
     state.readMap = await NewsDB.loadReadMap();
@@ -1085,21 +1083,19 @@
       await window.NewsAPI.reload();
       if(window.showToast) window.showToast("Verversen klaar");
     }catch(e){
-      console.error("[WAR DESK] hard refresh fout:", e);
+      wdLog.error("[WAR DESK] hard refresh fout:", e);
       if(window.showToast) window.showToast("Verversen mislukt");
     }
   };
 
-  // ==================== FASE 3: TRANSLATION CACHE PAUZEERT OP ACHTERGROND ====================
   setInterval(() => {
-    if(document.hidden) return; // niet draaien als tab verborgen
+    if(document.hidden) return;
     if(state.translations && Object.keys(state.translations).length > 1000){
       state.translations = {};
-      console.log('[NEWS] Translation cache cleared');
+      wdLog.info('[NEWS] Translation cache cleared');
     }
   }, 3600000);
 
-  // DE BRUG: NewsAPI voor compatibiliteit
   window.NewsAPI = {
     init: initNews,
     reload: loadAllFeeds,
@@ -1110,5 +1106,5 @@
     render: renderNews
   };
 
-  console.log("[WAR DESK] news-v27.js " + window.__newsVersion + " geladen");
+  wdLog.info("[WAR DESK] news-v27.js " + window.__newsVersion + " geladen");
 })();

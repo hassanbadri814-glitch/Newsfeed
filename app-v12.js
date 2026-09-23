@@ -1,17 +1,17 @@
 /* ============================================================
-   WAR DESK v12.2 — App Orchestration (Met Touch Gestures)
+   WAR DESK v12.4 — App Orchestration (Touch Gestures)
    - Swipe navigation tussen tabs
    - Klok pauzeert op achtergrond
    - VOD-view + Escape fix
-   - FIX v12.1: Dubbele VODAPI.init() aanroep verwijderd
-   - FIX v12.2: Dubbele NewsAPI.init() aanroep verwijderd (index.html regelt dit)
+   - FIX v12.3: wdLog in plaats van console.log
+   - FIX v12.4: WDStorage in plaats van localStorage (Fase 4 Deel 2)
    ============================================================ */
 
 (function(){
   "use strict";
 
   const $ = (id) => document.getElementById(id);
-  const APP_VERSION = window.APP_VERSION || "v12.2";
+  const APP_VERSION = window.APP_VERSION || "v14.15";
 
   const ready = (fn) => {
     if(document.readyState !== "loading") fn();
@@ -57,7 +57,7 @@
       themeBtn.addEventListener("click", () => {
         const isLight = document.documentElement.classList.toggle("light");
         document.body.classList.toggle("light", isLight);
-        try{ localStorage.setItem("wardesk_theme", isLight ? "light" : "dark"); }catch(e){}
+        if(window.WDStorage) WDStorage.set("theme", isLight ? "light" : "dark");
       });
     }
 
@@ -82,11 +82,9 @@
       tab.addEventListener("click", () => {
         const view = tab.dataset.view;
         showView(view);
-        // VODAPI.init() wordt NIET hier aangeroepen — vod-v24.js doet dit zelf via setupVodWatcher()
       });
     });
 
-    // URL parameter support
     try{
       const params = new URLSearchParams(location.search);
       const requestedTab = params.get("tab");
@@ -131,7 +129,7 @@
         closeSheet();
         Array.from(document.querySelectorAll(".sheet-item[data-cat]")).forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        try{ if(window.NewsAPI) NewsAPI.setCat(btn.dataset.cat); }catch(err){ console.error("[WAR DESK] setCat fout:", err); }
+        try{ if(window.NewsAPI) NewsAPI.setCat(btn.dataset.cat); }catch(err){ wdLog.error("[WAR DESK] setCat fout:", err); }
       });
     });
 
@@ -178,7 +176,6 @@
       });
     }
 
-    // Sheet swipe-to-close
     let startY = 0, currentY = 0, dragging = false, canSwipeClose = false;
     if(sheet){
       sheet.addEventListener("touchstart", e => {
@@ -256,7 +253,6 @@
       toastTimer = setTimeout(() => { t.classList.remove("show"); }, 2200);
     };
 
-    // TOUCH GESTURES: Swipe navigation
     let touchStartX = 0;
     let touchStartY = 0;
 
@@ -272,7 +268,6 @@
       const deltaX = touchEndX - touchStartX;
       const deltaY = touchEndY - touchStartY;
       
-      // Horizontal swipe (min 100px, max 50px vertical)
       if(Math.abs(deltaX) > 100 && Math.abs(deltaY) < 50){
         const tabs = ['news', 'map', 'iptv', 'vod'];
         const currentTab = document.querySelector('.tab.active')?.dataset.view || 'news';
@@ -280,9 +275,9 @@
         
         let newIndex;
         if(deltaX > 0 && currentIndex > 0){
-          newIndex = currentIndex - 1; // Swipe right
+          newIndex = currentIndex - 1;
         } else if(deltaX < 0 && currentIndex < tabs.length - 1){
-          newIndex = currentIndex + 1; // Swipe left
+          newIndex = currentIndex + 1;
         }
         
         if(newIndex !== undefined){
@@ -292,12 +287,6 @@
       }
     }, { passive: true });
 
-    // ============================================================
-    // FASE 3A FIX: NewsAPI.init() wordt NIET hier aangeroepen.
-    // index.html heeft een robuuste retry-loop (40× 100ms = 4s wachten).
-    // Door beide aanroepen tegelijk te laten draaien werden feeds 2× geladen.
-    // ============================================================
-
-    console.log("[WAR DESK] app-v12.js " + APP_VERSION + " geladen");
+    wdLog.info("[WAR DESK] app-v12.js " + APP_VERSION + " geladen");
   });
 })();

@@ -1,21 +1,20 @@
 // msf-api.js - API laag voor de Metasploit RPC verbinding
 
 const MSFApi = {
-    // Tijdelijk: vervang dit later door de URL van je Python backend
-    // Bijvoorbeeld: https://<codespace-naam>-8000.app.github.dev
-    BASE_URL: 'https://your-backend-url',
+    // De URL van je Replit backend
+    BASE_URL: 'https://8129f60e-ad46-4e16-b163-72caab78ee20-00-11jpk23wccygv.reed.replit.dev',
 
     // Test of de backend bereikbaar is en of de inloggegevens kloppen
     async testConnection(ip, pass) {
         try {
-            // In de toekomst: stuur een POST naar /api/connect met ip en wachtwoord
-            // Voor nu doen we alsof het werkt, zodat je de UI kunt testen.
-            console.log('Test verbinding met:', ip, 'wachtwoord:', pass);
-            
-            // Simuleer een succesvolle verbinding na 1 seconde
-            return new Promise((resolve) => {
-                setTimeout(() => resolve(true), 1000);
+            const response = await fetch(`${this.BASE_URL}/connect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ip: ip, password: pass })
             });
+            const data = await response.json();
+            // Let op: de Replit AI stuurt { "status": "connected" } terug
+            return data.status === 'connected';
         } catch (error) {
             console.error('Verbindingsfout:', error);
             return false;
@@ -24,13 +23,11 @@ const MSFApi = {
 
     // Haal sessies op van de backend
     async getSessions() {
-        // Later: fetch(`${this.BASE_URL}/sessions`)
         return [];
     },
 
     // Stuur een commando naar een sessie
     async executeCommand(sessionId, command) {
-        // Later: fetch(`${this.BASE_URL}/execute/${sessionId}`, { method: 'POST', body: command })
         return 'Commando output komt hier';
     }
 };
